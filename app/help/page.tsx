@@ -84,8 +84,8 @@ export default function HelpIndexPage() {
           </p>
           <ul style={{ marginLeft: 20, marginTop: 12, fontSize: 14, lineHeight: 1.5, listStyleType: "disc", listStylePosition: "outside", color: TEXT_COLOR }}>
             <li><strong>Search & Trends</strong>: Discover patents and publications through hybrid keyword and semantic search, visualize filing trends over time, by CPC code, or by assignee, and set up proactive alerts for new filings that match configurable criteria;</li>
-            <li><strong>Scope Analysis</strong>: Paste a product description or draft claim set to run a semantic comparison against independent claims in the corpus and surface potential overlap signals for early FTO and infringement-risk triage;</li>
-            <li><strong>IP Overview</strong>: Analysis and insights on the AI/ML IP landscape with subject matter saturation, activity rates, momentum, and CPC distribution. Option to focus on specific assignees.</li>
+            <li><strong>Scope Analysis</strong>: Input a product description, invention disclosure, or draft claim set to run a semantic comparison against independent claims in the SynapseIP database. The closest matching independent claims are returned with similarity scoring for preliminary FTO and infringement-risk analysis.;</li>
+            <li><strong>IP Overview</strong>: Investigate the AI/ML IP landscape through information and insights on subject matter saturation, activity rates, momentum, and CPC distribution of AI/ML-related patents and publications. Option to focus on specific assignees.</li>
           </ul>
         </div>
 
@@ -119,7 +119,7 @@ export default function HelpIndexPage() {
             </div>
 
             <p style={{ marginTop: 20, fontSize: 14, lineHeight: 1.5, color: TEXT_COLOR, marginBottom: 8 }}>
-              The Search & Trends page is the primary interface for discovering and monitoring granted patents and published applications. It combines powerful search capabilities with visual trend analytics to provide an easily comprehensible view of the AI/ML IP landscape. The intuitive interface allows users to construct complex queries using both keywords and semantic similarity, filter results by various metadata fields, and visualize filing trends over time, by CPC classification, or by assignee. 
+              The Search & Trends page is the primary interface for discovering and monitoring granted patents and published applications. It combines powerful search capabilities with visual trend analytics to provide an easily comprehensible view of the AI/ML IP landscape. The intuitive interface allows users to construct complex queries using both keywords and semantic natural language, filter results by various metadata fields, and visualize filing trends over time, by CPC classification, or by assignee. 
             </p>
             <p style={{ fontSize: 14, lineHeight: 1.5, color: TEXT_COLOR, marginBottom: 16 }}>
               The Search & Trends page further includes the option to save a particular search configuration as an alert. SynapseIP updates its database on a weekly basis, following the USPTO schedule. Saved searches are automatically run when new data becomes available, and users are notified of new matches.
@@ -146,7 +146,7 @@ export default function HelpIndexPage() {
               }}
             >
               <p style={{ fontSize: 13, lineHeight: 1.5, color: TEXT_COLOR, margin: 0 }}>
-                <strong>Example Use Cases</strong>: Ongoing competitive monitoring, prior art searches, freedom-to-operate and clearance analysis, and staying current with AI/ML IP as it relates to specific technology areas. Graphs provide visual guides on trends across the AI/ML IP landscape.
+                <strong>Example Use Cases</strong>: Ongoing competitive monitoring, prior art searches, freedom-to-operate and clearance analysis, and staying current with AI/ML IP as it relates to specific technology areas. Graphs provide visual guides on trends across the AI/ML IP domain.
               </p>
             </div>
           </div>
@@ -178,7 +178,7 @@ export default function HelpIndexPage() {
             </div>
 
             <p style={{ marginTop: 20, fontSize: 14, lineHeight: 1.5, color: TEXT_COLOR, marginBottom: 8 }}>
-              The IP Overview page provides a quantitative view of patent and publication activity within a defined scope. This page includes analysis and insights for saturation, activity rate, and momentum measurements, as well as identifying CPC codes under which patent and publications are concentrated. The interface presents four primary metrics (subject matter saturation, patent and publication activity rate, patent grant and publication momentum, and top CPC codes) supported by a monthly trend line, CPC distribution chart, and sortable results table with direct links to the underlying patents and publications.
+              The IP Overview page provides a quantitative view of patent and publication activity within a defined scope. This page includes analysis and insights for subject matter saturation, activity rates, and momentum measurements, as well as identifying CPC codes under which patent and publications are concentrated. The interface presents four primary metrics (subject matter saturation, patent and publication activity rate, patent grant and publication momentum, and top CPC codes) supported by a monthly trend line, CPC distribution chart, and sortable results table with direct links to the underlying patents and publications.
             </p>
             <p style={{ fontSize: 14, lineHeight: 1.5, color: TEXT_COLOR, marginBottom: 16 }}>
               An optional “Group by Assignee” toggle enables the KNN Sigma graph visualization with confidence-scored signals highlighting potential gaps, bridging opportunities*, focus convergence, and crowd-out patterns.
@@ -239,18 +239,18 @@ export default function HelpIndexPage() {
           </div>
 
           <p style={{ marginTop: 20, fontSize: 14, lineHeight: 1.5, color: TEXT_COLOR, marginBottom: 8 }}>
-            The Scope Analysis page supplements AI/ML IP search, trends, and IP overview by providing freedom-to-operate (FTO) and infringement-risk screening. Input a natural language description of subject matter of interest (e.g., product features, invention disclosures, draft claims, etc.) and run a semantically comparison against independent claims across patents in the SynapseIP database. Closest matches with context-rich analysis is returned.
+            The Scope Analysis page supplements AI/ML IP search, trends, and IP overview by providing freedom-to-operate (FTO) and infringement-risk screening. Input a natural language description of subject matter of interest (e.g., product features, invention disclosures, draft claims, etc.) to run a semantic comparison against independent claims across patents in the SynapseIP database. The closest matches are returned with context-rich analysis.
           </p>
           <p style={{ fontSize: 14, lineHeight: 1.5, color: TEXT_COLOR, marginBottom: 16 }}>
-            Results are visualized in an interactive node map that positions the user input at the center with claim nodes arranged radially by similarity, while a synchronized evidence table lists the associated patents, assignees, publication dates, and full claim language. This combination provides an immediate, data-driven starting point for preliminary freedom-to-operate, infringement-risk reviews, and design-around brainstorming.
+            Results are graphically represented in an interactive node map that positions the user input at the center with claim nodes radially arranged by similarity. A synchronized results table lists the associated patents, assignees, grant dates, and full claim language.
           </p>
 
           <div style={{ display: "grid", gap: 12 }}>
-            <DetailItem icon="⬩" title="Independent Claim Embeddings" text="Every independent claim in the corpus is embedded and indexed, allowing high-fidelity semantic comparisons against inputs." />
-            <DetailItem icon="⬩" title="Interactive Similarity Graph" text="Hover to preview claim snippets, click nodes to sync with the evidence table, and quickly see which patents crowd closest to input subject matter." />
-            <DetailItem icon="⬩" title="Evidence Table" text="Clickable publication numbers open full patents on Google Patents, while expandable claim cells reveal the full verbatim language for easy reference." />
-            <DetailItem icon="⬩" title="Risk Snapshot Tiles" text="Automatic tallies highlight the number of high-similarity claims, lower-risk matches, and the overall scope sampled during each run." />
-            <DetailItem icon="⬩" title="Workflow Friendly" text="Perfect for rapid internal reviews before proceeding with formal opinions or further R&D investments." />
+            <DetailItem icon="⬩" title="Independent Claim Embeddings" text="Every independent claim in the database is embedded and indexed, allowing high-fidelity semantic comparisons against inputs." />
+            <DetailItem icon="⬩" title="Interactive Similarity Graph" text="Hover to preview claim snippets, click nodes to sync with the results table, and quickly see which patents crowd closest to input subject matter." />
+            <DetailItem icon="⬩" title="Results Table" text="The claim cells are expandable to reveal the full independent claim text. The patent numbers are linked to the full patent documents." />
+            <DetailItem icon="⬩" title="Risk Snapshot Tiles" text="Clustering and counts highlight the number of high-similarity claims, lower-risk matches, and the overall scope sampled during each run." />
+            <DetailItem icon="⬩" title="Pre-FTO/Clearance Review" text="Scope Analysis provides an immediate, data-driven starting point for preliminary freedom-to-operate analysis, infringement-risk reviews, and design-around brainstorming." />
           </div>
 
           <div

@@ -29,6 +29,9 @@ type GraphProps = {
   onSelect: (rowId: string) => void;
 };
 
+type SortKey = "similarity" | "assignee" | "pub_date";
+type SortDirection = "asc" | "desc";
+
 function formatPubDate(pubDate?: number | null): string {
   if (!pubDate) return "—";
   const s = String(pubDate);
@@ -40,6 +43,11 @@ function formatSimilarity(sim: number | null | undefined): string {
   if (sim == null) return "—";
   const pct = Math.max(0, Math.min(1, sim)) * 100;
   return `${pct.toFixed(1)}%`;
+}
+
+function googlePatentsUrl(pubId: string): string {
+  const cleaned = pubId.replace(/[-\s]/g, "");
+  return `https://patents.google.com/patent/${cleaned}`;
 }
 
 const ScopeGraph = ({ matches, selectedId, onSelect }: GraphProps) => {
@@ -196,7 +204,11 @@ const pageWrapperStyle: React.CSSProperties = {
   gap: 32,
 };
 
-
+const DEFAULT_SORT_DIRECTION: Record<SortKey, SortDirection> = {
+  similarity: "desc",
+  assignee: "asc",
+  pub_date: "desc",
+};
 
 export default function ScopeAnalysisPage() {
   const { isAuthenticated, isLoading, loginWithRedirect, getAccessTokenSilently } = useAuth0();
@@ -209,6 +221,8 @@ export default function ScopeAnalysisPage() {
   const [lastQuery, setLastQuery] = useState<string | null>(null);
   const [expandedClaims, setExpandedClaims] = useState<Record<string, boolean>>({});
   const [exporting, setExporting] = useState(false);
+  const [sortBy, setSortBy] = useState<SortKey>("similarity");
+  const [sortDirection, setSortDirection] = useState<SortDirection>(DEFAULT_SORT_DIRECTION.similarity);
 
   const primaryRisk = useMemo(() => {
     if (!results.length) return null;
@@ -270,6 +284,40 @@ export default function ScopeAnalysisPage() {
     return results.filter((r) => (r.similarity ?? 0) < 0.5).length;
   }, [results]);
 
+  const sortedResults = useMemo(() => {
+    const items = [...results];
+    items.sort((a, b) => {
+      if (sortBy === "assignee") {
+        const aName = (a.assignee_name || "").toLowerCase();
+        const bName = (b.assignee_name || "").toLowerCase();
+        if (aName !== bName) {
+          return sortDirection === "asc" ? aName.localeCompare(bName) : bName.localeCompare(aName);
+        }
+      } else if (sortBy === "pub_date") {
+        const aDate = a.pub_date ?? 0;
+        const bDate = b.pub_date ?? 0;
+        if (aDate !== bDate) {
+          return sortDirection === "asc" ? aDate - bDate : bDate - aDate;
+        }
+      } else {
+        const aSim = a.similarity ?? -Infinity;
+        const bSim = b.similarity ?? -Infinity;
+        if (aSim !== bSim) {
+          return sortDirection === "asc" ? aSim - bSim : bSim - aSim;
+        }
+      }
+
+      const aSim = a.similarity ?? -Infinity;
+      const bSim = b.similarity ?? -Infinity;
+      if (aSim !== bSim) return bSim - aSim;
+
+      const aDate = a.pub_date ?? 0;
+      const bDate = b.pub_date ?? 0;
+      return bDate - aDate;
+    });
+    return items;
+  }, [results, sortBy, sortDirection]);
+
   const handleRowSelect = (rowId: string) => {
     setSelectedId(rowId);
   };
@@ -286,62 +334,132 @@ export default function ScopeAnalysisPage() {
     });
   };
 
+  const handleSortFieldChange = (next: SortKey) => {
+    setSortBy(next);
+    setSortDirection(DEFAULT_SORT_DIRECTION[next]);
+  };
+
+  const toggleSortDirection = () => {
+    setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
+  };
+
   const exportTableToPdf = useCallback(() => {
-    if (!results.length || exporting) {
+    if (!sortedResults.length || exporting) {
       return;
     }
+
     try {
       setExporting(true);
+
       const doc = new jsPDF({ unit: "pt", format: "letter" });
-      const marginX = 48;
-      let y = 60;
+      const marginX = 54;
+      const topMargin = 60;
+      const bottomMargin = 64;
+      const lineHeight = 14;
+      const paragraphSpacing = 8;
+      const paragraphIndent = 16;
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const contentWidth = pageWidth - marginX * 2;
+      let y = topMargin;
+
+      const ensureSpace = (needed = lineHeight) => {
+        if (y + needed > pageHeight - bottomMargin) {
+          doc.addPage();
+          y = topMargin;
+        }
+      };
+
+      const drawDivider = () => {
+        ensureSpace(lineHeight);
+        doc.setDrawColor(184, 194, 208);
+        doc.setLineWidth(0.8);
+        doc.line(marginX, y, pageWidth - marginX, y);
+        y += 8;
+      };
+
+      const writeLines = (lines: string[], fontSize = 11, xOffset = 0) => {
+        doc.setFontSize(fontSize);
+        lines.forEach((line) => {
+          ensureSpace();
+          doc.text(line, marginX + xOffset, y);
+          y += lineHeight;
+        });
+      };
+
+      const addParagraphs = (text: string) => {
+        const normalized = text.replace(/\r\n/g, "\n").trim();
+        const paragraphs =
+          normalized.length === 0
+            ? ["No claim text available."]
+            : normalized
+                .split(/\n{2,}/)
+                .map((block) => block.replace(/\s*\n\s*/g, " ").replace(/\s+/g, " ").trim())
+                .filter(Boolean);
+
+        paragraphs.forEach((para, idx) => {
+          const paraLines = doc.splitTextToSize(para, contentWidth - paragraphIndent);
+          writeLines(paraLines, 11, paragraphIndent);
+          if (idx !== paragraphs.length - 1) {
+            y += paragraphSpacing;
+          }
+        });
+      };
 
       doc.setFontSize(18);
       doc.text("Scope Analysis Results", marginX, y);
-      y += 20;
-      doc.setFontSize(11);
-      doc.text(`Generated: ${new Date().toLocaleString()}`, marginX, y);
+      y += 22;
+
+      doc.setFontSize(12);
+      doc.text("Input", marginX, y);
       y += 14;
-      if (lastQuery) {
-        const snippet = lastQuery.length > 140 ? `${lastQuery.slice(0, 140)}…` : lastQuery;
-        const queryLines = doc.splitTextToSize(`Input: ${snippet}`, 520);
-        doc.text(queryLines, marginX, y);
-        y += queryLines.length * 12 + 6;
-      }
 
-      results.forEach((match, idx) => {
-        if (y > 720) {
-          doc.addPage();
-          y = 60;
-        }
+      const inputText = lastQuery?.trim() || "No input text provided.";
+      const inputLines = doc.splitTextToSize(inputText, contentWidth);
+      writeLines(inputLines, 11);
+      y += 4;
+      drawDivider();
+
+      sortedResults.forEach((match, idx) => {
+        // Keep headings on-page with at least a few lines of metadata.
+        ensureSpace(lineHeight * 4);
+
         const heading = `${idx + 1}. ${match.title || "Untitled patent"} (${match.pub_id})`;
-        doc.setFontSize(12);
-        doc.text(heading, marginX, y);
-        y += 14;
+        writeLines(doc.splitTextToSize(heading, contentWidth), 12);
 
-        doc.setFontSize(10);
-        const meta = [
+        const metaParts = [
           `Assignee: ${match.assignee_name || "Unknown"}`,
           `Grant Date: ${formatPubDate(match.pub_date)}`,
           `Claim #: ${match.claim_number}`,
           `Similarity: ${formatSimilarity(match.similarity)}`,
-          `Distance: ${typeof match.distance === "number" ? match.distance.toFixed(3) : "—"}`,
-        ].join(" | ");
-        doc.text(doc.splitTextToSize(meta, 520), marginX, y);
-        y += 14;
+        ];
+        writeLines(doc.splitTextToSize(metaParts.join(" | "), contentWidth), 10);
+        y += 2;
 
-        const claimText = match.claim_text ? match.claim_text : "No claim text available.";
-        const claimLines = doc.splitTextToSize(claimText, 520);
-        doc.text(claimLines, marginX + 12, y);
-        y += claimLines.length * 12 + 16;
+        const claimText = match.claim_text || "No claim text available.";
+        addParagraphs(claimText);
+
+        if (idx !== sortedResults.length - 1) {
+          y += 6;
+          drawDivider();
+        }
       });
+
+      const totalPages = doc.getNumberOfPages();
+      doc.setFontSize(9);
+      for (let i = 1; i <= totalPages; i += 1) {
+        doc.setPage(i);
+        const footerY = doc.internal.pageSize.getHeight() - 28;
+        const pageW = doc.internal.pageSize.getWidth();
+        doc.text(`Page ${i} of ${totalPages}`, pageW - marginX, footerY, { align: "right" });
+      }
 
       const filename = `scope-analysis-${new Date().toISOString().slice(0, 10)}.pdf`;
       doc.save(filename);
     } finally {
       setExporting(false);
     }
-  }, [results, lastQuery, exporting]);
+  }, [sortedResults, lastQuery, exporting]);
 
   return (
     <div style={pageWrapperStyle}>
@@ -353,14 +471,14 @@ export default function ScopeAnalysisPage() {
             <h1 style={{ color: TEXT_COLOR, fontSize: 22, fontWeight: 700 }}>Preliminary FTO / Infringement Radar</h1>
             <p style={{ margin: 0, fontSize: 14, color: "#475569" }}>
               Input subject matter to search for comparison against independent claims of patents in the SynapseIP database. 
-              A semantic search is executed over available independent claim, and semantically similar claims are returned with similarity scores and risk analysis.
+              A semantic search is executed over the available independent claims, and semantically similar claims are returned with similarity scores and risk analyses.
             </p>
           </header>
 
           <section className="glass-card" style={{ ...cardBaseStyle }}>
             <div className="flex flex-col gap-2">
               <label htmlFor="scope-text" className="text-sm font-semibold" style={{ color: TEXT_COLOR }}>
-                Input subject matter to search (e.g., product description, invention disclosure, draft claim, etc.)
+                Input subject matter to search (e.g., product description, invention disclosure, draft claim(s), etc.)
               </label>
               <textarea
                 id="scope-text"
@@ -488,9 +606,30 @@ export default function ScopeAnalysisPage() {
             </div>
             <div className="flex items-center gap-3">
               {results.length > 0 && (
-                <span className="text-xs font-semibold text-slate-500">
-                  Click a row to highlight the graph node.
-                </span>
+                <>
+                  <div className="flex items-center gap-2 text-xs text-slate-600">
+                    <span className="font-semibold text-slate-700">Sort</span>
+                    <select
+                      value={sortBy}
+                      onChange={(e) => handleSortFieldChange(e.target.value as SortKey)}
+                      className="h-9 rounded-lg border border-slate-200 bg-white px-2 text-xs font-semibold text-slate-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-300"
+                    >
+                      <option value="similarity">Similarity</option>
+                      <option value="assignee">Assignee</option>
+                      <option value="pub_date">Grant date</option>
+                    </select>
+                    <button
+                      type="button"
+                      onClick={toggleSortDirection}
+                      className="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
+                    >
+                      {sortDirection === "asc" ? "Asc" : "Desc"}
+                    </button>
+                  </div>
+                  <span className="text-xs font-semibold text-slate-500">
+                    Click a row to highlight the graph node.
+                  </span>
+                </>
               )}
               <button
                 type="button"
@@ -509,7 +648,7 @@ export default function ScopeAnalysisPage() {
                     <th className="py-2 pr-4">Patent</th>
                     <th className="py-2 pr-4">Claim #</th>
                     <th className="py-2 pr-4">Similarity</th>
-                    <th className="py-2 pr-4">Distance</th>
+                    <th className="py-2 pr-4">Assignee</th>
                     <th className="py-2">Claim text</th>
                   </tr>
                 </thead>
@@ -517,11 +656,11 @@ export default function ScopeAnalysisPage() {
                   {results.length === 0 ? (
                     <tr>
                       <td colSpan={5} className="py-6 text-center text-slate-500">
-                        Run a scope analysis to populate this table.
+                        Run scope analysis to populate this table.
                       </td>
                     </tr>
                   ) : (
-                    results.map((match) => {
+                    sortedResults.map((match) => {
                       const rowId = `${match.pub_id}#${match.claim_number}`;
                       const isSelected = selectedId === rowId;
                       return (
@@ -536,22 +675,22 @@ export default function ScopeAnalysisPage() {
                             <div className="font-semibold text-slate-900">{match.title || "Untitled patent"}</div>
                             <div className="text-xs text-slate-500">
                               <a
-                                href={`https://patents.google.com/patent/${match.pub_id}`}
+                                href={googlePatentsUrl(match.pub_id)}
                                 target="_blank"
                                 rel="noreferrer"
                                 className="text-sky-600 hover:underline"
                               >
                                 {match.pub_id}
                               </a>{" "}
-                              · {match.assignee_name || "Unknown assignee"} · {formatPubDate(match.pub_date)}
+                              · {formatPubDate(match.pub_date)}
                             </div>
                           </td>
                           <td className="py-3 pr-4">{match.claim_number}</td>
                           <td className="py-3 pr-4 font-semibold text-slate-900">
                             {formatSimilarity(match.similarity)}
                           </td>
-                          <td className="py-3 pr-4 text-slate-600">
-                            {typeof match.distance === "number" ? match.distance.toFixed(3) : "—"}
+                          <td className="py-3 pr-4 text-slate-700">
+                            {match.assignee_name || "Unknown assignee"}
                           </td>
                           <td
                             className="py-3 text-slate-700"
