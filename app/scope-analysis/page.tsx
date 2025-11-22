@@ -1,7 +1,6 @@
 "use client";
 
 import { useAuth0 } from "@auth0/auth0-react";
-import jsPDF from "jspdf";
 import { useCallback, useMemo, useState } from "react";
 import type { CSSProperties } from "react";
 
@@ -343,147 +342,50 @@ export default function ScopeAnalysisPage() {
     setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
   };
 
-  const exportTableToPdf = useCallback(() => {
-    if (!sortedResults.length || exporting) {
+  const exportTableToPdf = useCallback(async () => {
+    if (!lastQuery || exporting) {
       return;
     }
 
     try {
       setExporting(true);
+      const token = await getAccessTokenSilently();
 
-      const doc = new jsPDF({ unit: "pt", format: "letter" });
-      const marginX = 72; // 1" margins on letter page
-      const topMargin = 72;
-      const bottomMargin = 72;
-      const lineHeight = 12;
-      const paragraphSpacing = 6;
-      const paragraphIndent = 0;
-      const pageWidth = doc.internal.pageSize.getWidth();
-      const pageHeight = doc.internal.pageSize.getHeight();
-      const contentWidth = pageWidth - marginX * 2;
-      const wrapWidth = contentWidth - 6; // tiny inset to avoid right-edge bleed
-      let y = topMargin;
-
-      const splitLines = (text: string, width: number = wrapWidth) => doc.splitTextToSize(text, width);
-
-      const ensureSpace = (needed = lineHeight) => {
-        if (y + needed > pageHeight - bottomMargin) {
-          doc.addPage();
-          y = topMargin;
-        }
+      const payload = {
+        text: lastQuery,
+        top_k: topK,
       };
 
-      const drawDivider = () => {
-        ensureSpace(lineHeight + 6);
-        y += 4;
-        doc.setDrawColor(184, 194, 208);
-        doc.setLineWidth(0.8);
-        doc.line(marginX, y, pageWidth - marginX, y);
-        y += 10;
-      };
-
-      const writeLines = (lines: string[], fontSize = 11, xOffset = 0) => {
-        doc.setFontSize(fontSize);
-        lines.forEach((line) => {
-          ensureSpace();
-          if (line) {
-            doc.text(line, marginX + xOffset, y);
-          }
-          y += lineHeight;
-        });
-      };
-
-      const formatClaimText = (text: string, claimNumber?: number | null) => {
-        const normalized = text.replace(/\r\n/g, "\n").trim();
-        if (!normalized) return ["No claim text available."];
-
-        const withBreaks = normalized
-          .replace(/;[ \t]*and[ \t]*/gi, ";\nand ")
-          .replace(/;(?!(\s*and\b))/g, ";\n")
-          .replace(/:(?!\n)/g, ":\n")
-          .replace(/\n{3,}/g, "\n\n");
-
-        const paragraphs = withBreaks.split(/\n{2,}/).filter(Boolean);
-        const lines: string[] = [];
-
-        paragraphs.forEach((para, pIdx) => {
-          const segments = para.split(/\n/);
-          segments.forEach((segment, sIdx) => {
-            const trimmed = segment.trim();
-            if (!trimmed) return;
-            const wrapped = splitLines(trimmed, wrapWidth - paragraphIndent);
-            wrapped.forEach((wrapLine, wIdx) => {
-              if (pIdx === 0 && sIdx === 0 && wIdx === 0 && claimNumber != null) {
-                lines.push(`${claimNumber}. ${wrapLine}`);
-              } else {
-                lines.push(wrapLine);
-              }
-            });
-          });
-          if (pIdx !== paragraphs.length - 1) {
-            lines.push("");
-          }
-        });
-
-        return lines.length ? lines : ["No claim text available."];
-      };
-
-      doc.setFontSize(16);
-      doc.text("Scope Analysis Results", marginX, y);
-      y += 20;
-
-      doc.setFontSize(11);
-      doc.text("Input", marginX, y);
-      y += 12;
-
-      const inputText = lastQuery?.trim() || "No input text provided.";
-      const inputLines = splitLines(inputText);
-      writeLines(inputLines, 10);
-      y += 4;
-      drawDivider();
-
-      sortedResults.forEach((match, idx) => {
-        // Keep headings on-page with at least a few lines of metadata.
-        ensureSpace(lineHeight * 4);
-
-        const heading = `${match.title || "Untitled patent"} (${match.pub_id})`;
-        const headingLines = splitLines(heading);
-        writeLines(headingLines, 11);
-        y += 2;
-
-        const metaParts = [
-          `Assignee: ${match.assignee_name || "Unknown"}`,
-          `Grant Date: ${formatPubDate(match.pub_date)}`,
-          `Similarity: ${formatSimilarity(match.similarity)}`,
-        ];
-        const metaLines = splitLines(metaParts.join(" | "));
-        writeLines(metaLines, 9);
-        y += 2;
-
-        const claimLines = formatClaimText(match.claim_text || "No claim text available.", match.claim_number);
-        writeLines(claimLines, 10);
-
-        if (idx !== sortedResults.length - 1) {
-          y += 6;
-          drawDivider();
-        }
+      const res = await fetch("/api/scope-analysis/export", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
       });
 
-      const totalPages = doc.getNumberOfPages();
-      doc.setFontSize(9);
-      for (let i = 1; i <= totalPages; i += 1) {
-        doc.setPage(i);
-        const footerY = doc.internal.pageSize.getHeight() - 32;
-        const pageW = doc.internal.pageSize.getWidth();
-        doc.text(`Page ${i} of ${totalPages}`, pageW - marginX, footerY, { align: "right" });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || `Export failed (${res.status})`);
       }
 
-      const filename = `scope-analysis-${new Date().toISOString().slice(0, 10)}.pdf`;
-      doc.save(filename);
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `scope-analysis-${new Date().toISOString().slice(0, 10)}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err: any) {
+      console.error("Export error:", err);
+      alert(err.message || "Failed to export PDF");
     } finally {
       setExporting(false);
     }
-  }, [sortedResults, lastQuery, exporting]);
+  }, [lastQuery, topK, exporting, getAccessTokenSilently]);
 
   return (
     <div style={pageWrapperStyle}>

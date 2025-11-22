@@ -164,6 +164,125 @@ async def post_scope_analysis(
     return ScopeAnalysisResponse(query_text=text, top_k=req.top_k, matches=matches)
 
 
+@app.post("/scope_analysis/export")
+async def export_scope_analysis(
+    req: ScopeAnalysisRequest,
+    conn: Conn,
+    user: ActiveSubscription,
+):
+    if not HAVE_REPORTLAB:
+        raise HTTPException(status_code=500, detail="PDF generation not available")
+
+    text = (req.text or "").strip()
+    if not text:
+        raise HTTPException(status_code=400, detail="text must not be empty")
+
+    maybe = embed_text(text)
+    if inspect.isawaitable(maybe):
+        query_vec = list(cast(Sequence[float], await maybe))
+    else:
+        query_vec = list(cast(Sequence[float], maybe))
+
+    matches = await scope_claim_knn(conn, query_vec=query_vec, limit=req.top_k)
+
+    buffer = BytesIO()
+    c = _CANVAS.Canvas(buffer, pagesize=_LETTER)  # type: ignore
+    width, height = _LETTER  # type: ignore
+    margin = 40
+    y = height - margin
+
+    c.setFont("Helvetica-Bold", 16)
+    c.drawString(margin, y, "Scope Analysis Results")
+    y -= 24
+    
+    c.setFont("Helvetica-Bold", 12)
+    c.drawString(margin, y, "Input Subject Matter")
+    y -= 14
+    
+    def _ensure_space(font_name: str | None = None, font_size: int | None = None):
+        nonlocal y
+        if y < 60:
+            c.showPage()
+            y = height - margin
+            if font_name and font_size:
+                c.setFont(font_name, font_size)
+
+    def draw_wrapped_text(text: str, font_name="Helvetica", font_size=10, indent=0):
+        nonlocal y
+        c.setFont(font_name, font_size)
+        max_w = width - margin * 2 - indent
+        words = text.split()
+        line = ""
+        for w in words:
+            test = (line + " " + w).strip()
+            if c.stringWidth(test, font_name, font_size) <= max_w:
+                line = test
+            else:
+                c.drawString(margin + indent, y, line)
+                y -= (font_size + 2)
+                _ensure_space(font_name, font_size)
+                line = w
+        if line:
+            c.drawString(margin + indent, y, line)
+            y -= (font_size + 2)
+
+    draw_wrapped_text(text)
+    y -= 12
+    _ensure_space()
+    
+    c.setLineWidth(1)
+    c.line(margin, y, width - margin, y)
+    y -= 20
+
+    for m in matches:
+        _ensure_space()
+        # Title + Pub ID
+        title = m.title or "Untitled"
+        pub_id = m.pub_id
+        header = f"{title} ({pub_id})"
+        
+        c.setFont("Helvetica-Bold", 11)
+        c.drawString(margin, y, header)
+        y -= 14
+        _ensure_space()
+
+        # Meta
+        assignee = m.assignee_name or "Unknown"
+        pub_date = _int_date(m.pub_date) or "-"
+        sim = f"{m.similarity:.1%}"
+        meta = f"Assignee: {assignee} | Grant Date: {pub_date} | Similarity: {sim}"
+        
+        c.setFont("Helvetica", 9)
+        c.drawString(margin, y, meta)
+        y -= 14
+        _ensure_space()
+
+        # Claim Text
+        claim_text = m.claim_text or "No claim text available."
+        claim_num = m.claim_number
+        if claim_num:
+            claim_text = f"{claim_num}. {claim_text}"
+        
+        draw_wrapped_text(claim_text, font_size=10)
+        
+        y -= 10
+        _ensure_space()
+        c.setLineWidth(0.5)
+        c.line(margin, y, width - margin, y)
+        y -= 14
+
+    c.showPage()
+    c.save()
+    buffer.seek(0)
+    
+    filename = "scope_analysis_export"
+    headers = {
+        "Content-Type": "application/pdf",
+        "Content-Disposition": f"attachment; filename={filename}.pdf",
+    }
+    return StreamingResponse(buffer, headers=headers, media_type="application/pdf")
+
+
 # ----------------------------- Saved Queries -----------------------------
 class SavedQueryCreate(BaseModel):
     name: str
@@ -490,11 +609,13 @@ async def export(
     y -= 18
     c.setFont("Helvetica", 9)
 
-    def _ensure_space():
+    def _ensure_space(font_name: str | None = None, font_size: int | None = None):
         nonlocal y
         if y < 60:
             c.showPage()
             y = height - margin
+            if font_name and font_size:
+                c.setFont(font_name, font_size)
 
     def draw_label_value(label: str, value: str | None, label_font: str = "Helvetica-Bold", label_size: int = 9, value_font: str = "Helvetica", value_size: int = 9):
         """Draw a label in bold on its own line, followed by the value on subsequent wrapped lines.
@@ -522,7 +643,7 @@ async def export(
             else:
                 c.drawString(margin, y, line)
                 y -= 12
-                _ensure_space()
+                _ensure_space(value_font, value_size)
                 line = w
         if line:
             c.drawString(margin, y, line)
