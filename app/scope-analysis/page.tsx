@@ -363,6 +363,8 @@ export default function ScopeAnalysisPage() {
       const contentWidth = pageWidth - marginX * 2;
       let y = topMargin;
 
+      const splitLines = (text: string, width: number) => doc.splitTextToSize(text, width);
+
       const ensureSpace = (needed = lineHeight) => {
         if (y + needed > pageHeight - bottomMargin) {
           doc.addPage();
@@ -383,7 +385,7 @@ export default function ScopeAnalysisPage() {
         doc.setFontSize(fontSize);
         lines.forEach((line) => {
           ensureSpace();
-          doc.text(line, marginX + xOffset, y, { maxWidth: contentWidth - xOffset });
+          doc.text(line, marginX + xOffset, y);
           y += lineHeight;
         });
       };
@@ -399,7 +401,7 @@ export default function ScopeAnalysisPage() {
                 .filter(Boolean);
 
         paragraphs.forEach((para, idx) => {
-          const paraLines = doc.splitTextToSize(para, contentWidth - paragraphIndent);
+          const paraLines = splitLines(para, contentWidth - paragraphIndent);
           writeLines(paraLines, 10, paragraphIndent);
           if (idx !== paragraphs.length - 1) {
             y += paragraphSpacing;
@@ -416,7 +418,7 @@ export default function ScopeAnalysisPage() {
       y += 12;
 
       const inputText = lastQuery?.trim() || "No input text provided.";
-      const inputLines = doc.splitTextToSize(inputText, contentWidth);
+      const inputLines = splitLines(inputText, contentWidth);
       writeLines(inputLines, 10);
       y += 4;
       drawDivider();
@@ -426,7 +428,9 @@ export default function ScopeAnalysisPage() {
         ensureSpace(lineHeight * 4);
 
         const heading = `${idx + 1}. ${match.title || "Untitled patent"} (${match.pub_id})`;
-        writeLines(doc.splitTextToSize(heading, contentWidth), 11);
+        const headingLines = splitLines(heading, contentWidth);
+        writeLines(headingLines, 11);
+        y += 2;
 
         const metaParts = [
           `Assignee: ${match.assignee_name || "Unknown"}`,
@@ -434,8 +438,9 @@ export default function ScopeAnalysisPage() {
           `Claim #: ${match.claim_number}`,
           `Similarity: ${formatSimilarity(match.similarity)}`,
         ];
-        writeLines(doc.splitTextToSize(metaParts.join(" | "), contentWidth), 9);
-        y += 1;
+        const metaLines = splitLines(metaParts.join(" | "), contentWidth);
+        writeLines(metaLines, 9);
+        y += 2;
 
         const claimText = match.claim_text || "No claim text available.";
         addParagraphs(claimText);
