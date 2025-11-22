@@ -357,13 +357,14 @@ export default function ScopeAnalysisPage() {
       const bottomMargin = 72;
       const lineHeight = 12;
       const paragraphSpacing = 6;
-      const paragraphIndent = 16;
+      const paragraphIndent = 0;
       const pageWidth = doc.internal.pageSize.getWidth();
       const pageHeight = doc.internal.pageSize.getHeight();
       const contentWidth = pageWidth - marginX * 2;
+      const wrapWidth = contentWidth - 6; // tiny inset to avoid right-edge bleed
       let y = topMargin;
 
-      const splitLines = (text: string, width: number) => doc.splitTextToSize(text, width);
+      const splitLines = (text: string, width: number = wrapWidth) => doc.splitTextToSize(text, width);
 
       const ensureSpace = (needed = lineHeight) => {
         if (y + needed > pageHeight - bottomMargin) {
@@ -385,28 +386,46 @@ export default function ScopeAnalysisPage() {
         doc.setFontSize(fontSize);
         lines.forEach((line) => {
           ensureSpace();
-          doc.text(line, marginX + xOffset, y);
+          if (line) {
+            doc.text(line, marginX + xOffset, y);
+          }
           y += lineHeight;
         });
       };
 
-      const addParagraphs = (text: string) => {
+      const formatClaimText = (text: string, claimNumber?: number | null) => {
         const normalized = text.replace(/\r\n/g, "\n").trim();
-        const paragraphs =
-          normalized.length === 0
-            ? ["No claim text available."]
-            : normalized
-                .split(/\n{2,}/)
-                .map((block) => block.replace(/\s*\n\s*/g, " ").replace(/\s+/g, " ").trim())
-                .filter(Boolean);
+        if (!normalized) return ["No claim text available."];
 
-        paragraphs.forEach((para, idx) => {
-          const paraLines = splitLines(para, contentWidth - paragraphIndent);
-          writeLines(paraLines, 10, paragraphIndent);
-          if (idx !== paragraphs.length - 1) {
-            y += paragraphSpacing;
+        const withBreaks = normalized
+          .replace(/;[ \t]*and[ \t]*/gi, ";\nand ")
+          .replace(/;(?!(\s*and\b))/g, ";\n")
+          .replace(/:(?!\n)/g, ":\n")
+          .replace(/\n{3,}/g, "\n\n");
+
+        const paragraphs = withBreaks.split(/\n{2,}/).filter(Boolean);
+        const lines: string[] = [];
+
+        paragraphs.forEach((para, pIdx) => {
+          const segments = para.split(/\n/);
+          segments.forEach((segment, sIdx) => {
+            const trimmed = segment.trim();
+            if (!trimmed) return;
+            const wrapped = splitLines(trimmed, wrapWidth - paragraphIndent);
+            wrapped.forEach((wrapLine, wIdx) => {
+              if (pIdx === 0 && sIdx === 0 && wIdx === 0 && claimNumber != null) {
+                lines.push(`${claimNumber}. ${wrapLine}`);
+              } else {
+                lines.push(wrapLine);
+              }
+            });
+          });
+          if (pIdx !== paragraphs.length - 1) {
+            lines.push("");
           }
         });
+
+        return lines.length ? lines : ["No claim text available."];
       };
 
       doc.setFontSize(16);
@@ -418,7 +437,7 @@ export default function ScopeAnalysisPage() {
       y += 12;
 
       const inputText = lastQuery?.trim() || "No input text provided.";
-      const inputLines = splitLines(inputText, contentWidth);
+      const inputLines = splitLines(inputText);
       writeLines(inputLines, 10);
       y += 4;
       drawDivider();
@@ -427,23 +446,22 @@ export default function ScopeAnalysisPage() {
         // Keep headings on-page with at least a few lines of metadata.
         ensureSpace(lineHeight * 4);
 
-        const heading = `${idx + 1}. ${match.title || "Untitled patent"} (${match.pub_id})`;
-        const headingLines = splitLines(heading, contentWidth);
+        const heading = `${match.title || "Untitled patent"} (${match.pub_id})`;
+        const headingLines = splitLines(heading);
         writeLines(headingLines, 11);
         y += 2;
 
         const metaParts = [
           `Assignee: ${match.assignee_name || "Unknown"}`,
           `Grant Date: ${formatPubDate(match.pub_date)}`,
-          `Claim #: ${match.claim_number}`,
           `Similarity: ${formatSimilarity(match.similarity)}`,
         ];
-        const metaLines = splitLines(metaParts.join(" | "), contentWidth);
+        const metaLines = splitLines(metaParts.join(" | "));
         writeLines(metaLines, 9);
         y += 2;
 
-        const claimText = match.claim_text || "No claim text available.";
-        addParagraphs(claimText);
+        const claimLines = formatClaimText(match.claim_text || "No claim text available.", match.claim_number);
+        writeLines(claimLines, 10);
 
         if (idx !== sortedResults.length - 1) {
           y += 6;
