@@ -352,11 +352,11 @@ export default function ScopeAnalysisPage() {
       setExporting(true);
 
       const doc = new jsPDF({ unit: "pt", format: "letter" });
-      const marginX = 54;
-      const topMargin = 60;
-      const bottomMargin = 64;
-      const lineHeight = 14;
-      const paragraphSpacing = 8;
+      const marginX = 72; // 1" margins on letter page
+      const topMargin = 72;
+      const bottomMargin = 72;
+      const lineHeight = 12;
+      const paragraphSpacing = 6;
       const paragraphIndent = 16;
       const pageWidth = doc.internal.pageSize.getWidth();
       const pageHeight = doc.internal.pageSize.getHeight();
@@ -371,18 +371,19 @@ export default function ScopeAnalysisPage() {
       };
 
       const drawDivider = () => {
-        ensureSpace(lineHeight);
+        ensureSpace(lineHeight + 6);
+        y += 4;
         doc.setDrawColor(184, 194, 208);
         doc.setLineWidth(0.8);
         doc.line(marginX, y, pageWidth - marginX, y);
-        y += 8;
+        y += 10;
       };
 
       const writeLines = (lines: string[], fontSize = 11, xOffset = 0) => {
         doc.setFontSize(fontSize);
         lines.forEach((line) => {
           ensureSpace();
-          doc.text(line, marginX + xOffset, y);
+          doc.text(line, marginX + xOffset, y, { maxWidth: contentWidth - xOffset });
           y += lineHeight;
         });
       };
@@ -399,24 +400,24 @@ export default function ScopeAnalysisPage() {
 
         paragraphs.forEach((para, idx) => {
           const paraLines = doc.splitTextToSize(para, contentWidth - paragraphIndent);
-          writeLines(paraLines, 11, paragraphIndent);
+          writeLines(paraLines, 10, paragraphIndent);
           if (idx !== paragraphs.length - 1) {
             y += paragraphSpacing;
           }
         });
       };
 
-      doc.setFontSize(18);
+      doc.setFontSize(16);
       doc.text("Scope Analysis Results", marginX, y);
-      y += 22;
+      y += 20;
 
-      doc.setFontSize(12);
+      doc.setFontSize(11);
       doc.text("Input", marginX, y);
-      y += 14;
+      y += 12;
 
       const inputText = lastQuery?.trim() || "No input text provided.";
       const inputLines = doc.splitTextToSize(inputText, contentWidth);
-      writeLines(inputLines, 11);
+      writeLines(inputLines, 10);
       y += 4;
       drawDivider();
 
@@ -425,7 +426,7 @@ export default function ScopeAnalysisPage() {
         ensureSpace(lineHeight * 4);
 
         const heading = `${idx + 1}. ${match.title || "Untitled patent"} (${match.pub_id})`;
-        writeLines(doc.splitTextToSize(heading, contentWidth), 12);
+        writeLines(doc.splitTextToSize(heading, contentWidth), 11);
 
         const metaParts = [
           `Assignee: ${match.assignee_name || "Unknown"}`,
@@ -433,8 +434,8 @@ export default function ScopeAnalysisPage() {
           `Claim #: ${match.claim_number}`,
           `Similarity: ${formatSimilarity(match.similarity)}`,
         ];
-        writeLines(doc.splitTextToSize(metaParts.join(" | "), contentWidth), 10);
-        y += 2;
+        writeLines(doc.splitTextToSize(metaParts.join(" | "), contentWidth), 9);
+        y += 1;
 
         const claimText = match.claim_text || "No claim text available.";
         addParagraphs(claimText);
@@ -449,7 +450,7 @@ export default function ScopeAnalysisPage() {
       doc.setFontSize(9);
       for (let i = 1; i <= totalPages; i += 1) {
         doc.setPage(i);
-        const footerY = doc.internal.pageSize.getHeight() - 28;
+        const footerY = doc.internal.pageSize.getHeight() - 32;
         const pageW = doc.internal.pageSize.getWidth();
         doc.text(`Page ${i} of ${totalPages}`, pageW - marginX, footerY, { align: "right" });
       }
