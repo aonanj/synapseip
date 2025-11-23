@@ -9,8 +9,10 @@ from functools import lru_cache
 import stripe
 from dotenv import load_dotenv
 
-load_dotenv()
+from infrastructure.logger import get_logger
 
+load_dotenv()
+logger = get_logger()
 
 @dataclass(frozen=True)
 class StripeSettings:
@@ -116,4 +118,4 @@ def ensure_stripe_configured() -> None:
     """Ensure Stripe is configured. Call at app startup."""
     settings = get_stripe_settings()
     mode = "test" if settings.is_test_mode else "live"
-    print(f"✓ Stripe configured in {mode} mode")
+    logger.info(f"✓ Stripe configured in {mode} mode")

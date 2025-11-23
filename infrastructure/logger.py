@@ -69,4 +69,4 @@ def setup_logger(name="synapseip", level=logging.INFO, toFile=False, fileName="s
     return logger
 
 def get_logger(name="synapseip"):
-    return logging.getLogger(name)
+    return setup_logger(name=name)

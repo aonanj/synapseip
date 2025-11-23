@@ -227,6 +227,42 @@ def _extract_invoice_period_bounds(invoice: dict[str, Any] | Any) -> tuple[datet
     return latest_start, latest_end
 
 
+def _ensure_subscription_period_bounds(subscription: dict[str, Any]) -> None:
+    """Populate current_period_start/end on a subscription dict using item data when missing."""
+    def _prefer_latest(candidate: Any, current: Any) -> Any:
+        cand_dt = _to_utc_datetime(candidate)
+        curr_dt = _to_utc_datetime(current)
+        if cand_dt and (curr_dt is None or cand_dt > curr_dt):
+            return candidate
+        return current
+
+    period_start = subscription.get("current_period_start")
+    period_end = subscription.get("current_period_end")
+
+    items = subscription.get("items", {})
+    data = items.get("data", []) if isinstance(items, dict) else []
+
+    if isinstance(data, list):
+        for item in data:
+            if not isinstance(item, dict):
+                continue
+            item_start = item.get("current_period_start")
+            item_end = item.get("current_period_end")
+
+            period = item.get("period")
+            if isinstance(period, dict):
+                item_start = item_start or period.get("start")
+                item_end = item_end or period.get("end")
+
+            period_start = _prefer_latest(item_start, period_start)
+            period_end = _prefer_latest(item_end, period_end)
+
+    if period_start is not None and not subscription.get("current_period_start"):
+        subscription["current_period_start"] = period_start
+    if period_end is not None and not subscription.get("current_period_end"):
+        subscription["current_period_end"] = period_end
+
+
 async def _resolve_subscription_id(
     conn: AsyncConnection,
     event_type: str,
@@ -418,7 +454,7 @@ async def upsert_subscription(
 
     current_period_end = _to_utc_datetime(subscription_data.get("current_period_end"))
     cancel_at_period_end = bool(subscription_data.get("cancel_at_period_end", False))
-    
+
     logger.warning(f"{__name__}.upsert_subscription: current_period_end: {current_period_end}")
 
     # Get the price ID from the subscription items
@@ -700,7 +736,15 @@ async def handle_subscription_updated(
     Returns:
         Subscription ID if updated
     """
-    subscription = event["data"]["object"]
+    raw_subscription = event["data"]["object"]
+    subscription = (
+        raw_subscription.to_dict_recursive()
+        if hasattr(raw_subscription, "to_dict_recursive")
+        else raw_subscription
+    )
+
+    if isinstance(subscription, dict):
+        _ensure_subscription_period_bounds(subscription)
 
     logger.info(f"Subscription update for {subscription['id']}: ")
     logger.info(f"  Status: {subscription.get('status')}")
@@ -708,14 +752,21 @@ async def handle_subscription_updated(
     logger.info(f"  Current Period End: {subscription.get('current_period_end')}")
     logger.info(f"  Items: {subscription}")
 
-    # If subscription is missing period dates, fetch from Stripe
+    # If subscription is still missing period dates, fetch from Stripe
     if not subscription.get("current_period_start") or not subscription.get("current_period_end"):
         logger.info(
             f"Subscription {subscription['id']} missing period dates, "
             "fetching from Stripe API"
         )
         try:
-            subscription = stripe.Subscription.retrieve(subscription["id"])
+            fetched = stripe.Subscription.retrieve(subscription["id"])
+            subscription = (
+                fetched.to_dict_recursive()
+                if hasattr(fetched, "to_dict_recursive")
+                else fetched
+            )
+            if isinstance(subscription, dict):
+                _ensure_subscription_period_bounds(subscription)
             logger.info("Fetched complete subscription data from Stripe")
         except Exception as e:
             logger.error(f"Failed to fetch subscription from Stripe: {e}")
