@@ -9,8 +9,8 @@ The repository contains the full SynapseIP stack: FastAPI exposes the search, ex
 - Hybrid keyword + vector search with semantic embeddings, adaptive result trimming, CSV/PDF export, and patent/application detail expansion ([app/api.py](app/api.py), [app/page.tsx](app/page.tsx)). 
 - Auth0-protected React UI with saved-alert management, login overlay, and modal workspace for alert toggles ([components/NavBar.tsx](components/NavBar.tsx), [app/layout.tsx](app/layout.tsx)).
 - IP Overview that surfaces saturation, activity rates, momentum, and CPC distribution for focus keyword(s) and/or CPC(s), with optional group by assignee signals ([app/overview_api.py](app/overview_api.py), [app/overview_signals.py](app/overview_signals.py), [components/SigmaOverviewGraph.tsx](components/SigmaOverviewGraph.tsx), [app/overview/page.tsx](app/overview/page.tsx)). 
-  - Semantic neighbors are trimmed when distances jump or exceed a threshold so the counts and timelines stay focused on relevant patents and publications.
-- Scope Analysis page adds a preliminary freedom-to-operate (FTO) and infringement-risk tool to the platform: input subject matter of interest (e.g., a product description or draft claim set), run a KNN search against every embedded independent claim, visualize similarity nodes, inspect expandable claims inline, and export the match table to PDF for review ([app/api.py](app/api.py#L147), [app/repository.py](app/repository.py#L593), [app/scope-analysis/page.tsx](app/scope-analysis/page.tsx)).
+  - Semantic neighbors are dropped when distances jump or exceed a threshold so the counts and timelines stay focused on relevant patents and publications.
+- Scope Analysis page adds a preliminary freedom-to-operate (FTO) and infringement-risk tool to the platform: input subject matter of interest (e.g., a product description or draft claim set) and run a KNN search against every embedded independent claim to get a similarity node graph and results table with patent information and similarity-scored claims displayed inline. Results table and similarity scoring information is exportable in PDF format. ([app/api.py](app/api.py#L147), [app/repository.py](app/repository.py#L593), [app/scope-analysis/page.tsx](app/scope-analysis/page.tsx)).
 - Canonical assignee name normalization for improved entity matching and trend analysis ([add_canon_name.py](add_canon_name.py)).
 - Multiple data ingestion pipelines: BigQuery loader ([etl.py](etl.py)), USPTO PEDS API loader ([etl_uspto.py](etl_uspto.py)), and bulk XML parser ([etl_xml_fulltext.py](etl_xml_fulltext.py)) for comprehensive patent and application coverage.
 - Embedding backfill utility for maintaining vector search quality across historical data ([etl_add_embeddings.py](etl_add_embeddings.py)).
@@ -109,7 +109,7 @@ The repository contains the full SynapseIP stack: FastAPI exposes the search, ex
 │   ├── env.py, script.py.mako       # Migration configuration
 │   └── versions/                    # Schema migrations (overview, billing, user tables)
 ├── docs/
-│   ├── screenshots/                 # UI & API imagery
+│   ├── screenshots/                 # UI & API images
 │   └── uspto_odp_api/               # USPTO API schema reference
 ├── scripts/                              # Operational & maintenance scripts
 │   ├── add_canon_name.py
@@ -121,7 +121,7 @@ The repository contains the full SynapseIP stack: FastAPI exposes the search, ex
 │   ├── process_patent_citations.py
 │   ├── update_patent_staging.py
 │   └── update_stripe_prices.py 
-├── public/                          # Static assets (favicons, logos, OG images)
+├── public/                          # Static assets (favicons, logos, etc.)
 ├── types/                           # TypeScript ambient declarations
 ├── instrumentation.ts & -client.ts  # Next.js instrumentation entrypoints
 ├── alerts_runner.py, etl.py         # Automated chron jobs
@@ -136,7 +136,7 @@ The repository contains the full SynapseIP stack: FastAPI exposes the search, ex
 ## Setup
 
 ### Prerequisites
-- Python 3.12+
+- Python 3.13+
 - Node.js 20+ (Next.js 15 target)
 - Postgres 15+ with the `pgvector` extension enabled
 - Auth0 tenant (Machine-to-Machine + SPA apps) and an OpenAI API key
@@ -218,16 +218,16 @@ Unit and integration tests cover search repository queries, API endpoints, Auth0
 - Configure CI/CD with the following secrets for sourcemap uploads:
   - `GLITCHTIP_URL` (or `SENTRY_URL`) – e.g., `https://app.glitchtip.com`
   - `GLITCHTIP_AUTH_TOKEN` (same scopes as the Sentry CLI)
-  - `GLITCHTIP_ORG` – your GlitchTip org slug
+  - `GLITCHTIP_ORG` – GlitchTip org slug
   - `GLITCHTIP_PROJECT` – the project slug receiving frontend errors
 - Optionally, create `.sentryclirc` (see `.sentryclirc.example`) instead of env vars.
 - The build plugin is enabled automatically by `next.config.js` when `@sentry/nextjs` is present. Source maps are hidden from clients (`sentry.hideSourceMaps: true`) and uploaded to GlitchTip during production builds.
 
 ## Data Pipeline (`etl.py`)
-`etl.py` loads AI-focused US filings from Google’s public patent publication dataset, normalizes CPC codes, upserts metadata into Postgres, and generates OpenAI embeddings for both title+abstract (`...|ta`) and claims (`...|claims`). Runs are idempotent via the `ingest_log` table and hash-based deduplication. Usage example:
+`etl.py` loads AI/ML-related US patents and publications from Google’s public patent publication dataset, normalizes CPC codes, upserts metadata into Postgres, and generates embeddings for both title+abstract (`...|ta`) and claims (`...|claims`). Runs are idempotent via the `ingest_log` table and hash-based deduplication. Usage example:
 ```bash
 python etl.py \
-  --project your-gcp-project \
+  --project gcp-project \
   --dsn "postgresql://user:pass@host/db?sslmode=require" \
   --date-from 2024-01-01 \
   --date-to 2024-02-01 \
@@ -235,7 +235,7 @@ python etl.py \
 ```
 
 ## Alerts Runner (`alerts_runner.py`)
-The alert runner replays saved queries, diffing against the last `alert_event` timestamp per query. Matching patents are emailed through Mailgun (or printed to stdout when Mailgun is not configured). Run locally with:
+The alert runner replays saved queries, diffing against the last `alert_event` timestamp per query. Matching patents and publications are emailed through Mailgun (or printed to stdout when Mailgun is not configured). Run locally with:
 ```bash
 python alerts_runner.py
 ```

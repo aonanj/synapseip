@@ -442,13 +442,26 @@ async def upsert_subscription(
 
         # Check if subscription exists
         await cur.execute(
-            "SELECT id, tier, tier_started_at FROM subscription WHERE stripe_subscription_id = %s",
+            "SELECT id, tier, tier_started_at, current_period_end FROM subscription WHERE stripe_subscription_id = %s",
             [stripe_subscription_id],
         )
         existing = await cur.fetchone()
 
         if existing:
             # Update existing subscription
+
+            # Check for stale data (e.g. race condition between invoice.payment_succeeded and customer.subscription.updated)
+            existing_period_end = existing["current_period_end"]
+            if existing_period_end and existing_period_end.tzinfo is None:
+                existing_period_end = existing_period_end.replace(tzinfo=UTC)
+
+            if existing_period_end and current_period_end and current_period_end < existing_period_end:
+                logger.info(
+                    f"Skipping stale subscription update for {stripe_subscription_id}. "
+                    f"Incoming end: {current_period_end}, Existing end: {existing_period_end}"
+                )
+                return str(existing["id"])
+
             # Preserve tier_started_at if tier hasn't changed
             tier_started_at = existing["tier_started_at"]
             if tier_started_at and tier_started_at.tzinfo is None:
@@ -549,8 +562,8 @@ async def handle_checkout_session_completed(
 ) -> str | None:
     """Handle successful checkout session completion.
 
-    This event fires when a customer completes the Stripe Checkout flow.
-    We use it to create the stripe_customer record linking Auth0 user to Stripe.
+    Event fires when customer completes the Stripe Checkout.
+    Creates the stripe_customer record linking Auth0 user to Stripe.
 
     Args:
         conn: Database connection
@@ -568,7 +581,7 @@ async def handle_checkout_session_completed(
     if not user_id:
         logger.error(
             f"Checkout session {session['id']} missing user_id in metadata. "
-            "Ensure you set metadata.user_id when creating checkout sessions."
+            "Ensure metadata.user_id is set when creating checkout sessions."
         )
         return None
 
