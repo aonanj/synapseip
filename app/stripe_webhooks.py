@@ -381,9 +381,12 @@ async def upsert_subscription(
         or _to_utc_datetime(subscription_data.get("created"))
         or datetime.now(UTC)
     )
+    logger.info(f"{__name__}.upsert_subscription: current_period_start: {current_period_start}")
+
     current_period_end = _to_utc_datetime(subscription_data.get("current_period_end"))
     cancel_at_period_end = bool(subscription_data.get("cancel_at_period_end", False))
-
+    logger.info(f"{__name__}.upsert_subscription: current_period_end: {current_period_end}")
+    
     # Get the price ID from the subscription items
     items = subscription_data.get("items", {}).get("data", [])
     if not items:
@@ -660,6 +663,12 @@ async def handle_subscription_updated(
         Subscription ID if updated
     """
     subscription = event["data"]["object"]
+
+    logger.info(f"Subscription update for {subscription['id']}: ")
+    logger.info(f"  Status: {subscription.get('status')}")
+    logger.info(f"  Current Period Start: {subscription.get('current_period_start')}")
+    logger.info(f"  Current Period End: {subscription.get('current_period_end')}")
+    logger.info(f"  Items: {subscription}")
 
     # If subscription is missing period dates, fetch from Stripe
     if not subscription.get("current_period_start") or not subscription.get("current_period_end"):
