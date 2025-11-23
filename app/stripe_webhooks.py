@@ -414,11 +414,12 @@ async def upsert_subscription(
         or _to_utc_datetime(subscription_data.get("created"))
         or datetime.now(UTC)
     )
-    logger.info(f"{__name__}.upsert_subscription: current_period_start: {current_period_start}")
+    logger.warning(f"{__name__}.upsert_subscription: current_period_start: {current_period_start}")
 
     current_period_end = _to_utc_datetime(subscription_data.get("current_period_end"))
     cancel_at_period_end = bool(subscription_data.get("cancel_at_period_end", False))
-    logger.info(f"{__name__}.upsert_subscription: current_period_end: {current_period_end}")
+    
+    logger.warning(f"{__name__}.upsert_subscription: current_period_end: {current_period_end}")
 
     # Get the price ID from the subscription items
     items = subscription_data.get("items", {}).get("data", [])
@@ -488,10 +489,15 @@ async def upsert_subscription(
 
             existing_period_end = existing["current_period_end"]
             if existing_period_end and existing_period_end.tzinfo is None:
+                logger.warning(
+                    "Existing current_period_end %s for subscription %s is naive, assuming UTC",
+                    existing_period_end,
+                    stripe_subscription_id,
+                )
                 existing_period_end = existing_period_end.replace(tzinfo=UTC)
 
             if existing_period_end and current_period_end and current_period_end < existing_period_end:
-                logger.info(
+                logger.warning(
                     f"Skipping stale subscription update for {stripe_subscription_id}. "
                     f"Incoming end: {current_period_end}, Existing end: {existing_period_end}"
                 )
