@@ -194,6 +194,39 @@ def _extract_stripe_subscription_id(
     return None
 
 
+def _extract_invoice_period_bounds(invoice: dict[str, Any] | Any) -> tuple[datetime | None, datetime | None]:
+    """Extract the period start/end from an invoice's line items."""
+    try:
+        lines = invoice.get("lines")  # type: ignore[attr-defined]
+    except AttributeError:
+        return None, None
+
+    line_get = getattr(lines, "get", None)
+    if callable(line_get):
+        data = line_get("data") or []
+    else:
+        data = lines.get("data", []) if isinstance(lines, dict) else []
+
+    latest_start: datetime | None = None
+    latest_end: datetime | None = None
+
+    if isinstance(data, list):
+        for item in data:
+            if not isinstance(item, dict):
+                continue
+            period = item.get("period") or {}
+            if not isinstance(period, dict):
+                continue
+            start = _to_utc_datetime(period.get("start"))
+            end = _to_utc_datetime(period.get("end"))
+            if start and (latest_start is None or start > latest_start):
+                latest_start = start
+            if end and (latest_end is None or end > latest_end):
+                latest_end = end
+
+    return latest_start, latest_end
+
+
 async def _resolve_subscription_id(
     conn: AsyncConnection,
     event_type: str,
@@ -386,7 +419,7 @@ async def upsert_subscription(
     current_period_end = _to_utc_datetime(subscription_data.get("current_period_end"))
     cancel_at_period_end = bool(subscription_data.get("cancel_at_period_end", False))
     logger.info(f"{__name__}.upsert_subscription: current_period_end: {current_period_end}")
-    
+
     # Get the price ID from the subscription items
     items = subscription_data.get("items", {}).get("data", [])
     if not items:
@@ -453,7 +486,6 @@ async def upsert_subscription(
         if existing:
             # Update existing subscription
 
-            # Check for stale data (e.g. race condition between invoice.payment_succeeded and customer.subscription.updated)
             existing_period_end = existing["current_period_end"]
             if existing_period_end and existing_period_end.tzinfo is None:
                 existing_period_end = existing_period_end.replace(tzinfo=UTC)
@@ -718,6 +750,7 @@ async def handle_invoice_payment_succeeded(
         Subscription ID if updated
     """
     invoice = event["data"]["object"]
+    invoice_period_start, invoice_period_end = _extract_invoice_period_bounds(invoice)
     subscription_id = invoice.get("subscription")
 
     if not subscription_id:
@@ -727,7 +760,23 @@ async def handle_invoice_payment_succeeded(
     # Fetch the latest subscription data from Stripe
     try:
         subscription = stripe.Subscription.retrieve(subscription_id)
-        return await upsert_subscription(conn, subscription)
+        subscription_data = (
+            subscription.to_dict_recursive()
+            if hasattr(subscription, "to_dict_recursive")
+            else subscription
+        )
+
+        if isinstance(subscription_data, dict):
+            sub_start = _to_utc_datetime(subscription_data.get("current_period_start"))
+            sub_end = _to_utc_datetime(subscription_data.get("current_period_end"))
+
+            # Invoice line items carry the precise billing period; prefer them if newer
+            if invoice_period_start and (sub_start is None or invoice_period_start > sub_start):
+                subscription_data["current_period_start"] = invoice_period_start
+            if invoice_period_end and (sub_end is None or invoice_period_end > sub_end):
+                subscription_data["current_period_end"] = invoice_period_end
+
+        return await upsert_subscription(conn, subscription_data)
     except stripe.StripeError as e:
         logger.error(f"Failed to retrieve subscription {subscription_id}: {e}")
         return None
