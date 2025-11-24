@@ -241,9 +241,7 @@ async def export_scope_analysis(
         pub_id = m.pub_id
         header = f"{title} ({pub_id})"
         
-        c.setFont("Helvetica-Bold", 11)
-        c.drawString(margin, y, header)
-        y -= 14
+        draw_wrapped_text(header, font_name="Helvetica-Bold", font_size=11)
         _ensure_space()
 
         # Meta

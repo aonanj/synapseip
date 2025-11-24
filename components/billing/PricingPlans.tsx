@@ -184,7 +184,7 @@ function PricingCard({ plan, onSubscribe }: { plan: PricePlan; onSubscribe: (pri
                   clipRule="evenodd"
                 />
               </svg>
-              <span>Beta tester pricing</span>
+              <span>Early adopter pricing</span>
             </li>
           )}
         </ul>
@@ -198,7 +198,7 @@ function PricingCard({ plan, onSubscribe }: { plan: PricePlan; onSubscribe: (pri
               : "bg-slate-100 text-[#102A43] hover:bg-slate-200 border border-slate-200"
           }`}
         >
-          {isBeta ? "Start Beta Trial" : "Subscribe Now"}
+          {isBeta ? "Start Early Adopter Trial" : "Subscribe Now"}
         </button>
 
         {plan.interval === "year" && (
@@ -241,7 +241,7 @@ export default function PricingPlans({ plans, onSubscribe }: PricingPlansProps) 
       {/* Beta Tier Plans */}
       {betaPlans.length > 0 && (
         <div className="mb-12">
-          <h3 className="text-xl font-bold mb-4" style={{ color: '#102A43' }}>Beta Tester Access</h3>
+          <h3 className="text-xl font-bold mb-4" style={{ color: '#102A43' }}>Early Adopter Access</h3>
           <p className="text-sm text-slate-600 mb-6">
             Special pricing for early adopters. Auto-migrates to User tier after 90 days.
           </p>
@@ -283,7 +283,7 @@ export default function PricingPlans({ plans, onSubscribe }: PricingPlansProps) 
             </div>
             <h4 className="font-semibold mb-2" style={{ color: '#102A43' }}>Powerful Search</h4>
             <p className="text-sm text-slate-600">
-              Search 50,000+ patents and applications with keyword and semantic search
+              Search 56,000+ patents and applications with keyword and semantic search
             </p>
           </div>
 
@@ -366,7 +366,7 @@ export default function PricingPlans({ plans, onSubscribe }: PricingPlansProps) 
           <div>
             <h4 className="font-semibold mb-2" style={{ color: '#102A43' }}>What happens after the beta period?</h4>
             <p className="text-sm text-slate-600">
-              Beta tester plans automatically migrate to the User tier after 90 days. You'll be
+              Early Adopter plans automatically migrate to the User tier after 90 days. You'll be
               notified before this happens and can manage your subscription at any time.
             </p>
           </div>

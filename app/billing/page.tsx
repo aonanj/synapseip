@@ -353,7 +353,7 @@ function BillingContent() {
             For subscription, billing, and technical issues, contact <strong><a href="mailto:support@phaethon.llc" style={{ color: LINK_COLOR, textDecoration: "none" }}>support@phaethon.llc</a></strong>.
           </p>
           <p style={{ marginTop: 12, fontSize: 14, lineHeight: 1.6, color: TEXT_COLOR }}>
-            For urgent issues, phone and text support are available at <strong>(949) 328-0878</strong>. Please include your account email so we can assist quickly.
+            For urgent issues, phone and text support are available at <strong>(949) 326-0878</strong>. Please include your account email so we can assist quickly.
           </p>
           <p style={{ marginTop: 12, fontSize: 14, lineHeight: 1.6, color: TEXT_COLOR, marginBottom: 0 }}>
             Phone and text support require an active subscription.

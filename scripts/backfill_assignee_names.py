@@ -36,7 +36,7 @@ from infrastructure.logger import setup_logger
 
 API_URL = "https://api.uspto.gov/api/v1/patent/applications/search"
 REQUEST_TEMPLATE_PATH = (
-    Path(__file__).resolve().parent
+    Path(__file__).resolve().parent.parent
     / "docs"
     / "uspto_odp_api"
     / "uspto-odp-query-on-application-number.json"

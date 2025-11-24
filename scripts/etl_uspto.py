@@ -455,7 +455,7 @@ def build_filters(cpc_codes: list[str] | None) -> list[dict[str, Any]]:
     publication_category = {
         "name": "applicationMetaData.publicationCategoryBag",
         "value": [
-           ## "Pre-Grant Publications - PGPub", 
+            "Pre-Grant Publications - PGPub", 
             "Granted/Issued"
             ]
     }
