@@ -22,6 +22,23 @@ def _coerce_list(items: Iterable[Any] | None) -> list[Any]:
     return [x for x in (items or [])]
 
 
+async def resolve_assignee_ids_by_name(
+    conn: psycopg.AsyncConnection, names: list[str] | None
+) -> list[Any]:
+    if not names:
+        return []
+    cleaned = [n.strip() for n in names if n and str(n).strip()]
+    if not cleaned:
+        return []
+    async with conn.cursor(row_factory=dict_row) as cur:
+        await cur.execute(
+            "SELECT id FROM canonical_assignee_name WHERE canonical_assignee_name ILIKE ANY(%s)",
+            [[f"%{n}%" for n in cleaned]],
+        )
+        rows = await cur.fetchall()
+    return [r["id"] for r in rows if r.get("id")]
+
+
 async def resolve_portfolio_pub_ids(
     conn: psycopg.AsyncConnection,
     scope: CitationScope,

@@ -242,7 +242,7 @@ export default function HelpIndexPage() {
             </p>
 
             <div style={{ display: "grid", gap: 12 }}>
-              <DetailItem icon="⬩" title="Scope Panel" text="Switch between assignee IDs, explicit pub_ids, or search filters; set citing date window, bucket granularity, and optional competitor list." />
+              <DetailItem icon="⬩" title="Scope Panel" text="Switch between assignee names, explicit pub_ids, or search filters; set citing date window, bucket granularity, and optional competitor list." />
               <DetailItem icon="⬩" title="Forward-Citation Impact" text="Tiles for total citations and distinct citing patents, a bucketed influence timeline, and a ranked table of top cited assets with velocity." />
               <DetailItem icon="⬩" title="Dependency Matrix" text="Citing→cited assignee pairs with min-citation threshold and optional normalization to expose reliance patterns." />
               <DetailItem icon="⬩" title="Risk Radar" text="Per-patent exposure and fragility scores combining forward competitor activity and backward-citation concentration with CSV export." />

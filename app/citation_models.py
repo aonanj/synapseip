@@ -73,6 +73,7 @@ class DependencyMatrixResponse(BaseModel):
 class RiskRadarRequest(BaseModel):
     scope: CitationScope
     competitor_assignee_ids: list[UUID] | None = None
+    competitor_assignee_names: list[str] | None = None
     top_n: int = 200
 
 
@@ -102,8 +103,10 @@ class RiskRadarResponse(BaseModel):
 
 
 class EncroachmentRequest(BaseModel):
-    target_assignee_ids: list[UUID]
+    target_assignee_ids: list[UUID] | None = None
+    target_assignee_names: list[str] | None = None
     competitor_assignee_ids: list[UUID] | None = None
+    competitor_assignee_names: list[str] | None = None
     citing_pub_date_from: date | None = None
     citing_pub_date_to: date | None = None
     bucket: BucketGranularity = "quarter"

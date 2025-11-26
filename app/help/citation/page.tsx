@@ -103,14 +103,14 @@ export default function CitationHelpPage() {
           </p>
           <DetailList
             items={[
-              { title: "Portfolio mode", text: "Choose one: target canonical assignee IDs/names; explicit pub_id list; or search filters (keyword, CPC, assignee contains)." },
+              { title: "Portfolio mode", text: "Choose one: target assignee names; explicit patent/publication numbers; or search filters (keyword, CPC, assignee contains)." },
               { title: "Time window", text: "Set citing publication date from/to and bucket granularity (month or quarter)." },
               { title: "Competitors", text: "Optionally constrain to a competitor list; affects Risk Radar and Encroachment." },
               { title: "Apply/Clear", text: "Apply triggers all widgets; Clear resets to defaults." },
             ]}
           />
           <p style={{ fontSize: 13, color: "#627D98", marginTop: 12, marginBottom: 0 }}>
-            Tip: keep scopes focused (specific assignees or curated pub_ids) to avoid noisy dependency and risk outputs.
+            Note: keep scopes focused (specific assignees or patent/publication numbers) to avoid noisy dependency and risk outputs.
           </p>
         </div>
 
@@ -121,7 +121,7 @@ export default function CitationHelpPage() {
             items={[
               { title: "Metrics", text: "Tiles for total forward citations, distinct citing patents, and median velocity across top results." },
               { title: "Timeline", text: "Bucketed line chart using citing pub_date; respects global or per-card bucket override." },
-              { title: "Top patents", text: "Sortable table with pub_id/title, assignee, pub date, forward citations, velocity, first/last citation dates." },
+              { title: "Top patents", text: "Sortable table with patent/publication number, title, assignee, pub date, forward citations, velocity, first/last citation dates." },
               { title: "Controls", text: "Top N selector and optional bucket override." },
             ]}
           />
@@ -139,7 +139,7 @@ export default function CitationHelpPage() {
             ]}
           />
           <p style={{ fontSize: 13, color: "#627D98", marginTop: 12, marginBottom: 0 }}>
-            Reminder: set a portfolio (assignee IDs or pub_ids) for meaningful dependency results.
+            Note: set a portfolio (assignee names or patent/publication numbers) for meaningful dependency results.
           </p>
         </div>
 
@@ -161,7 +161,7 @@ export default function CitationHelpPage() {
           <SectionHeader title="Assignee Encroachment" link="/citation" />
           <DetailList
             items={[
-              { title: "Precondition", text: "Requires at least one target assignee ID in scope." },
+              { title: "Precondition", text: "Requires at least one target assignee name in scope." },
               { title: "Controls", text: "Bucket (month/quarter), top competitors count, toggle for explicit competitors only." },
               { title: "Timeline", text: "Multi-series line chart of citing patent counts per competitor into the target portfolio." },
               { title: "Table", text: "Per-competitor totals, encroachment scores, and velocity labels." },

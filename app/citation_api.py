@@ -33,6 +33,7 @@ from .repository_citation import (
     get_forward_citation_summary,
     get_forward_citation_timeline,
     get_risk_raw_metrics,
+    resolve_assignee_ids_by_name,
     resolve_portfolio_pub_ids,
 )
 from .subscription_middleware import ActiveSubscription
@@ -84,10 +85,13 @@ async def get_dependency_matrix(req: DependencyMatrixRequest, conn: Conn, user: 
 @router.post("/risk-radar", response_model=RiskRadarResponse)
 async def get_risk_radar(req: RiskRadarRequest, conn: Conn, user: ActiveSubscription):
     portfolio_pub_ids = await resolve_portfolio_pub_ids(conn, req.scope)
+    competitor_ids = req.competitor_assignee_ids or []
+    if not competitor_ids and req.competitor_assignee_names:
+        competitor_ids = await resolve_assignee_ids_by_name(conn, req.competitor_assignee_names)
     rows = await get_risk_raw_metrics(
         conn,
         portfolio_pub_ids=portfolio_pub_ids,
-        competitor_assignee_ids=req.competitor_assignee_ids,
+        competitor_assignee_ids=competitor_ids or None,
         limit=req.top_n,
     )
     patents = [compute_risk_scores(r) for r in rows]
@@ -96,10 +100,18 @@ async def get_risk_radar(req: RiskRadarRequest, conn: Conn, user: ActiveSubscrip
 
 @router.post("/encroachment", response_model=EncroachmentResponse)
 async def get_encroachment(req: EncroachmentRequest, conn: Conn, user: ActiveSubscription):
+    target_ids = req.target_assignee_ids or []
+    if not target_ids and req.target_assignee_names:
+        target_ids = await resolve_assignee_ids_by_name(conn, req.target_assignee_names)
+
+    competitor_ids = req.competitor_assignee_ids or []
+    if not competitor_ids and req.competitor_assignee_names:
+        competitor_ids = await resolve_assignee_ids_by_name(conn, req.competitor_assignee_names)
+
     timeline_rows = await get_encroachment_timeline(
         conn,
-        target_assignee_ids=req.target_assignee_ids,
-        competitor_assignee_ids=req.competitor_assignee_ids,
+        target_assignee_ids=target_ids,
+        competitor_assignee_ids=competitor_ids or None,
         from_date=req.citing_pub_date_from,
         to_date=req.citing_pub_date_to,
         bucket=req.bucket,
@@ -108,7 +120,7 @@ async def get_encroachment(req: EncroachmentRequest, conn: Conn, user: ActiveSub
     summaries = compute_encroachment_summaries(timeline_rows)
 
     return EncroachmentResponse(
-        target_assignee_ids=req.target_assignee_ids,
+        target_assignee_ids=target_ids,
         timeline=[
             EncroachmentTimelinePoint(
                 bucket_start=r.get("bucket_start") or date.today(),

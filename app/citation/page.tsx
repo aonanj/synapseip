@@ -8,7 +8,6 @@ type ScopeMode = "assignee" | "pub" | "search";
 
 type CitationScope = {
   focus_pub_ids?: string[] | null;
-  focus_assignee_ids?: string[] | null;
   focus_assignee_names?: string[] | null;
   filters?: Record<string, any> | null;
   citing_pub_date_from?: string | null;
@@ -94,7 +93,6 @@ type EncroachmentResponse = {
 
 type ScopePanelState = {
   mode: ScopeMode;
-  focusAssigneeIds: string[];
   focusAssigneeNames: string[];
   pubIds: string[];
   keyword: string;
@@ -109,7 +107,6 @@ type ScopePanelState = {
 
 const INITIAL_SCOPE_STATE: ScopePanelState = {
   mode: "assignee",
-  focusAssigneeIds: [],
   focusAssigneeNames: [],
   pubIds: [],
   keyword: "",
@@ -262,7 +259,6 @@ function updateUrlFromScope(scope: CitationScope, mode: ScopeMode, competitors: 
   const params = new URLSearchParams();
   params.set("mode", mode);
   params.set("bucket", scope.bucket || "month");
-  if (scope.focus_assignee_ids?.length) params.set("assignees", scope.focus_assignee_ids.join(","));
   if (scope.focus_assignee_names?.length) params.set("assignee_names", scope.focus_assignee_names.join(","));
   if (scope.focus_pub_ids?.length) params.set("pub_ids", scope.focus_pub_ids.join(","));
   if (scope.filters?.keyword) params.set("keyword", scope.filters.keyword);
@@ -462,7 +458,7 @@ function DependencyMatrixCard({ scope, scopeVersion, tokenGetter }: DependencyMa
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<DependencyMatrixResponse | null>(null);
 
-  const hasPortfolio = Boolean(scope?.focus_assignee_ids?.length || scope?.focus_pub_ids?.length);
+  const hasPortfolio = Boolean(scope?.focus_assignee_names?.length || scope?.focus_pub_ids?.length);
 
   const load = useCallback(async () => {
     if (!scope) return;
@@ -614,10 +610,10 @@ type RiskRadarCardProps = {
   scope: CitationScope | null;
   scopeVersion: number;
   tokenGetter: TokenGetter;
-  competitorIds: string[] | null;
+  competitorNames: string[] | null;
 };
 
-function RiskRadarCard({ scope, scopeVersion, tokenGetter, competitorIds }: RiskRadarCardProps) {
+function RiskRadarCard({ scope, scopeVersion, tokenGetter, competitorNames }: RiskRadarCardProps) {
   const [topN, setTopN] = useState(200);
   const [sortKey, setSortKey] = useState<"overall" | "exposure" | "fragility" | "fwd">("overall");
   const [loading, setLoading] = useState(false);
@@ -631,7 +627,7 @@ function RiskRadarCard({ scope, scopeVersion, tokenGetter, competitorIds }: Risk
     try {
       const payload = {
         scope,
-        competitor_assignee_ids: competitorIds && competitorIds.length ? competitorIds : null,
+        competitor_assignee_names: competitorNames && competitorNames.length ? competitorNames : null,
         top_n: topN,
       };
       const json = await postCitation("/api/citation/risk-radar", payload, tokenGetter);
@@ -641,7 +637,7 @@ function RiskRadarCard({ scope, scopeVersion, tokenGetter, competitorIds }: Risk
     } finally {
       setLoading(false);
     }
-  }, [scope, competitorIds, topN, tokenGetter]);
+  }, [scope, competitorNames, topN, tokenGetter]);
 
   useEffect(() => {
     load();
@@ -799,10 +795,10 @@ type EncroachmentCardProps = {
   scope: CitationScope | null;
   scopeVersion: number;
   tokenGetter: TokenGetter;
-  competitorIds: string[] | null;
+  competitorNames: string[] | null;
 };
 
-function EncroachmentCard({ scope, scopeVersion, tokenGetter, competitorIds }: EncroachmentCardProps) {
+function EncroachmentCard({ scope, scopeVersion, tokenGetter, competitorNames }: EncroachmentCardProps) {
   const [bucket, setBucket] = useState<"month" | "quarter">("quarter");
   const [topK, setTopK] = useState(10);
   const [explicitOnly, setExplicitOnly] = useState(false);
@@ -810,7 +806,7 @@ function EncroachmentCard({ scope, scopeVersion, tokenGetter, competitorIds }: E
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<EncroachmentResponse | null>(null);
 
-  const hasTargets = Boolean(scope?.focus_assignee_ids?.length);
+  const hasTargets = Boolean(scope?.focus_assignee_names?.length);
 
   const load = useCallback(async () => {
     if (!scope || !hasTargets) return;
@@ -818,8 +814,8 @@ function EncroachmentCard({ scope, scopeVersion, tokenGetter, competitorIds }: E
     setError(null);
     try {
       const payload = {
-        target_assignee_ids: scope.focus_assignee_ids,
-        competitor_assignee_ids: explicitOnly ? competitorIds : null,
+        target_assignee_names: scope.focus_assignee_names,
+        competitor_assignee_names: explicitOnly ? competitorNames : null,
         citing_pub_date_from: scope.citing_pub_date_from || null,
         citing_pub_date_to: scope.citing_pub_date_to || null,
         bucket,
@@ -831,7 +827,7 @@ function EncroachmentCard({ scope, scopeVersion, tokenGetter, competitorIds }: E
     } finally {
       setLoading(false);
     }
-  }, [scope, hasTargets, explicitOnly, competitorIds, bucket, tokenGetter]);
+  }, [scope, hasTargets, explicitOnly, competitorNames, bucket, tokenGetter]);
 
   useEffect(() => {
     load();
@@ -913,15 +909,15 @@ function EncroachmentCard({ scope, scopeVersion, tokenGetter, competitorIds }: E
         <div className="text-xs text-slate-500">…</div>
       ) : data ? (
         <div className="space-y-4">
-          {explicitOnly && (!competitorIds || competitorIds.length === 0) ? (
+          {explicitOnly && (!competitorNames || competitorNames.length === 0) ? (
             <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-3 py-2 inline-block">
-              Add competitor IDs in the scope panel to limit the chart.
+              Add assignee names in the scope panel to limit the chart.
             </div>
           ) : null}
           <div>
             <div className="flex items-center justify-between mb-2">
               <h3 className="font-semibold text-slate-800">Encroachment timeline</h3>
-              <div className="text-xs text-slate-500">Top {topK} assignees by citing patents</div>
+              <div className="text-xs text-slate-500">Top {topK} assignees by citing patents/pubs</div>
             </div>
             {filteredTimeline.length ? (
               <div className="overflow-x-auto">
@@ -1015,7 +1011,6 @@ export default function CitationPage() {
       ...INITIAL_SCOPE_STATE,
       mode: (params.get("mode") as ScopeMode) || INITIAL_SCOPE_STATE.mode,
       bucket: (params.get("bucket") as "month" | "quarter") || INITIAL_SCOPE_STATE.bucket,
-      focusAssigneeIds: parseListInput(params.get("assignees") || ""),
       focusAssigneeNames: parseListInput(params.get("assignee_names") || ""),
       pubIds: parseListInput(params.get("pub_ids") || ""),
       keyword: params.get("keyword") || "",
@@ -1029,7 +1024,6 @@ export default function CitationPage() {
     setScopeState(nextState);
     setHydrated(true);
     const shouldApply =
-      nextState.focusAssigneeIds.length ||
       nextState.focusAssigneeNames.length ||
       nextState.pubIds.length ||
       nextState.keyword ||
@@ -1061,7 +1055,6 @@ export default function CitationPage() {
       citing_pub_date_to: state.to || null,
     };
     if (state.mode === "assignee") {
-      scope.focus_assignee_ids = state.focusAssigneeIds;
       scope.focus_assignee_names = state.focusAssigneeNames;
     } else if (state.mode === "pub") {
       scope.focus_pub_ids = state.pubIds;
@@ -1099,7 +1092,6 @@ export default function CitationPage() {
     setScopeState((s) => ({
       ...s,
       mode,
-      focusAssigneeIds: mode === "assignee" ? s.focusAssigneeIds : [],
       focusAssigneeNames: mode === "assignee" ? s.focusAssigneeNames : [],
       pubIds: mode === "pub" ? s.pubIds : [],
       keyword: mode === "search" ? s.keyword : "",
@@ -1144,27 +1136,18 @@ export default function CitationPage() {
               ))}
             </div>
             {scopeState.mode === "assignee" && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <div className={fieldLabel}>Target assignee(s) – canonical UUIDs</div>
-                  <textarea
-                    value={scopeState.focusAssigneeIds.join("\n")}
-                    onChange={(e) => setScopeState((s) => ({ ...s, focusAssigneeIds: parseListInput(e.target.value) }))}
-                    rows={3}
-                    placeholder="uuid-1, uuid-2"
-                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs"
-                  />
-                </div>
-                <div>
-                  <div className={fieldLabel}>Assignee name</div>
-                  <textarea
-                    value={scopeState.focusAssigneeNames.join("\n")}
-                    onChange={(e) => setScopeState((s) => ({ ...s, focusAssigneeNames: parseListInput(e.target.value) }))}
-                    rows={3}
-                    placeholder="IBM, Samsung"
-                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs"
-                  />
-                </div>
+              <div>
+                <div className={fieldLabel}>Target assignee name(s)</div>
+                <textarea
+                  value={scopeState.focusAssigneeNames.join("\n")}
+                  onChange={(e) => setScopeState((s) => ({ ...s, focusAssigneeNames: parseListInput(e.target.value) }))}
+                  rows={3}
+                  placeholder="NVIDIA, IBM, Samsung"
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs"
+                />
+                <p className="text-[11px] text-slate-500 mt-1">
+                  Enter one name per line; similarity matching will include aliases automatically.
+                </p>
               </div>
             )}
             {scopeState.mode === "pub" && (
@@ -1215,7 +1198,7 @@ export default function CitationPage() {
             )}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div>
-                <div className={fieldLabel}>From (citing pub date)</div>
+                <div className={fieldLabel}>From (citing)</div>
                 <input
                   type="date"
                   value={scopeState.from}
@@ -1224,7 +1207,7 @@ export default function CitationPage() {
                 />
               </div>
               <div>
-                <div className={fieldLabel}>To (citing pub date)</div>
+                <div className={fieldLabel}>To (citing)</div>
                 <input
                   type="date"
                   value={scopeState.to}
@@ -1241,27 +1224,27 @@ export default function CitationPage() {
                 >
                   <option value="month">Month</option>
                   <option value="quarter">Quarter</option>
-                </select>
-              </div>
-              <div>
-                <div className={fieldLabel}>Other Assignee(s)</div>
-                <textarea
-                  rows={2}
-                  value={scopeState.competitors.join("\n")}
-                  onChange={(e) => setScopeState((s) => ({ ...s, competitors: parseListInput(e.target.value) }))}
-                  placeholder="UUIDs, one per line"
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs"
-                />
-                <label className="mt-1 inline-flex items-center gap-2 text-xs text-slate-600">
-                  <input
-                    type="checkbox"
-                    checked={scopeState.competitorToggle}
-                    onChange={(e) => setScopeState((s) => ({ ...s, competitorToggle: e.target.checked }))}
-                  />
-                  Limit other assignees to explicit list
-                </label>
-              </div>
+              </select>
             </div>
+            <div>
+              <div className={fieldLabel}>Competitor assignee name(s)</div>
+              <textarea
+                rows={2}
+                value={scopeState.competitors.join("\n")}
+                onChange={(e) => setScopeState((s) => ({ ...s, competitors: parseListInput(e.target.value) }))}
+                placeholder="Competitor names, one per line"
+                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs"
+              />
+              <label className="mt-1 inline-flex items-center gap-2 text-xs text-slate-600">
+                <input
+                  type="checkbox"
+                  checked={scopeState.competitorToggle}
+                  onChange={(e) => setScopeState((s) => ({ ...s, competitorToggle: e.target.checked }))}
+                />
+                Limit competitors to explicit list
+              </label>
+            </div>
+          </div>
             <div className="flex items-center gap-3">
               <button className="btn-modern h-10 px-5 text-xs font-semibold" onClick={applyScope}>
                 Apply
@@ -1276,8 +1259,8 @@ export default function CitationPage() {
           <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <ForwardImpactCard scope={appliedScope} scopeVersion={scopeVersion} tokenGetter={tokenGetter} />
             <DependencyMatrixCard scope={appliedScope} scopeVersion={scopeVersion} tokenGetter={tokenGetter} />
-            <RiskRadarCard scope={appliedScope} scopeVersion={scopeVersion} tokenGetter={tokenGetter} competitorIds={appliedCompetitors} />
-            <EncroachmentCard scope={appliedScope} scopeVersion={scopeVersion} tokenGetter={tokenGetter} competitorIds={appliedCompetitors} />
+            <RiskRadarCard scope={appliedScope} scopeVersion={scopeVersion} tokenGetter={tokenGetter} competitorNames={appliedCompetitors} />
+            <EncroachmentCard scope={appliedScope} scopeVersion={scopeVersion} tokenGetter={tokenGetter} competitorNames={appliedCompetitors} />
           </section>
         </div>
       </div>
