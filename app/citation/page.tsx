@@ -1024,13 +1024,17 @@ function EncroachmentCard({ scope, scopeVersion, tokenGetter, competitorNames }:
       <div className="flex flex-col gap-3 mb-3 pr-12 sm:flex-row sm:items-start sm:justify-between">
         <SectionHeader title="Assignee Encroachment" subtitle="Other assignee forward citations into a portfolio." />
         <div className="flex flex-col gap-2 items-start sm:items-end">
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2">
             <label className="flex items-center gap-2 text-xs text-slate-600">
               <span>Bucket</span>
               <select value={bucket} onChange={(e) => setBucket(e.target.value as any)} className={inlineInputClass}>
                 <option value="month">Month</option>
                 <option value="quarter">Quarter</option>
               </select>
+            </label>
+            <label className="flex items-center gap-2 text-xs text-slate-600">
+              <input type="checkbox" checked={explicitOnly} onChange={(e) => setExplicitOnly(e.target.checked)} />
+              <span>Only listed</span>
             </label>
             <label className="flex items-center gap-2 text-xs text-slate-600">
               <span>Top competitors</span>
@@ -1042,10 +1046,6 @@ function EncroachmentCard({ scope, scopeVersion, tokenGetter, competitorNames }:
                 onChange={(e) => setTopK(Number(e.target.value) || 3)}
                 className={inlineInputClass}
               />
-            </label>
-            <label className="flex items-center gap-2 text-xs text-slate-600">
-              <input type="checkbox" checked={explicitOnly} onChange={(e) => setExplicitOnly(e.target.checked)} />
-              <span>Only listed</span>
             </label>
           </div>
         </div>
