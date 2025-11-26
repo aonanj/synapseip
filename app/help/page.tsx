@@ -86,7 +86,7 @@ export default function HelpIndexPage() {
             <li><strong>Search & Trends</strong>: Discover patents and publications through hybrid keyword and semantic search, visualize filing trends over time, by CPC code, or by assignee, and set up proactive alerts for new filings that match configurable criteria;</li>
             <li><strong>Scope Analysis</strong>: Input a product description, invention disclosure, or draft claim set to run a semantic comparison against independent claims in the SynapseIP database. The closest matching independent claims are returned with similarity scoring for preliminary FTO and infringement-risk analysis.;</li>
             <li><strong>IP Overview</strong>: Investigate the AI/ML IP landscape through information and insights on subject matter saturation, activity rates, momentum, and CPC distribution of AI/ML-related patents and publications. Option to focus on specific assignees.</li>
-            <li><strong>Citation Tracker</strong>: Analyze forward-citation impact, cross-assignee dependencies, competitor risk signals, and encroachment trends using the patent_citation dataset with portfolio-aware filters.</li>
+            <li><strong>Citation Tracker</strong>: Analyze forward-citation impact, cross-assignee dependencies, competitor risk signals, and encroachment trends using the patent/publication citations dataset with portfolio-aware filters.</li>
           </ul>
         </div>
 
@@ -238,14 +238,14 @@ export default function HelpIndexPage() {
             </div>
 
             <p style={{ marginTop: 20, fontSize: 14, lineHeight: 1.5, color: TEXT_COLOR, marginBottom: 8 }}>
-              The Citation Intelligence page layers analytics on the patent_citation table to reveal who cites your portfolio, where cross-assignee dependencies exist, and which competitors are encroaching on your space. A shared scope card defines portfolio and time window once, then four widgets refresh in parallel.
+              The Citation Intelligence page layers analytics on the patent_citation table to reveal who cites your portfolio, where cross-assignee dependencies exist, and which competitors are encroaching on your space. A shared scope card defines portfolio and time window. The interface further includes four widgets: (1) Forward-citation impact, (2) Cross-assignee dependencies, (3) Risk radar, and (4) Assignee encroachment. The widgets are refreshed in parallel.
             </p>
 
             <div style={{ display: "grid", gap: 12 }}>
               <DetailItem icon="⬩" title="Scope Panel" text="Switch between assignee names, explicit pub_ids, or search filters; set citing date window, bucket granularity, and optional competitor list." />
               <DetailItem icon="⬩" title="Forward-Citation Impact" text="Tiles for total citations and distinct citing patents, a bucketed influence timeline, and a ranked table of top cited assets with velocity." />
               <DetailItem icon="⬩" title="Dependency Matrix" text="Citing→cited assignee pairs with min-citation threshold and optional normalization to expose reliance patterns." />
-              <DetailItem icon="⬩" title="Risk Radar" text="Per-patent exposure and fragility scores combining forward competitor activity and backward-citation concentration with CSV export." />
+              <DetailItem icon="⬩" title="Risk Radar" text="Per-patent/publication exposure and fragility scores combining forward competitor activity and backward-citation concentration with CSV export." />
               <DetailItem icon="⬩" title="Encroachment" text="Timeline and table showing competitor citing patterns into target assignees, with velocity and encroachment scores." />
             </div>
 
@@ -262,7 +262,7 @@ export default function HelpIndexPage() {
               }}
             >
               <p style={{ fontSize: 13, lineHeight: 1.5, color: TEXT_COLOR, margin: 0 }}>
-                <strong>Best practices</strong>: keep scopes focused (target assignees or curated pub IDs), use month buckets for recent activity and quarter buckets for multi-year trends, and apply competitor lists to sharpen Risk Radar and Encroachment views.
+                <strong>Example Use Cases</strong>: View other assignees' recent activity, identify cross-assignee dependencies, assess competitor risk, and monitor encroachment trends.
               </p>
             </div>
           </div>

@@ -102,6 +102,10 @@ class RiskRadarResponse(BaseModel):
     patents: list[PatentRiskMetrics]
 
 
+class RiskRadarExportRequest(RiskRadarRequest):
+    sort_by: Literal["overall", "exposure", "fragility", "fwd"] = "overall"
+
+
 class EncroachmentRequest(BaseModel):
     target_assignee_ids: list[UUID] | None = None
     target_assignee_names: list[str] | None = None

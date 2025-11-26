@@ -508,7 +508,7 @@ type DependencyMatrixCardProps = {
 };
 
 function DependencyMatrixCard({ scope, scopeVersion, tokenGetter }: DependencyMatrixCardProps) {
-  const [minCitations, setMinCitations] = useState(5);
+  const [minCitations, setMinCitations] = useState(1);
   const [normalize, setNormalize] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -729,41 +729,51 @@ function RiskRadarCard({ scope, scopeVersion, tokenGetter, competitorNames }: Ri
     currentRiskPage * ROWS_PER_PAGE
   );
 
-  const exportCsv = useCallback(() => {
-    if (!data?.patents?.length) return;
-    const header = [
-      "pub_id",
-      "title",
-      "assignee",
-      "fwd_total",
-      "fwd_from_competitors",
-      "fwd_competitor_ratio",
-      "bwd_total",
-      "exposure_score",
-      "fragility_score",
-      "overall_risk_score",
-    ];
-    const rows = data.patents.map((p) => [
-      p.pub_id,
-      `"${(p.title || "").replace(/"/g, '""')}"`,
-      `"${(p.assignee_name || "").replace(/"/g, '""')}"`,
-      p.fwd_total,
-      p.fwd_from_competitors,
-      p.fwd_competitor_ratio ?? "",
-      p.bwd_total,
-      p.exposure_score.toFixed(2),
-      p.fragility_score.toFixed(2),
-      p.overall_risk_score.toFixed(2),
-    ]);
-    const csv = [header.join(","), ...rows.map((r) => r.join(","))].join("\n");
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "risk_radar.csv";
-    a.click();
-    URL.revokeObjectURL(url);
-  }, [data]);
+  const [exporting, setExporting] = useState(false);
+
+  const exportPdf = useCallback(async () => {
+    if (!scope || !data?.patents?.length) return;
+    setExporting(true);
+    try {
+      const payload = {
+        scope,
+        competitor_assignee_names: competitorNames && competitorNames.length ? competitorNames : null,
+        top_n: topN,
+        sort_by: sortKey,
+      };
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      const token = await tokenGetter();
+      if (token) headers.Authorization = `Bearer ${token}`;
+      const resp = await fetch("/api/citation/risk-radar/export", {
+        method: "POST",
+        headers,
+        body: JSON.stringify(payload),
+        cache: "no-store",
+      });
+      if (!resp.ok) {
+        const text = await resp.text();
+        let message = text || `Export failed (${resp.status})`;
+        try {
+          const parsed = JSON.parse(text);
+          message = parsed.detail || parsed.error || message;
+        } catch (err) {
+          // fall through if body is not JSON
+        }
+        throw new Error(message);
+      }
+      const blob = await resp.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "risk_radar.pdf";
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err: any) {
+      setError(err?.message ?? "Failed to export PDF");
+    } finally {
+      setExporting(false);
+    }
+  }, [scope, data, competitorNames, topN, sortKey, tokenGetter]);
 
   return (
     <div className={cardClass}>
@@ -791,8 +801,12 @@ function RiskRadarCard({ scope, scopeVersion, tokenGetter, competitorNames }: Ri
             <option value="fragility">Fragility</option>
             <option value="fwd">Forward citations</option>
           </select>
-          <button className="btn-outline h-9 px-4 text-xs font-semibold" onClick={exportCsv} disabled={!data?.patents?.length}>
-            Export CSV
+          <button
+            className="btn-outline h-9 px-4 text-xs font-semibold"
+            onClick={exportPdf}
+            disabled={!data?.patents?.length || exporting || loading}
+          >
+            {exporting ? "Exporting…" : "Export PDF"}
           </button>
         </div>
       </div>
@@ -1325,7 +1339,7 @@ export default function CitationPage() {
                   }`}
                   onClick={() => switchMode(mode)}
                 >
-                  {mode === "assignee" ? "By Assignee" : mode === "pub" ? "By Patent IDs" : "By Search Filters"}
+                  {mode === "assignee" ? "Assignee" : mode === "pub" ? "Patent/Pub #" : "Search Filters"}
                 </button>
               ))}
             </div>
