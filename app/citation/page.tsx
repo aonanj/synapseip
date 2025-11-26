@@ -133,9 +133,16 @@ const cardClass = "glass-card p-5 rounded-xl shadow-xl border border-white/50";
 
 const fieldLabel = "text-xs font-semibold uppercase tracking-wide text-slate-500";
 
-const sectionTitle = "text-base font-semibold text-slate-800";
+const sectionTitle = "text-sm font-semibold text-slate-800";
 
 const sectionSubtitle = "text-xs text-slate-600";
+
+const inputClass =
+  "w-full rounded-lg border border-slate-200 px-3 py-2 text-xs shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-200 focus:border-sky-300 bg-white";
+const selectClass =
+  "w-full rounded-lg border border-slate-200 px-3 py-2 text-xs shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-200 focus:border-sky-300 bg-white";
+const inlineInputClass =
+  "h-9 rounded border border-slate-200 px-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-200 focus:border-sky-300 bg-white";
 
 function parseListInput(value: string): string[] {
   return value
@@ -348,7 +355,7 @@ function ForwardImpactCard({ scope, scopeVersion, tokenGetter }: ForwardImpactCa
               max={200}
               value={topN}
               onChange={(e) => setTopN(Number(e.target.value) || 1)}
-              className="h-9 w-20 rounded border border-slate-200 px-2 text-xs"
+              className={inlineInputClass}
             />
           </label>
           <label className="flex items-center gap-2 text-xs text-slate-600">
@@ -356,7 +363,7 @@ function ForwardImpactCard({ scope, scopeVersion, tokenGetter }: ForwardImpactCa
             <select
               value={bucketOverride}
               onChange={(e) => setBucketOverride(e.target.value as any)}
-              className="h-9 rounded border border-slate-200 px-2 text-xs"
+              className={inlineInputClass}
             >
               <option value="">Use scope</option>
               <option value="month">Month</option>
@@ -365,10 +372,10 @@ function ForwardImpactCard({ scope, scopeVersion, tokenGetter }: ForwardImpactCa
           </label>
           <button
             onClick={load}
-            className="btn-outline h-9 px-4 text-xs font-semibold"
+            className="refresh-btn px-4 text-2xl font-semibold"
             disabled={loading || !scope}
           >
-            {loading ? "…" : "↺"}
+            {loading ? "…" : "⟳"}
           </button>
         </div>
       </div>
@@ -513,15 +520,15 @@ function DependencyMatrixCard({ scope, scopeVersion, tokenGetter }: DependencyMa
               max={50}
               value={minCitations}
               onChange={(e) => setMinCitations(Number(e.target.value) || 1)}
-              className="h-9 w-20 rounded border border-slate-200 px-2 text-xs"
+              className={inlineInputClass}
             />
           </label>
           <label className="flex items-center gap-2 text-xs text-slate-600">
             <input type="checkbox" checked={normalize} onChange={(e) => setNormalize(e.target.checked)} />
             <span>Normalize</span>
           </label>
-          <button onClick={load} className="btn-outline h-9 px-4 text-xs font-semibold" disabled={!scope || loading}>
-            {loading ? "…" : "↺"}
+          <button onClick={load} className="refresh-btn px-4 text-2xl font-semibold" disabled={!scope || loading}>
+            {loading ? "…" : "⟳"}
           </button>
         </div>
       </div>
@@ -710,13 +717,13 @@ function RiskRadarCard({ scope, scopeVersion, tokenGetter, competitorNames }: Ri
               max={400}
               value={topN}
               onChange={(e) => setTopN(Number(e.target.value) || 10)}
-              className="h-9 w-20 rounded border border-slate-200 px-2 text-xs"
+              className={inlineInputClass}
             />
           </label>
           <select
             value={sortKey}
             onChange={(e) => setSortKey(e.target.value as any)}
-            className="h-9 rounded border border-slate-200 px-3 text-xs"
+            className={inlineInputClass}
           >
             <option value="overall">Overall risk</option>
             <option value="exposure">Exposure</option>
@@ -874,7 +881,7 @@ function EncroachmentCard({ scope, scopeVersion, tokenGetter, competitorNames }:
         <div className="flex flex-wrap items-center gap-3">
           <label className="flex items-center gap-2 text-xs text-slate-600">
             <span>Bucket</span>
-            <select value={bucket} onChange={(e) => setBucket(e.target.value as any)} className="h-9 rounded border border-slate-200 px-2 text-xs">
+            <select value={bucket} onChange={(e) => setBucket(e.target.value as any)} className={inlineInputClass}>
               <option value="month">Month</option>
               <option value="quarter">Quarter</option>
             </select>
@@ -887,21 +894,21 @@ function EncroachmentCard({ scope, scopeVersion, tokenGetter, competitorNames }:
               max={25}
               value={topK}
               onChange={(e) => setTopK(Number(e.target.value) || 3)}
-              className="h-9 w-20 rounded border border-slate-200 px-2 text-xs"
+              className={inlineInputClass}
             />
           </label>
           <label className="flex items-center gap-2 text-xs text-slate-600">
             <input type="checkbox" checked={explicitOnly} onChange={(e) => setExplicitOnly(e.target.checked)} />
             <span>Only explicit competitors</span>
           </label>
-          <button className="btn-outline h-9 px-4 text-xs font-semibold" disabled={!hasTargets || loading} onClick={load}>
-            {loading ? "…" : "↺"}
+          <button className="refresh-btn px-4 text-2xl font-semibold" disabled={!hasTargets || loading} onClick={load}>
+            {loading ? "…" : "⟳"}
           </button>
         </div>
       </div>
       {!hasTargets ? (
-        <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
-          Define at least one target assignee in the Scope panel to view encroachment metrics.
+        <div className="text-xs text-slate-600">
+          Apply a target assignee in the Scope panel to view.
         </div>
       ) : error ? (
         <div className="text-xs text-rose-600">Error: {error}</div>
@@ -1143,7 +1150,7 @@ export default function CitationPage() {
                   onChange={(e) => setScopeState((s) => ({ ...s, focusAssigneeNames: parseListInput(e.target.value) }))}
                   rows={3}
                   placeholder="NVIDIA, IBM, Samsung"
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs"
+                  className={inputClass}
                 />
                 <p className="text-[11px] text-slate-500 mt-1">
                   Enter one name per line; similarity matching will include aliases automatically.
@@ -1171,7 +1178,7 @@ export default function CitationPage() {
                     value={scopeState.keyword}
                     onChange={(e) => setScopeState((s) => ({ ...s, keyword: e.target.value }))}
                     placeholder="Generative AI safety…"
-                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs"
+                    className={inputClass}
                   />
                 </div>
                 <div>
@@ -1181,7 +1188,7 @@ export default function CitationPage() {
                     value={scopeState.cpc}
                     onChange={(e) => setScopeState((s) => ({ ...s, cpc: e.target.value }))}
                     placeholder="G06N, H04W…"
-                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs"
+                    className={inputClass}
                   />
                 </div>
                 <div>
@@ -1203,7 +1210,7 @@ export default function CitationPage() {
                   type="date"
                   value={scopeState.from}
                   onChange={(e) => setScopeState((s) => ({ ...s, from: e.target.value }))}
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs"
+                  className={inputClass}
                 />
               </div>
               <div>
@@ -1212,7 +1219,7 @@ export default function CitationPage() {
                   type="date"
                   value={scopeState.to}
                   onChange={(e) => setScopeState((s) => ({ ...s, to: e.target.value }))}
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs"
+                  className={inputClass}
                 />
               </div>
               <div>
@@ -1220,7 +1227,7 @@ export default function CitationPage() {
                 <select
                   value={scopeState.bucket}
                   onChange={(e) => setScopeState((s) => ({ ...s, bucket: e.target.value as any }))}
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs"
+                  className={selectClass}
                 >
                   <option value="month">Month</option>
                   <option value="quarter">Quarter</option>
@@ -1233,7 +1240,7 @@ export default function CitationPage() {
                 value={scopeState.competitors.join("\n")}
                 onChange={(e) => setScopeState((s) => ({ ...s, competitors: parseListInput(e.target.value) }))}
                 placeholder="Competitor names, one per line"
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs"
+                  className={inputClass}
               />
               <label className="mt-1 inline-flex items-center gap-2 text-xs text-slate-600">
                 <input

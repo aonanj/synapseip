@@ -91,3 +91,31 @@ body.app-shell {
   cursor: not-allowed;
   box-shadow: none;
 }
+
+.refresh-btn {
+  background: rgba(255, 255, 255, 0.3);
+  color: #102A43;
+  padding: 0 8px;
+  font-weight: 600;
+  box-shadow: 0 10px 18px rgba(15, 23, 42, 0.18);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.refresh-btn:hover:not(:disabled) {
+  /* transform: translateY(-1px); */
+  scale: 1.05;
+  background: rgba(255, 255, 255, 0.45);
+  box-shadow: 0 16px 28px rgba(15, 23, 42, 0.5);
+}
+
+.refresh-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  box-shadow: none;
+}
