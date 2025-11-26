@@ -28,7 +28,7 @@ type GraphProps = {
   onSelect: (rowId: string) => void;
 };
 
-type SortKey = "similarity" | "assignee" | "pub_date";
+type SortKey = "similarity" | "assignee" | "pub_date" | "claim_number" | "claim_text";
 type SortDirection = "asc" | "desc";
 
 function formatPubDate(pubDate?: number | null): string {
@@ -47,6 +47,34 @@ function formatSimilarity(sim: number | null | undefined): string {
 function googlePatentsUrl(pubId: string): string {
   const cleaned = pubId.replace(/[-\s]/g, "");
   return `https://patents.google.com/patent/${cleaned}`;
+}
+
+function SortableHeader({
+  label,
+  active,
+  direction,
+  onClick,
+  className,
+}: {
+  label: string;
+  active: boolean;
+  direction: SortDirection;
+  onClick: () => void;
+  className?: string;
+}) {
+  return (
+    <th
+      onClick={onClick}
+      className={`py-2 pr-4 cursor-pointer select-none ${className ?? ""}`}
+      aria-sort={active ? (direction === "asc" ? "ascending" : "descending") : "none"}
+      scope="col"
+    >
+      <span className="inline-flex items-center gap-1 text-[#39506B]">
+        <span>{label}</span>
+        <span className="text-[11px]">{active ? (direction === "asc" ? "↑" : "↓") : "⇅"}</span>
+      </span>
+    </th>
+  );
 }
 
 const ScopeGraph = ({ matches, selectedId, onSelect }: GraphProps) => {
@@ -93,7 +121,7 @@ const ScopeGraph = ({ matches, selectedId, onSelect }: GraphProps) => {
 
   if (!matches.length) {
     return (
-      <div className="h-[360px] flex items-center justify-center text-sm text-slate-500">
+      <div className="h-[360px] flex items-center justify-center text-sm text-[#39506B]">
         Run a scope analysis to visualize overlaps with independent claims.
       </div>
     );
@@ -187,8 +215,8 @@ const ScopeGraph = ({ matches, selectedId, onSelect }: GraphProps) => {
             transform: "translate(-50%, -100%) translateY(-12px)",
           }}
         >
-          <p className="font-semibold text-slate-800 mb-1">{tooltip.title}</p>
-          <p className="text-slate-600 leading-snug">{tooltip.snippet}</p>
+          <p className="font-semibold text-[#102a43] mb-1">{tooltip.title}</p>
+          <p className="text-[#39506B] leading-snug">{tooltip.snippet}</p>
         </div>
       )}
     </div>
@@ -203,12 +231,6 @@ const pageWrapperStyle: React.CSSProperties = {
   gap: 32,
 };
 
-const DEFAULT_SORT_DIRECTION: Record<SortKey, SortDirection> = {
-  similarity: "desc",
-  assignee: "asc",
-  pub_date: "desc",
-};
-
 export default function ScopeAnalysisPage() {
   const { isAuthenticated, isLoading, loginWithRedirect, getAccessTokenSilently } = useAuth0();
   const [text, setText] = useState("");
@@ -220,8 +242,10 @@ export default function ScopeAnalysisPage() {
   const [lastQuery, setLastQuery] = useState<string | null>(null);
   const [expandedClaims, setExpandedClaims] = useState<Record<string, boolean>>({});
   const [exporting, setExporting] = useState(false);
-  const [sortBy, setSortBy] = useState<SortKey>("similarity");
-  const [sortDirection, setSortDirection] = useState<SortDirection>(DEFAULT_SORT_DIRECTION.similarity);
+  const [sortState, setSortState] = useState<{ key: SortKey; direction: SortDirection }>({
+    key: "similarity",
+    direction: "desc",
+  });
 
   const primaryRisk = useMemo(() => {
     if (!results.length) return null;
@@ -285,25 +309,32 @@ export default function ScopeAnalysisPage() {
 
   const sortedResults = useMemo(() => {
     const items = [...results];
+    const dir = sortState.direction === "asc" ? 1 : -1;
+    const getValue = (match: ScopeClaimMatch) => {
+      switch (sortState.key) {
+        case "assignee":
+          return (match.assignee_name || "").toLowerCase();
+        case "pub_date":
+          return match.pub_date ?? 0;
+        case "claim_number":
+          return match.claim_number ?? 0;
+        case "claim_text":
+          return (match.claim_text || "").toLowerCase();
+        default:
+          return match.similarity ?? -Infinity;
+      }
+    };
+
     items.sort((a, b) => {
-      if (sortBy === "assignee") {
-        const aName = (a.assignee_name || "").toLowerCase();
-        const bName = (b.assignee_name || "").toLowerCase();
-        if (aName !== bName) {
-          return sortDirection === "asc" ? aName.localeCompare(bName) : bName.localeCompare(aName);
-        }
-      } else if (sortBy === "pub_date") {
-        const aDate = a.pub_date ?? 0;
-        const bDate = b.pub_date ?? 0;
-        if (aDate !== bDate) {
-          return sortDirection === "asc" ? aDate - bDate : bDate - aDate;
-        }
-      } else {
-        const aSim = a.similarity ?? -Infinity;
-        const bSim = b.similarity ?? -Infinity;
-        if (aSim !== bSim) {
-          return sortDirection === "asc" ? aSim - bSim : bSim - aSim;
-        }
+      const valA = getValue(a);
+      const valB = getValue(b);
+
+      if (typeof valA === "string" || typeof valB === "string") {
+        const aStr = typeof valA === "string" ? valA : String(valA ?? "");
+        const bStr = typeof valB === "string" ? valB : String(valB ?? "");
+        if (aStr !== bStr) return aStr.localeCompare(bStr) * dir;
+      } else if (valA !== valB) {
+        return (Number(valA) - Number(valB)) * dir;
       }
 
       const aSim = a.similarity ?? -Infinity;
@@ -312,10 +343,12 @@ export default function ScopeAnalysisPage() {
 
       const aDate = a.pub_date ?? 0;
       const bDate = b.pub_date ?? 0;
-      return bDate - aDate;
+      if (aDate !== bDate) return bDate - aDate;
+
+      return (a.claim_number ?? 0) - (b.claim_number ?? 0);
     });
     return items;
-  }, [results, sortBy, sortDirection]);
+  }, [results, sortState]);
 
   const handleRowSelect = (rowId: string) => {
     setSelectedId(rowId);
@@ -333,13 +366,10 @@ export default function ScopeAnalysisPage() {
     });
   };
 
-  const handleSortFieldChange = (next: SortKey) => {
-    setSortBy(next);
-    setSortDirection(DEFAULT_SORT_DIRECTION[next]);
-  };
-
-  const toggleSortDirection = () => {
-    setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
+  const handleSort = (key: SortKey) => {
+    setSortState((prev) =>
+      prev.key === key ? { key, direction: prev.direction === "desc" ? "asc" : "desc" } : { key, direction: "desc" }
+    );
   };
 
   const exportTableToPdf = useCallback(async () => {
@@ -403,7 +433,7 @@ export default function ScopeAnalysisPage() {
 
           <section className="glass-card" style={{ ...cardBaseStyle }}>
             <div className="flex flex-col gap-2">
-              <label htmlFor="scope-text" className="text-base uppercase font-medium" style={{ color: TEXT_COLOR }}>
+              <label htmlFor="scope-text" className="text-base uppercase" style={{ color: TEXT_COLOR }}>
                 Subject matter to search 
               </label>
               <textarea
@@ -462,8 +492,8 @@ export default function ScopeAnalysisPage() {
               <div className="glass-card p-6" style={{ ...cardBaseStyle }}>
                 <div className="flex items-center justify-between mb-4">
                   <div>
-                    <p className="text-xs tracking-wide uppercase text-slate-500">Risk snapshot</p>
-                    <h2 className="text-xl font-semibold text-slate-900">Similarity map</h2>
+                    <p className="text-xs tracking-wide uppercase text-[#39506B]">Risk snapshot</p>
+                    <h2 className="text-lg font-semibold text-[#102a43]">Similarity map</h2>
                   </div>
                   {primaryRisk && (
                     <div
@@ -481,41 +511,41 @@ export default function ScopeAnalysisPage() {
                 </div>
                 <ScopeGraph matches={results} selectedId={selectedId} onSelect={handleRowSelect} />
                 {primaryRisk && (
-                  <p className="mt-4 text-sm text-slate-600">{primaryRisk.message}</p>
+                  <p className="mt-4 text-sm text-[#39506B]">{primaryRisk.message}</p>
                 )}
               </div>
 
-              <div className="glass-card p-6 space-y-4" style={{ ...cardBaseStyle }}>
-                <p className="text-xs tracking-wide uppercase text-slate-500">Impact summary</p>
-                <h2 className="text-xl font-semibold" style={{ color: TEXT_COLOR }}>Claim proximity breakdown</h2>
+              <div className="glass-card p-6" style={{ ...cardBaseStyle }}>
+                <p className="text-xs tracking-wide uppercase text-[#47617e]">Impact summary</p>
+                <h2 className="text-lg font-semibold" style={{ color: TEXT_COLOR }}>Claim proximity breakdown</h2>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="rounded-xl border border-slate-100 bg-slate-50/60 p-4">
-                    <p className="text-sm text-slate-500">Top match similarity</p>
-                    <p className="text-2xl font-bold text-slate-900">
+                    <p className="text-sm text-[#47617e]">Top match similarity</p>
+                    <p className="text-2xl font-bold text-[#102a43]">
                       {formatSimilarity(results[0]?.similarity)}
                     </p>
-                    <p className="text-xs text-slate-500 mt-1">
+                    <p className="text-xs text-[#47617e] mt-1">
                       Pub {results[0]?.pub_id} / Claim {results[0]?.claim_number}
                     </p>
                   </div>
                   <div className="rounded-xl border border-slate-100 bg-slate-50/60 p-4">
-                    <p className="text-sm text-slate-500">High-risk cluster</p>
-                    <p className="text-2xl font-bold text-slate-900">{highRiskCount}</p>
-                    <p className="text-xs text-slate-500 mt-1">claims ≥ 0.70 similarity</p>
+                    <p className="text-sm text-[#47617e]">High-risk cluster</p>
+                    <p className="text-2xl font-bold text-[#102a43]">{highRiskCount}</p>
+                    <p className="text-xs text-[#47617e] mt-1">claims ≥ 0.70 similarity</p>
                   </div>
                   <div className="rounded-xl border border-slate-100 bg-slate-50/60 p-4">
-                    <p className="text-sm text-slate-500">Lower-risk set</p>
-                    <p className="text-2xl font-bold text-slate-900">{lowRiskCount}</p>
-                    <p className="text-xs text-slate-500 mt-1">claims &lt; 0.50 similarity</p>
+                    <p className="text-sm text-[#47617e]">Lower-risk set</p>
+                    <p className="text-2xl font-bold text-[#102a43]">{lowRiskCount}</p>
+                    <p className="text-xs text-[#47617e] mt-1">claims &lt; 0.50 similarity</p>
                   </div>
                   <div className="rounded-xl border border-slate-100 bg-slate-50/60 p-4">
-                    <p className="text-sm text-slate-500">Scope sampled</p>
-                    <p className="text-2xl font-bold text-slate-900">{results.length}</p>
-                    <p className="text-xs text-slate-500 mt-1">independent claims inspected</p>
+                    <p className="text-sm text-[#47617e]">Scope sampled</p>
+                    <p className="text-2xl font-bold text-[#102a43]">{results.length}</p>
+                    <p className="text-xs text-[#47617e] mt-1">independent claims inspected</p>
                   </div>
                 </div>
                 {lastQuery && (
-                  <div className="rounded-lg border border-slate-200 bg-white/80 px-3 py-2 text-xs text-slate-500">
+                  <div className="rounded-lg border border-slate-200 bg-white/80 px-3 py-2 text-xs text-[#47617e]">
                     Last analyzed snippet: {lastQuery.slice(0, 160)}
                     {lastQuery.length > 160 ? "…" : ""}
                   </div>
@@ -525,43 +555,22 @@ export default function ScopeAnalysisPage() {
           )}
 
         <section className="glass-card p-6" style={{ ...cardBaseStyle }}>
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <p className="text-xs tracking-wide uppercase text-slate-500">Independent claim matches</p>
-              <h2 className="text-xl font-semibold text-slate-900">Closest patent claims</h2>
-            </div>
-            <div className="flex items-center gap-3">
-              {results.length > 0 && (
-                <>
-                  <div className="flex items-center gap-2 text-xs text-slate-600">
-                    <span className="font-semibold text-slate-700">Sort</span>
-                    <select
-                      value={sortBy}
-                      onChange={(e) => handleSortFieldChange(e.target.value as SortKey)}
-                      className="h-9 rounded-lg border border-slate-200 bg-white px-2 text-xs font-semibold text-slate-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-300"
-                    >
-                      <option value="similarity">Similarity</option>
-                      <option value="assignee">Assignee</option>
-                      <option value="pub_date">Grant date</option>
-                    </select>
-                    <button
-                      type="button"
-                      onClick={toggleSortDirection}
-                      className="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
-                    >
-                      {sortDirection === "asc" ? "Asc" : "Desc"}
-                    </button>
-                  </div>
-                  <span className="text-xs font-semibold text-slate-500">
-                    Click a row to highlight the graph node.
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <p className="text-xs tracking-wide uppercase text-[#39506B]">Independent claim matches</p>
+                <h2 className="text-lg font-semibold text-[#102a43]">Closest patent claims</h2>
+              </div>
+              <div className="flex items-center gap-3">
+                {results.length > 0 && (
+                  <span className="text-xs font-semibold text-[#39506B]">
+                    Click column headers to sort. Click a row to highlight the graph node.
                   </span>
-                </>
-              )}
-              <button
-                type="button"
-                onClick={exportTableToPdf}
-                disabled={!results.length || exporting}
-                className="btn-outline h-9 px-4 text-xs font-semibold disabled:opacity-50"
+                )}
+                <button
+                  type="button"
+                  onClick={exportTableToPdf}
+                  disabled={!results.length || exporting}
+                  className="btn-outline h-9 px-4 text-xs font-semibold disabled:opacity-50"
               >
                 {exporting ? "Preparing PDF…" : "Export PDF"}
               </button>
@@ -570,18 +579,44 @@ export default function ScopeAnalysisPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-sm border-collapse">
                 <thead>
-                  <tr className="text-left text-slate-500 border-b">
-                    <th className="py-2 pr-4">Patent</th>
-                    <th className="py-2 pr-4">Claim #</th>
-                    <th className="py-2 pr-4">Similarity</th>
-                    <th className="py-2 pr-4">Assignee</th>
-                    <th className="py-2">Claim text</th>
+                  <tr className="text-left text-[#39506B] border-b">
+                    <SortableHeader
+                      label="Patent"
+                      active={sortState.key === "pub_date"}
+                      direction={sortState.direction}
+                      onClick={() => handleSort("pub_date")}
+                    />
+                    <SortableHeader
+                      label="Claim #"
+                      active={sortState.key === "claim_number"}
+                      direction={sortState.direction}
+                      onClick={() => handleSort("claim_number")}
+                    />
+                    <SortableHeader
+                      label="Similarity"
+                      active={sortState.key === "similarity"}
+                      direction={sortState.direction}
+                      onClick={() => handleSort("similarity")}
+                    />
+                    <SortableHeader
+                      label="Assignee"
+                      active={sortState.key === "assignee"}
+                      direction={sortState.direction}
+                      onClick={() => handleSort("assignee")}
+                    />
+                    <SortableHeader
+                      label="Claim text"
+                      active={sortState.key === "claim_text"}
+                      direction={sortState.direction}
+                      onClick={() => handleSort("claim_text")}
+                      className="pr-0"
+                    />
                   </tr>
                 </thead>
                 <tbody>
                   {results.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="py-6 text-center text-slate-500">
+                      <td colSpan={5} className="py-6 text-center text-[#39506B]">
                         Run scope analysis to populate this table.
                       </td>
                     </tr>
@@ -598,8 +633,8 @@ export default function ScopeAnalysisPage() {
                           onClick={() => handleRowSelect(rowId)}
                         >
                           <td className="py-3 pr-4 min-w-[180px]">
-                            <div className="font-semibold text-slate-900">{match.title || "Untitled patent"}</div>
-                            <div className="text-xs text-slate-500">
+                            <div className="font-semibold text-[#102a43]">{match.title || "Untitled patent"}</div>
+                            <div className="text-xs text-[#39506B]">
                               <a
                                 href={googlePatentsUrl(match.pub_id)}
                                 target="_blank"
@@ -612,14 +647,14 @@ export default function ScopeAnalysisPage() {
                             </div>
                           </td>
                           <td className="py-3 pr-4">{match.claim_number}</td>
-                          <td className="py-3 pr-4 font-semibold text-slate-900">
+                          <td className="py-3 pr-4 font-semibold text-[#102a43]">
                             {formatSimilarity(match.similarity)}
                           </td>
-                          <td className="py-3 pr-4 text-slate-700">
+                          <td className="py-3 pr-4 text-[#39506B]">
                             {match.assignee_name || "Unknown assignee"}
                           </td>
                           <td
-                            className="py-3 text-slate-700"
+                            className="py-3 text-[#39506B]"
                             role="button"
                             tabIndex={0}
                             onClick={(e) => {
@@ -642,7 +677,7 @@ export default function ScopeAnalysisPage() {
                                 : match.claim_text.slice(0, 280) + (match.claim_text.length > 280 ? "…" : "")
                               : "—"}
                             {match.claim_text && (
-                              <span className="block text-xs text-slate-500 mt-1">
+                              <span className="block text-xs text-[#39506B] mt-1">
                                 {expandedClaims[rowId] ? "Click to collapse" : "Click to read full claim"}
                               </span>
                             )}

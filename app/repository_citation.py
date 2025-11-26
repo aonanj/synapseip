@@ -254,8 +254,8 @@ async def get_cross_assignee_dependency_matrix(
         SELECT
             citing_key,
             cited_key,
-            MAX(citing_assignee_id) FILTER (WHERE citing_assignee_id IS NOT NULL) AS citing_assignee_id,
-            MAX(cited_assignee_id) FILTER (WHERE cited_assignee_id IS NOT NULL) AS cited_assignee_id,
+            MIN(citing_assignee_id::text) FILTER (WHERE citing_assignee_id IS NOT NULL)::uuid AS citing_assignee_id,
+            MIN(cited_assignee_id::text) FILTER (WHERE cited_assignee_id IS NOT NULL)::uuid AS cited_assignee_id,
             MAX(citing_assignee_name) AS citing_assignee_name,
             MAX(cited_assignee_name) AS cited_assignee_name,
             COUNT(*) AS citation_count

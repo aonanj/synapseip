@@ -139,7 +139,7 @@ const cardClass = "glass-card p-5 rounded-xl shadow-xl border border-white/50";
 
 const fieldLabel = "text-xs font-semibold uppercase tracking-wide text-[#3A506B]";
 
-const mainTitle = "text-base uppercase font-medium text-[#102A43]";
+const mainTitle = "text-base uppercase text-[#102A43]";
 
 const sectionTitle = "text-sm font-semibold text-[#102A43]";
 
@@ -152,6 +152,8 @@ const selectClass = `w-full rounded-xl px-2 py-2 text-xs ${controlBaseClass}`;
 const inlineInputClass = `h-8 rounded-lg px-2 text-xs ${controlBaseClass}`;
 
 const ROWS_PER_PAGE = 5;
+
+type SortDirection = "asc" | "desc";
 
 function parseListInput(value: string, opts?: { allowSpaceDelimiter?: boolean }): string[] {
   const delimiter = opts?.allowSpaceDelimiter ? /[\n,; ]+/ : /[\n,;]+/;
@@ -177,6 +179,57 @@ function googlePatentsUrl(pubId: string): string {
   const match = cleaned.match(/^(US)(\d{4})(\d{6})(A\d{1,2})$/);
   const normalized = match ? `${match[1]}${match[2]}0${match[3]}${match[4]}` : cleaned;
   return `https://patents.google.com/patent/${normalized}`;
+}
+
+function parseDateValue(value: string | null | undefined): number {
+  if (!value) return 0;
+  const str = String(value);
+  if (/^\d{8}$/.test(str)) {
+    const iso = `${str.slice(0, 4)}-${str.slice(4, 6)}-${str.slice(6, 8)}`;
+    const ts = Date.parse(iso);
+    if (!Number.isNaN(ts)) return ts;
+  }
+  const ts = Date.parse(str);
+  return Number.isNaN(ts) ? 0 : ts;
+}
+
+function compareValues(a: string | number | null | undefined, b: string | number | null | undefined, direction: SortDirection): number {
+  const dir = direction === "asc" ? 1 : -1;
+  if (typeof a === "number" && typeof b === "number") {
+    return (a - b) * dir;
+  }
+  const aStr = (a ?? "").toString().toLowerCase();
+  const bStr = (b ?? "").toString().toLowerCase();
+  return aStr.localeCompare(bStr) * dir;
+}
+
+function SortableHeader({
+  label,
+  active,
+  direction,
+  onClick,
+  align = "left",
+}: {
+  label: string;
+  active: boolean;
+  direction: SortDirection;
+  onClick: () => void;
+  align?: "left" | "right" | "center";
+}) {
+  const alignClass = align === "right" ? "text-right" : align === "center" ? "text-center" : "text-left";
+  return (
+    <th
+      onClick={onClick}
+      className={`px-3 py-2 border-b cursor-pointer select-none ${alignClass}`}
+      aria-sort={active ? (direction === "asc" ? "ascending" : "descending") : "none"}
+      scope="col"
+    >
+      <span className="inline-flex items-center gap-1 text-xs uppercase tracking-wide text-[#3A506B]">
+        <span>{label}</span>
+        <span className="text-[11px] text-[#3A506B]">{active ? (direction === "asc" ? "↑" : "↓") : "⇅"}</span>
+      </span>
+    </th>
+  );
 }
 
 function ScoreBar({ value, color = "sky" }: { value: number; color?: "sky" | "amber" | "rose" }) {
@@ -293,7 +346,7 @@ function updateUrlFromScope(scope: CitationScope, mode: ScopeMode, competitors: 
 function MainHeader({ title, subtitle }: { title: string; subtitle: string }) {
   return (
     <div>
-      <h2 className={sectionTitle}>{title}</h2>
+      <h2 className={mainTitle}>{title}</h2>
       <p className={sectionSubtitle}>{subtitle}</p>
     </div>
   );
@@ -314,6 +367,8 @@ type ForwardImpactCardProps = {
   tokenGetter: TokenGetter;
 };
 
+type ForwardSortKey = "patent" | "assignee" | "pub_date" | "fwd" | "velocity" | "first_citation" | "last_citation";
+
 function ForwardImpactCard({ scope, scopeVersion, tokenGetter }: ForwardImpactCardProps) {
   const [topN, setTopN] = useState(50);
   const [bucketOverride, setBucketOverride] = useState<"month" | "quarter" | "">("");
@@ -321,6 +376,16 @@ function ForwardImpactCard({ scope, scopeVersion, tokenGetter }: ForwardImpactCa
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<ForwardImpactResponse | null>(null);
   const [impactPage, setImpactPage] = useState(1);
+  const [impactSort, setImpactSort] = useState<{ key: ForwardSortKey; direction: SortDirection }>({
+    key: "fwd",
+    direction: "desc",
+  });
+
+  const handleImpactSort = useCallback((key: ForwardSortKey) => {
+    setImpactSort((prev) =>
+      prev.key === key ? { key, direction: prev.direction === "desc" ? "asc" : "desc" } : { key, direction: "desc" }
+    );
+  }, []);
 
   const load = useCallback(async () => {
     if (!scope) return;
@@ -351,22 +416,32 @@ function ForwardImpactCard({ scope, scopeVersion, tokenGetter }: ForwardImpactCa
     return values.length % 2 ? values[mid] : (values[mid - 1] + values[mid]) / 2;
   }, [data]);
 
-  const [sortKey, setSortKey] = useState<"fwd" | "velocity">("fwd");
   const sortedPatents = useMemo(() => {
     if (!data?.top_patents) return [];
-    const copy = [...data.top_patents];
-    copy.sort((a, b) => {
-      if (sortKey === "velocity") {
-        return (b.fwd_citation_velocity ?? 0) - (a.fwd_citation_velocity ?? 0);
+    const getValue = (p: PatentImpactSummary) => {
+      switch (impactSort.key) {
+        case "patent":
+          return p.pub_id || "";
+        case "assignee":
+          return p.assignee_name || "";
+        case "pub_date":
+          return parseDateValue(p.pub_date);
+        case "velocity":
+          return p.fwd_citation_velocity ?? 0;
+        case "first_citation":
+          return parseDateValue(p.first_citation_date);
+        case "last_citation":
+          return parseDateValue(p.last_citation_date);
+        default:
+          return p.fwd_citation_count ?? 0;
       }
-      return (b.fwd_citation_count ?? 0) - (a.fwd_citation_count ?? 0);
-    });
-    return copy;
-  }, [data, sortKey]);
+    };
+    return [...data.top_patents].sort((a, b) => compareValues(getValue(a), getValue(b), impactSort.direction));
+  }, [data, impactSort]);
 
   useEffect(() => {
     setImpactPage(1);
-  }, [data, sortKey]);
+  }, [data, impactSort]);
 
   const impactTotalPages = Math.max(1, Math.ceil(sortedPatents.length / ROWS_PER_PAGE));
   const currentImpactPage = Math.min(impactPage, impactTotalPages);
@@ -379,7 +454,7 @@ function ForwardImpactCard({ scope, scopeVersion, tokenGetter }: ForwardImpactCa
     <div className={`${cardClass} relative`}>
       <button
         onClick={load}
-        className="refresh-btn absolute right-5 top-5 px-4 text-3xl font-semibold"
+        className="refresh-btn absolute right-5 top-2 px-4 text-3xl font-semibold"
         disabled={loading || !scope}
       >
         {loading ? "…" : "⟳"}
@@ -436,25 +511,56 @@ function ForwardImpactCard({ scope, scopeVersion, tokenGetter }: ForwardImpactCa
           <div className="overflow-x-auto">
             <table className="min-w-full border-collapse">
               <thead>
-                <tr className="text-left text-xs uppercase tracking-wide text-[#3A506B]">
-                  <th className="px-3 py-2 border-b">Patent</th>
-                  <th className="px-3 py-2 border-b">Assignee</th>
-                  <th className="px-3 py-2 border-b">Pub date</th>
-                  <th className="px-3 py-2 border-b cursor-pointer" onClick={() => setSortKey("fwd")}>
-                    Forward citations
-                  </th>
-                  <th className="px-3 py-2 border-b cursor-pointer" onClick={() => setSortKey("velocity")}>
-                    Velocity
-                  </th>
-                  <th className="px-3 py-2 border-b">First citation</th>
-                  <th className="px-3 py-2 border-b">Last citation</th>
+                <tr>
+                  <SortableHeader
+                    label="Patent"
+                    active={impactSort.key === "patent"}
+                    direction={impactSort.direction}
+                    onClick={() => handleImpactSort("patent")}
+                  />
+                  <SortableHeader
+                    label="Assignee"
+                    active={impactSort.key === "assignee"}
+                    direction={impactSort.direction}
+                    onClick={() => handleImpactSort("assignee")}
+                  />
+                  <SortableHeader
+                    label="Pub date"
+                    active={impactSort.key === "pub_date"}
+                    direction={impactSort.direction}
+                    onClick={() => handleImpactSort("pub_date")}
+                  />
+                  <SortableHeader
+                    label="Forward citations"
+                    active={impactSort.key === "fwd"}
+                    direction={impactSort.direction}
+                    onClick={() => handleImpactSort("fwd")}
+                  />
+                  <SortableHeader
+                    label="Velocity"
+                    active={impactSort.key === "velocity"}
+                    direction={impactSort.direction}
+                    onClick={() => handleImpactSort("velocity")}
+                  />
+                  <SortableHeader
+                    label="First citation"
+                    active={impactSort.key === "first_citation"}
+                    direction={impactSort.direction}
+                    onClick={() => handleImpactSort("first_citation")}
+                  />
+                  <SortableHeader
+                    label="Last citation"
+                    active={impactSort.key === "last_citation"}
+                    direction={impactSort.direction}
+                    onClick={() => handleImpactSort("last_citation")}
+                  />
                 </tr>
               </thead>
               <tbody>
                 {pagedPatents.map((p) => (
                   <tr key={p.pub_id} className="odd:bg-white even:bg-slate-50/60">
                     <td className="px-3 py-2 align-top text-xs">
-                      <a href={googlePatentsUrl(p.pub_id)} target="_blank" rel="noreferrer" className="text-[#5FA8D2] font-semibold hover:underline text-xs">
+                      <a href={googlePatentsUrl(p.pub_id)} target="_blank" rel="noreferrer" className="text-[#5FA8D2] font-medium text-xs hover:underline">
                         {p.pub_id}
                       </a>
                       <div className="text-[#102A43] text-xs">{p.title}</div>
@@ -569,7 +675,7 @@ function DependencyMatrixCard({ scope, scopeVersion, tokenGetter }: DependencyMa
 
   return (
     <div className={`${cardClass} relative`}>
-      <button onClick={load} className="refresh-btn absolute right-5 top-5 px-4 text-3xl font-semibold" disabled={!scope || loading}>
+      <button onClick={load} className="refresh-btn absolute right-5 top-2 px-4 text-3xl font-semibold" disabled={!scope || loading}>
         {loading ? "…" : "⟳"}
       </button>
       <div className="flex items-start justify-between gap-3 mb-3 pr-12">
@@ -680,13 +786,31 @@ type RiskRadarCardProps = {
   competitorNames: string[] | null;
 };
 
+type RiskSortKey =
+  | "patent"
+  | "assignee"
+  | "fwd"
+  | "from_competitors"
+  | "bwd"
+  | "exposure"
+  | "fragility"
+  | "overall";
+
 function RiskRadarCard({ scope, scopeVersion, tokenGetter, competitorNames }: RiskRadarCardProps) {
   const [topN, setTopN] = useState(200);
-  const [sortKey, setSortKey] = useState<"overall" | "exposure" | "fragility" | "fwd">("overall");
+  const [riskSort, setRiskSort] = useState<{ key: RiskSortKey; direction: SortDirection }>({
+    key: "overall",
+    direction: "desc",
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<RiskRadarResponse | null>(null);
   const [riskPage, setRiskPage] = useState(1);
+  const handleRiskSort = useCallback((key: RiskSortKey) => {
+    setRiskSort((prev) =>
+      prev.key === key ? { key, direction: prev.direction === "desc" ? "asc" : "desc" } : { key, direction: "desc" }
+    );
+  }, []);
 
   const load = useCallback(async () => {
     if (!scope) return;
@@ -713,25 +837,32 @@ function RiskRadarCard({ scope, scopeVersion, tokenGetter, competitorNames }: Ri
 
   const sortedRows = useMemo(() => {
     if (!data?.patents) return [];
-    const copy = [...data.patents];
-    copy.sort((a, b) => {
-      switch (sortKey) {
-        case "exposure":
-          return b.exposure_score - a.exposure_score;
-        case "fragility":
-          return b.fragility_score - a.fragility_score;
+    const getValue = (p: PatentRiskMetrics) => {
+      switch (riskSort.key) {
+        case "patent":
+          return p.pub_id || "";
+        case "assignee":
+          return p.assignee_name || "";
         case "fwd":
-          return b.fwd_total - a.fwd_total;
+          return p.fwd_total;
+        case "from_competitors":
+          return p.fwd_from_competitors;
+        case "bwd":
+          return p.bwd_total;
+        case "exposure":
+          return p.exposure_score;
+        case "fragility":
+          return p.fragility_score;
         default:
-          return b.overall_risk_score - a.overall_risk_score;
+          return p.overall_risk_score;
       }
-    });
-    return copy;
-  }, [data, sortKey]);
+    };
+    return [...data.patents].sort((a, b) => compareValues(getValue(a), getValue(b), riskSort.direction));
+  }, [data, riskSort]);
 
   useEffect(() => {
     setRiskPage(1);
-  }, [data, sortKey]);
+  }, [data, riskSort]);
 
   const riskTotalPages = Math.max(1, Math.ceil(sortedRows.length / ROWS_PER_PAGE));
   const currentRiskPage = Math.min(riskPage, riskTotalPages);
@@ -746,11 +877,13 @@ function RiskRadarCard({ scope, scopeVersion, tokenGetter, competitorNames }: Ri
     if (!scope || !data?.patents?.length) return;
     setExporting(true);
     try {
+      const exportSortKey: "overall" | "exposure" | "fragility" | "fwd" =
+        riskSort.key === "exposure" || riskSort.key === "fragility" || riskSort.key === "fwd" ? riskSort.key : "overall";
       const payload = {
         scope,
         competitor_assignee_names: competitorNames && competitorNames.length ? competitorNames : null,
         top_n: topN,
-        sort_by: sortKey,
+        sort_by: exportSortKey,
       };
       const headers: Record<string, string> = { "Content-Type": "application/json" };
       const token = await tokenGetter();
@@ -784,7 +917,7 @@ function RiskRadarCard({ scope, scopeVersion, tokenGetter, competitorNames }: Ri
     } finally {
       setExporting(false);
     }
-  }, [scope, data, competitorNames, topN, sortKey, tokenGetter]);
+  }, [scope, data, competitorNames, topN, riskSort, tokenGetter]);
 
   return (
     <div className={cardClass}>
@@ -802,16 +935,7 @@ function RiskRadarCard({ scope, scopeVersion, tokenGetter, competitorNames }: Ri
               className={inlineInputClass}
             />
           </label>
-          <select
-            value={sortKey}
-            onChange={(e) => setSortKey(e.target.value as any)}
-            className={inlineInputClass}
-          >
-            <option value="overall">Overall risk</option>
-            <option value="exposure">Exposure</option>
-            <option value="fragility">Fragility</option>
-            <option value="fwd">Forward citations</option>
-          </select>
+          <div className="text-[11px] text-[#3A506B] whitespace-nowrap">Click column headers to sort</div>
           <button
             className="btn-outline h-9 px-4 text-xs font-semibold"
             onClick={exportPdf}
@@ -831,22 +955,62 @@ function RiskRadarCard({ scope, scopeVersion, tokenGetter, competitorNames }: Ri
         <div className="overflow-x-auto">
           <table className="min-w-full border-collapse">
             <thead>
-              <tr className="text-xs uppercase tracking-wide text-[#3A506B]">
-                <th className="px-3 py-2 border-b text-left">Patent</th>
-                <th className="px-3 py-2 border-b text-left">Assignee</th>
-                <th className="px-3 py-2 border-b text-left">Forward citations</th>
-                <th className="px-3 py-2 border-b text-left">From competitors</th>
-                <th className="px-3 py-2 border-b text-left">Backward cites</th>
-                <th className="px-3 py-2 border-b text-left">Exposure</th>
-                <th className="px-3 py-2 border-b text-left">Fragility</th>
-                <th className="px-3 py-2 border-b text-left">Overall</th>
+              <tr>
+                <SortableHeader
+                  label="Patent"
+                  active={riskSort.key === "patent"}
+                  direction={riskSort.direction}
+                  onClick={() => handleRiskSort("patent")}
+                />
+                <SortableHeader
+                  label="Assignee"
+                  active={riskSort.key === "assignee"}
+                  direction={riskSort.direction}
+                  onClick={() => handleRiskSort("assignee")}
+                />
+                <SortableHeader
+                  label="Forward citations"
+                  active={riskSort.key === "fwd"}
+                  direction={riskSort.direction}
+                  onClick={() => handleRiskSort("fwd")}
+                />
+                <SortableHeader
+                  label="From competitors"
+                  active={riskSort.key === "from_competitors"}
+                  direction={riskSort.direction}
+                  onClick={() => handleRiskSort("from_competitors")}
+                />
+                <SortableHeader
+                  label="Backward cites"
+                  active={riskSort.key === "bwd"}
+                  direction={riskSort.direction}
+                  onClick={() => handleRiskSort("bwd")}
+                />
+                <SortableHeader
+                  label="Exposure"
+                  active={riskSort.key === "exposure"}
+                  direction={riskSort.direction}
+                  onClick={() => handleRiskSort("exposure")}
+                />
+                <SortableHeader
+                  label="Fragility"
+                  active={riskSort.key === "fragility"}
+                  direction={riskSort.direction}
+                  onClick={() => handleRiskSort("fragility")}
+                />
+                <SortableHeader
+                  label="Overall"
+                  active={riskSort.key === "overall"}
+                  direction={riskSort.direction}
+                  onClick={() => handleRiskSort("overall")}
+                />
               </tr>
             </thead>
             <tbody>
               {pagedRiskRows.map((p) => (
                 <tr key={p.pub_id} className="odd:bg-white even:bg-slate-50/60">
                   <td className="px-3 py-2 align-top">
-                    <a href={googlePatentsUrl(p.pub_id)} target="_blank" rel="noreferrer" className="text-[#5FA8D2] font-semibold hover:underline">
+                    <a href={googlePatentsUrl(p.pub_id)} target="_blank" rel="noreferrer" className="text-[#5FA8D2] font-medium text-xs hover:underline">
                       {p.pub_id}
                     </a>
                     <div className="text-xs text-[#102A43]">{p.title}</div>
@@ -1025,7 +1189,14 @@ function EncroachmentCard({ scope, scopeVersion, tokenGetter, competitorNames }:
 
   return (
     <div className={`${cardClass} relative`}>
-      <div className="flex flex-col gap-3 mb-3 sm:flex-row sm:items-start sm:gap-4">
+      <button
+        className="refresh-btn absolute right-5 top-2 px-4 text-3xl font-semibold"
+        disabled={!hasTargets || loading}
+        onClick={load}
+      >
+        {loading ? "…" : "⟳"}
+      </button>
+      <div className="flex flex-col gap-3 mb-3 pr-12 sm:flex-row sm:items-start sm:gap-4">
         <SectionHeader title="Assignee Encroachment" subtitle="Other assignee forward citations into a portfolio." />
         <div className="flex flex-col gap-2 items-start sm:ml-auto sm:flex-row sm:items-start sm:gap-3">
           <div className="flex flex-wrap items-center gap-3 sm:justify-end sm:min-w-[200px]">
@@ -1052,13 +1223,6 @@ function EncroachmentCard({ scope, scopeVersion, tokenGetter, competitorNames }:
               />
             </label>
           </div>
-          <button
-            className="refresh-btn mt-1 shrink-0 px-4 text-3xl font-semibold sm:mt-0"
-            disabled={!hasTargets || loading}
-            onClick={load}
-          >
-            {loading ? "…" : "⟳"}
-          </button>
         </div>
       </div>
       {!hasTargets ? (
@@ -1346,94 +1510,121 @@ export default function CitationPage() {
           <div className="flex items-start justify-between gap-3 mb-3">
             <MainHeader title="Scope" subtitle="Define portfolio, time window, and competitors for all widgets." />
           </div>
-          <div className="space-y-4">
-            <div className="flex flex-wrap gap-3">
-              {(["assignee", "pub", "search"] as ScopeMode[]).map((mode) => (
-                <button
-                  key={mode}
-                  className={`px-4 py-2 rounded-full border text-xs font-semibold ${
-                    scopeState.mode === mode ? "bg-sky-600 text-white border-sky-600" : "bg-white text-[#102A43] border-slate-200"
-                  }`}
-                  onClick={() => switchMode(mode)}
+          <div className="space-y-5">
+            <div className="flex flex-col gap-3 md:flex-row md:items-start">
+              <div className="md:w-56">
+                <div className={fieldLabel}>Scope picker</div>
+                <select
+                  value={scopeState.mode}
+                  onChange={(e) => switchMode(e.target.value as ScopeMode)}
+                  className={selectClass}
                 >
-                  {mode === "assignee" ? "Assignee" : mode === "pub" ? "Patent/Pub #" : "Search Filters"}
-                </button>
-              ))}
+                  <option value="assignee">Assignee</option>
+                  <option value="pub">Patent/Pub #</option>
+                  <option value="search">Search Filters</option>
+                </select>
+              </div>
+              <div className="flex-1 space-y-3">
+                {scopeState.mode === "assignee" && (
+                  <div>
+                    <div className={fieldLabel}>Target assignee(s)</div>
+                    <textarea
+                      value={scopeState.focusAssigneeInput}
+                      onChange={(e) =>
+                        setScopeState((s) => ({
+                          ...s,
+                          focusAssigneeInput: e.target.value,
+                          focusAssigneeNames: parseListInput(e.target.value),
+                        }))
+                      }
+                      rows={3}
+                      placeholder="NVIDIA, IBM, Samsung"
+                      className={inputClass}
+                    />
+                    <p className="text-[11px] text-[#3A506B] mt-1">
+                      Enter one name per line; similarity matching will include aliases automatically.
+                    </p>
+                  </div>
+                )}
+                {scopeState.mode === "pub" && (
+                  <div>
+                    <div className={fieldLabel}>Portfolio patents/publications</div>
+                    <textarea
+                      value={scopeState.pubIdsInput}
+                      onChange={(e) =>
+                        setScopeState((s) => ({
+                          ...s,
+                          pubIdsInput: e.target.value,
+                          pubIds: parseListInput(e.target.value, { allowSpaceDelimiter: true }),
+                        }))
+                      }
+                      rows={4}
+                      placeholder="US-12345678-B1, US-20250001234-A1"
+                      className={inputClass}
+                    />
+                  </div>
+                )}
+                {scopeState.mode === "search" && (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <div className={fieldLabel}>Keyword</div>
+                      <input
+                        type="text"
+                        value={scopeState.keyword}
+                        onChange={(e) => setScopeState((s) => ({ ...s, keyword: e.target.value }))}
+                        placeholder="Generative AI safety…"
+                        className={inputClass}
+                      />
+                    </div>
+                    <div>
+                      <div className={fieldLabel}>CPC</div>
+                      <input
+                        type="text"
+                        value={scopeState.cpc}
+                        onChange={(e) => setScopeState((s) => ({ ...s, cpc: e.target.value }))}
+                        placeholder="G06N, H04W…"
+                        className={inputClass}
+                      />
+                    </div>
+                    <div>
+                      <div className={fieldLabel}>Assignee</div>
+                      <input
+                        type="text"
+                        value={scopeState.assigneeFilter}
+                        onChange={(e) => setScopeState((s) => ({ ...s, assigneeFilter: e.target.value }))}
+                        placeholder="Nvidia"
+                        className={inputClass}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
-            {scopeState.mode === "assignee" && (
-              <div>
-                <div className={fieldLabel}>Target assignee(s)</div>
-                <textarea
-                  value={scopeState.focusAssigneeInput}
-                  onChange={(e) =>
-                    setScopeState((s) => ({
-                      ...s,
-                      focusAssigneeInput: e.target.value,
-                      focusAssigneeNames: parseListInput(e.target.value),
-                    }))
-                  }
-                  rows={3}
-                  placeholder="NVIDIA, IBM, Samsung"
-                  className={inputClass}
-                />
-                <p className="text-[11px] text-[#3A506B] mt-1">
-                  Enter one name per line; similarity matching will include aliases automatically.
-                </p>
-              </div>
-            )}
-            {scopeState.mode === "pub" && (
-              <div>
-                <div className={fieldLabel}>Portfolio patents/publications</div>
-                <textarea
-                  value={scopeState.pubIdsInput}
-                  onChange={(e) =>
-                    setScopeState((s) => ({
-                      ...s,
-                      pubIdsInput: e.target.value,
-                      pubIds: parseListInput(e.target.value, { allowSpaceDelimiter: true }),
-                    }))
-                  }
-                  rows={4}
-                  placeholder="US-12345678-B1, US-20250001234-A1"
-                  className={inputClass}
-                />
-              </div>
-            )}
-            {scopeState.mode === "search" && (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <div className={fieldLabel}>Keyword</div>
-                  <input
-                    type="text"
-                    value={scopeState.keyword}
-                    onChange={(e) => setScopeState((s) => ({ ...s, keyword: e.target.value }))}
-                    placeholder="Generative AI safety…"
-                    className={inputClass}
-                  />
-                </div>
-                <div>
-                  <div className={fieldLabel}>CPC</div>
-                  <input
-                    type="text"
-                    value={scopeState.cpc}
-                    onChange={(e) => setScopeState((s) => ({ ...s, cpc: e.target.value }))}
-                    placeholder="G06N, H04W…"
-                    className={inputClass}
-                  />
-                </div>
-                <div>
-                  <div className={fieldLabel}>Assignee</div>
-                  <input
-                    type="text"
-                    value={scopeState.assigneeFilter}
-                    onChange={(e) => setScopeState((s) => ({ ...s, assigneeFilter: e.target.value }))}
-                    placeholder="Nvidia"
-                    className={inputClass}
-                  />
-                </div>
-              </div>
-            )}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div>
+                <div className={fieldLabel}>Competitor assignee(s)</div>
+                <textarea
+                  rows={2}
+                  value={scopeState.competitorsInput}
+                  onChange={(e) =>
+                    setScopeState((s) => ({
+                      ...s,
+                      competitorsInput: e.target.value,
+                      competitors: parseListInput(e.target.value),
+                    }))
+                  }
+                  placeholder="Competitor names, one per line"
+                  className={inputClass}
+                />
+                <label className="mt-1 inline-flex items-center gap-2 text-xs text-[#3A506B]">
+                  <input
+                    type="checkbox"
+                    checked={scopeState.competitorToggle}
+                    onChange={(e) => setScopeState((s) => ({ ...s, competitorToggle: e.target.checked }))}
+                  />
+                  Limit competitors to listed
+                </label>
+              </div>
               <div>
                 <div className={fieldLabel}>From (citing)</div>
                 <input
@@ -1463,32 +1654,8 @@ export default function CitationPage() {
                   <option value="quarter">Quarter</option>
                 </select>
               </div>
-              <div>
-                <div className={fieldLabel}>Competitor assignee(s)</div>
-                <textarea
-                  rows={2}
-                  value={scopeState.competitorsInput}
-                  onChange={(e) =>
-                    setScopeState((s) => ({
-                      ...s,
-                      competitorsInput: e.target.value,
-                      competitors: parseListInput(e.target.value),
-                    }))
-                  }
-                  placeholder="Competitor names, one per line"
-                  className={inputClass}
-                />
-                <label className="mt-1 inline-flex items-center gap-2 text-xs text-[#3A506B]">
-                  <input
-                    type="checkbox"
-                    checked={scopeState.competitorToggle}
-                    onChange={(e) => setScopeState((s) => ({ ...s, competitorToggle: e.target.checked }))}
-                  />
-                  Limit competitors to listed
-                </label>
-              </div>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 justify-end">
               <button className="btn-modern h-10 px-5 text-xs font-semibold" onClick={applyScope}>
                 Apply
               </button>
