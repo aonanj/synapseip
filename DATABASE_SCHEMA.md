@@ -134,12 +134,10 @@ Links patents in the `patent` table to the patents and publications it cites via
 
 * `patent_citation_pkey` PRIMARY KEY, btree `(id)`
 * `patent_citation_cited_application_number_idx` btree `(cited_application_number)`
-* `patent_citation_citing_pub_id_cited_application_number_key` UNIQUE CONSTRAINT, btree `(citing_pub_id, cited_application_number)`
 * `patent_citation_citing_pub_id_idx` btree `(citing_pub_id)`
 
 ### Foreign Key Constraints
 
-* `patent_citation_cited_application_number_fkey` FOREIGN KEY `(cited_application_number)` REFERENCES `patent(application_number)` ON DELETE SET NULL
 * `patent_citation_citing_pub_id_fkey` FOREIGN KEY `(citing_pub_id)` REFERENCES `patent(pub_id)` ON DELETE CASCADE
 
 ---

@@ -283,7 +283,7 @@ export default function PricingPlans({ plans, onSubscribe }: PricingPlansProps) 
             </div>
             <h4 className="font-semibold mb-2" style={{ color: '#102A43' }}>Powerful Search</h4>
             <p className="text-sm text-slate-600">
-              Search 56,000+ patents and applications with keyword and semantic search
+              Search 57,000+ patents and applications with keyword and semantic search
             </p>
           </div>
 

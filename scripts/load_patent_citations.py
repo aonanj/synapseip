@@ -51,7 +51,6 @@ INSERT_CITATION_SQL = """
 INSERT INTO patent_citation (citing_pub_id, cited_pub_id, cited_application_number)
 SELECT %(citing_pub_id)s, %(cited_pub_id)s, %(cited_application_number)s
 WHERE EXISTS (SELECT 1 FROM patent WHERE pub_id = %(citing_pub_id)s)
-ON CONFLICT (citing_pub_id, cited_application_number) DO NOTHING;
 """
 
 
