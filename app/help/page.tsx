@@ -86,6 +86,7 @@ export default function HelpIndexPage() {
             <li><strong>Search & Trends</strong>: Discover patents and publications through hybrid keyword and semantic search, visualize filing trends over time, by CPC code, or by assignee, and set up proactive alerts for new filings that match configurable criteria;</li>
             <li><strong>Scope Analysis</strong>: Input a product description, invention disclosure, or draft claim set to run a semantic comparison against independent claims in the SynapseIP database. The closest matching independent claims are returned with similarity scoring for preliminary FTO and infringement-risk analysis.;</li>
             <li><strong>IP Overview</strong>: Investigate the AI/ML IP landscape through information and insights on subject matter saturation, activity rates, momentum, and CPC distribution of AI/ML-related patents and publications. Option to focus on specific assignees.</li>
+            <li><strong>Citation Intelligence</strong>: Analyze forward-citation impact, cross-assignee dependencies, competitor risk signals, and encroachment trends using the patent_citation dataset with portfolio-aware filters.</li>
           </ul>
         </div>
 
@@ -206,6 +207,62 @@ export default function HelpIndexPage() {
             >
               <p style={{ fontSize: 13, lineHeight: 1.5, color: TEXT_COLOR, margin: 0 }}>
                 <strong>Example Use Cases</strong>: AI/ML investment decisions, R&D opportunity identification, competitive threat assessment, and understanding where R&D focus is shifting in and around specific technology areas in the context of AI/ML.
+              </p>
+            </div>
+          </div>
+
+          {/* Citation Intelligence Card */}
+          <div
+            className="glass-card"
+            style={{
+              ...cardBaseStyle,
+              border: "1.5px solid rgba(107, 174, 219, 0.75)",
+              boxShadow: "0 30px 60px rgba(107, 174, 219, 0.32)",
+              transition: "transform 0.2s ease, box-shadow 0.2s ease",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: 16 }}>
+              <div style={{ flex: 1, minWidth: 250 }}>
+                <h3 style={{ margin: 0, fontSize: 24, fontWeight: 700, color: TEXT_COLOR }}>Citation Intelligence</h3>
+                <p style={{ marginTop: 8, fontSize: 13, color: "#627D98", marginBottom: 0 }}>
+                  Portfolio-aware forward citations, dependencies, risk radar, and encroachment insights
+                </p>
+              </div>
+              <a
+                href="/help/citation"
+                className="btn-modern"
+                style={linkButtonStyle}
+              >
+                View Guide →
+              </a>
+            </div>
+
+            <p style={{ marginTop: 20, fontSize: 14, lineHeight: 1.5, color: TEXT_COLOR, marginBottom: 8 }}>
+              The Citation Intelligence page layers analytics on the patent_citation table to reveal who cites your portfolio, where cross-assignee dependencies exist, and which competitors are encroaching on your space. A shared scope card defines portfolio and time window once, then four widgets refresh in parallel.
+            </p>
+
+            <div style={{ display: "grid", gap: 12 }}>
+              <DetailItem icon="⬩" title="Scope Panel" text="Switch between assignee IDs, explicit pub_ids, or search filters; set citing date window, bucket granularity, and optional competitor list." />
+              <DetailItem icon="⬩" title="Forward-Citation Impact" text="Tiles for total citations and distinct citing patents, a bucketed influence timeline, and a ranked table of top cited assets with velocity." />
+              <DetailItem icon="⬩" title="Dependency Matrix" text="Citing→cited assignee pairs with min-citation threshold and optional normalization to expose reliance patterns." />
+              <DetailItem icon="⬩" title="Risk Radar" text="Per-patent exposure and fragility scores combining forward competitor activity and backward-citation concentration with CSV export." />
+              <DetailItem icon="⬩" title="Encroachment" text="Timeline and table showing competitor citing patterns into target assignees, with velocity and encroachment scores." />
+            </div>
+
+            <div
+              style={{
+                marginTop: 20,
+                padding: 18,
+                background: "rgba(57, 80, 107, 0.22)",
+                borderRadius: 14,
+                border: "1px solid rgba(155, 199, 255, 0.35)",
+                boxShadow: "0 14px 26px rgba(107, 174, 219, 0.18)",
+                backdropFilter: "blur(12px)",
+                WebkitBackdropFilter: "blur(12px)",
+              }}
+            >
+              <p style={{ fontSize: 13, lineHeight: 1.5, color: TEXT_COLOR, margin: 0 }}>
+                <strong>Best practices</strong>: keep scopes focused (target assignees or curated pub IDs), use month buckets for recent activity and quarter buckets for multi-year trends, and apply competitor lists to sharpen Risk Radar and Encroachment views.
               </p>
             </div>
           </div>
