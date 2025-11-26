@@ -145,8 +145,8 @@ const sectionSubtitle = "text-xs text-slate-600";
 
 const controlBaseClass =
   "border border-slate-200/70 bg-white/80 text-slate-800 shadow-[0_12px_22px_rgba(15,23,42,0.18)] backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-sky-300 focus:border-sky-300 transition";
-const inputClass = `w-auto rounded-xl px-2 py-2 text-xs ${controlBaseClass}`;
-const selectClass = `w-auto rounded-xl px-2 py-2 text-xs ${controlBaseClass}`;
+const inputClass = `w-full rounded-xl px-2 py-2 text-xs ${controlBaseClass}`;
+const selectClass = `w-full rounded-xl px-2 py-2 text-xs ${controlBaseClass}`;
 const inlineInputClass = `h-8 rounded-lg px-2 text-xs ${controlBaseClass}`;
 
 const ROWS_PER_PAGE = 5;
