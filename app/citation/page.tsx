@@ -136,9 +136,9 @@ const cardClass = "glass-card p-5 rounded-xl shadow-xl border border-white/50";
 
 const fieldLabel = "text-xs font-semibold uppercase tracking-wide text-slate-500";
 
-const sectionTitle = "text-lg font-semibold text-slate-800";
+const sectionTitle = "text-base font-semibold text-slate-800";
 
-const sectionSubtitle = "text-sm text-slate-600";
+const sectionSubtitle = "text-xs text-slate-600";
 
 function parseListInput(value: string): string[] {
   return value
@@ -180,8 +180,8 @@ function ScoreBar({ value, color = "sky" }: { value: number; color?: "sky" | "am
 function MetricTile({ label, value, hint }: { label: string; value: string | number; hint?: string }) {
   return (
     <div className="rounded-xl bg-white/70 border border-slate-200 px-4 py-3 shadow-sm">
-      <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide">{label}</div>
-      <div className="text-2xl font-semibold text-slate-900 mt-1">{value}</div>
+      <div className="text-base font-semibold text-slate-500 uppercase tracking-wide">{label}</div>
+      <div className="text-base font-semibold text-slate-900 mt-1">{value}</div>
       {hint ? <div className="text-xs text-slate-500 mt-1">{hint}</div> : null}
     </div>
   );
@@ -200,7 +200,7 @@ function LineChart({
 }) {
   if (!points.length) {
     return (
-      <div className="h-[220px] grid place-items-center text-sm text-slate-500">
+      <div className="h-[220px] grid place-items-center text-xs text-slate-500">
         No timeline data for this scope.
       </div>
     );
@@ -344,7 +344,7 @@ function ForwardImpactCard({ scope, scopeVersion, tokenGetter }: ForwardImpactCa
       <div className="flex items-start justify-between gap-3 mb-3">
         <SectionHeader title="Forward-Citation Impact" subtitle="Velocity, timeline, and top cited patents." />
         <div className="flex items-center gap-2">
-          <label className="flex items-center gap-2 text-sm text-slate-600">
+          <label className="flex items-center gap-2 text-xs text-slate-600">
             <span>Top N</span>
             <input
               type="number"
@@ -352,15 +352,15 @@ function ForwardImpactCard({ scope, scopeVersion, tokenGetter }: ForwardImpactCa
               max={200}
               value={topN}
               onChange={(e) => setTopN(Number(e.target.value) || 1)}
-              className="h-9 w-20 rounded border border-slate-200 px-2 text-sm"
+              className="h-9 w-20 rounded border border-slate-200 px-2 text-xs"
             />
           </label>
-          <label className="flex items-center gap-2 text-sm text-slate-600">
+          <label className="flex items-center gap-2 text-xs text-slate-600">
             <span>Bucket</span>
             <select
               value={bucketOverride}
               onChange={(e) => setBucketOverride(e.target.value as any)}
-              className="h-9 rounded border border-slate-200 px-2 text-sm"
+              className="h-9 rounded border border-slate-200 px-2 text-xs"
             >
               <option value="">Use scope</option>
               <option value="month">Month</option>
@@ -369,20 +369,20 @@ function ForwardImpactCard({ scope, scopeVersion, tokenGetter }: ForwardImpactCa
           </label>
           <button
             onClick={load}
-            className="btn-outline h-9 px-4 text-sm font-semibold"
+            className="btn-outline h-9 px-4 text-xs font-semibold"
             disabled={loading || !scope}
           >
-            {loading ? "Loading…" : "Refresh"}
+            {loading ? "…" : "↺"}
           </button>
         </div>
       </div>
 
       {!scope ? (
-        <div className="text-sm text-slate-600">Apply a scope to view citation impact.</div>
+        <div className="text-xs text-slate-600">Apply a scope to view citation impact.</div>
       ) : error ? (
-        <div className="text-sm text-rose-600">Error: {error}</div>
+        <div className="text-xs text-rose-600">Error: {error}</div>
       ) : loading && !data ? (
-        <div className="text-sm text-slate-500">Loading…</div>
+        <div className="text-xs text-slate-500">…</div>
       ) : data ? (
         <div className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -421,12 +421,12 @@ function ForwardImpactCard({ scope, scopeVersion, tokenGetter }: ForwardImpactCa
                       <a href={googlePatentsUrl(p.pub_id)} target="_blank" rel="noreferrer" className="text-sky-700 font-semibold hover:underline">
                         {p.pub_id}
                       </a>
-                      <div className="text-slate-700 text-sm">{p.title}</div>
+                      <div className="text-slate-700 text-xs">{p.title}</div>
                     </td>
-                    <td className="px-3 py-2 align-top text-sm text-slate-700">{p.assignee_name || "—"}</td>
-                    <td className="px-3 py-2 align-top text-sm text-slate-700">{fmtDate(p.pub_date)}</td>
-                    <td className="px-3 py-2 align-top text-sm font-semibold text-slate-800">{p.fwd_citation_count}</td>
-                    <td className="px-3 py-2 align-top text-sm text-slate-700">
+                    <td className="px-3 py-2 align-top text-xs text-slate-700">{p.assignee_name || "—"}</td>
+                    <td className="px-3 py-2 align-top text-xs text-slate-700">{fmtDate(p.pub_date)}</td>
+                    <td className="px-3 py-2 align-top text-xs font-semibold text-slate-800">{p.fwd_citation_count}</td>
+                    <td className="px-3 py-2 align-top text-xs text-slate-700">
                       <div className="flex items-center gap-2">
                         <div className="w-16">
                           <ScoreBar value={Math.min(100, p.fwd_citation_velocity * 20)} />
@@ -434,8 +434,8 @@ function ForwardImpactCard({ scope, scopeVersion, tokenGetter }: ForwardImpactCa
                         <span>{p.fwd_citation_velocity.toFixed(2)}/mo</span>
                       </div>
                     </td>
-                    <td className="px-3 py-2 align-top text-sm text-slate-700">{fmtDate(p.first_citation_date)}</td>
-                    <td className="px-3 py-2 align-top text-sm text-slate-700">{fmtDate(p.last_citation_date)}</td>
+                    <td className="px-3 py-2 align-top text-xs text-slate-700">{fmtDate(p.first_citation_date)}</td>
+                    <td className="px-3 py-2 align-top text-xs text-slate-700">{fmtDate(p.last_citation_date)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -443,7 +443,7 @@ function ForwardImpactCard({ scope, scopeVersion, tokenGetter }: ForwardImpactCa
           </div>
         </div>
       ) : (
-        <div className="text-sm text-slate-600">No data for this scope.</div>
+        <div className="text-xs text-slate-600">No data for this scope.</div>
       )}
     </div>
   );
@@ -509,7 +509,7 @@ function DependencyMatrixCard({ scope, scopeVersion, tokenGetter }: DependencyMa
       <div className="flex items-start justify-between gap-3 mb-3">
         <SectionHeader title="Cross-Assignee Dependency" subtitle="Citing → cited relationships across portfolios." />
         <div className="flex items-center gap-3">
-          <label className="flex items-center gap-2 text-sm text-slate-600">
+          <label className="flex items-center gap-2 text-xs text-slate-600">
             <span>Min citations</span>
             <input
               type="number"
@@ -517,28 +517,28 @@ function DependencyMatrixCard({ scope, scopeVersion, tokenGetter }: DependencyMa
               max={50}
               value={minCitations}
               onChange={(e) => setMinCitations(Number(e.target.value) || 1)}
-              className="h-9 w-20 rounded border border-slate-200 px-2 text-sm"
+              className="h-9 w-20 rounded border border-slate-200 px-2 text-xs"
             />
           </label>
-          <label className="flex items-center gap-2 text-sm text-slate-600">
+          <label className="flex items-center gap-2 text-xs text-slate-600">
             <input type="checkbox" checked={normalize} onChange={(e) => setNormalize(e.target.checked)} />
             <span>Normalize</span>
           </label>
-          <button onClick={load} className="btn-outline h-9 px-4 text-sm font-semibold" disabled={!scope || loading}>
-            {loading ? "Loading…" : "Refresh"}
+          <button onClick={load} className="btn-outline h-9 px-4 text-xs font-semibold" disabled={!scope || loading}>
+            {loading ? "…" : "↺"}
           </button>
         </div>
       </div>
       {!scope ? (
-        <div className="text-sm text-slate-600">Apply a scope to view dependency insights.</div>
+        <div className="text-xs text-slate-600">Apply a scope to view dependency insights.</div>
       ) : !hasPortfolio ? (
-        <div className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
+        <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
           Set a target portfolio (assignee or pub IDs) for meaningful dependency analysis.
         </div>
       ) : error ? (
-        <div className="text-sm text-rose-600">Error: {error}</div>
+        <div className="text-xs text-rose-600">Error: {error}</div>
       ) : loading && !data ? (
-        <div className="text-sm text-slate-500">Loading…</div>
+        <div className="text-xs text-slate-500">…</div>
       ) : data ? (
         <div className="space-y-4">
           <div className="overflow-x-auto">
@@ -565,7 +565,7 @@ function DependencyMatrixCard({ scope, scopeVersion, tokenGetter }: DependencyMa
                       const pct = val / maxVal;
                       const bg = `rgba(14,165,233,${0.15 + pct * 0.6})`;
                       return (
-                        <td key={col} className="px-3 py-2 border-b text-sm text-slate-800" style={{ background: bg }}>
+                        <td key={col} className="px-3 py-2 border-b text-xs text-slate-800" style={{ background: bg }}>
                           {val}
                           {normalize && edge?.citing_to_cited_pct != null ? (
                             <div className="text-[11px] text-slate-600">{(edge.citing_to_cited_pct * 100).toFixed(1)}%</div>
@@ -591,10 +591,10 @@ function DependencyMatrixCard({ scope, scopeVersion, tokenGetter }: DependencyMa
               <tbody>
                 {topEdges.map((e, idx) => (
                   <tr key={`${e.citing_assignee_name}-${idx}`} className="odd:bg-white even:bg-slate-50/60">
-                    <td className="px-3 py-2 text-sm text-slate-800">{e.citing_assignee_name || "Unknown"}</td>
-                    <td className="px-3 py-2 text-sm text-slate-800">{e.cited_assignee_name || "Unknown"}</td>
-                    <td className="px-3 py-2 text-sm font-semibold text-slate-900">{e.citation_count}</td>
-                    <td className="px-3 py-2 text-sm text-slate-700">
+                    <td className="px-3 py-2 text-xs text-slate-800">{e.citing_assignee_name || "Unknown"}</td>
+                    <td className="px-3 py-2 text-xs text-slate-800">{e.cited_assignee_name || "Unknown"}</td>
+                    <td className="px-3 py-2 text-xs font-semibold text-slate-900">{e.citation_count}</td>
+                    <td className="px-3 py-2 text-xs text-slate-700">
                       {normalize && e.citing_to_cited_pct != null ? `${(e.citing_to_cited_pct * 100).toFixed(1)}%` : "—"}
                     </td>
                   </tr>
@@ -604,7 +604,7 @@ function DependencyMatrixCard({ scope, scopeVersion, tokenGetter }: DependencyMa
           </div>
         </div>
       ) : (
-        <div className="text-sm text-slate-600">No dependency edges for this scope.</div>
+        <div className="text-xs text-slate-600">No dependency edges for this scope.</div>
       )}
     </div>
   );
@@ -706,7 +706,7 @@ function RiskRadarCard({ scope, scopeVersion, tokenGetter, competitorIds }: Risk
       <div className="flex items-start justify-between gap-3 mb-3">
         <SectionHeader title="Risk Radar" subtitle="Forward exposure + backward fragility indicators." />
         <div className="flex items-center gap-3">
-          <label className="flex items-center gap-2 text-sm text-slate-600">
+          <label className="flex items-center gap-2 text-xs text-slate-600">
             <span>Top N</span>
             <input
               type="number"
@@ -714,30 +714,30 @@ function RiskRadarCard({ scope, scopeVersion, tokenGetter, competitorIds }: Risk
               max={400}
               value={topN}
               onChange={(e) => setTopN(Number(e.target.value) || 10)}
-              className="h-9 w-20 rounded border border-slate-200 px-2 text-sm"
+              className="h-9 w-20 rounded border border-slate-200 px-2 text-xs"
             />
           </label>
           <select
             value={sortKey}
             onChange={(e) => setSortKey(e.target.value as any)}
-            className="h-9 rounded border border-slate-200 px-3 text-sm"
+            className="h-9 rounded border border-slate-200 px-3 text-xs"
           >
             <option value="overall">Overall risk</option>
             <option value="exposure">Exposure</option>
             <option value="fragility">Fragility</option>
             <option value="fwd">Forward citations</option>
           </select>
-          <button className="btn-outline h-9 px-4 text-sm font-semibold" onClick={exportCsv} disabled={!data?.patents?.length}>
+          <button className="btn-outline h-9 px-4 text-xs font-semibold" onClick={exportCsv} disabled={!data?.patents?.length}>
             Export CSV
           </button>
         </div>
       </div>
       {!scope ? (
-        <div className="text-sm text-slate-600">Apply a scope to view risk signals.</div>
+        <div className="text-xs text-slate-600">Apply a scope to view risk signals.</div>
       ) : error ? (
-        <div className="text-sm text-rose-600">Error: {error}</div>
+        <div className="text-xs text-rose-600">Error: {error}</div>
       ) : loading && !data ? (
-        <div className="text-sm text-slate-500">Loading…</div>
+        <div className="text-xs text-slate-500">…</div>
       ) : data ? (
         <div className="overflow-x-auto">
           <table className="min-w-full border-collapse">
@@ -760,26 +760,26 @@ function RiskRadarCard({ scope, scopeVersion, tokenGetter, competitorIds }: Risk
                     <a href={googlePatentsUrl(p.pub_id)} target="_blank" rel="noreferrer" className="text-sky-700 font-semibold hover:underline">
                       {p.pub_id}
                     </a>
-                    <div className="text-sm text-slate-700">{p.title}</div>
+                    <div className="text-xs text-slate-700">{p.title}</div>
                   </td>
-                  <td className="px-3 py-2 text-sm text-slate-700">{p.assignee_name || "—"}</td>
-                  <td className="px-3 py-2 text-sm font-semibold text-slate-900">{p.fwd_total}</td>
-                  <td className="px-3 py-2 text-sm text-slate-700">
+                  <td className="px-3 py-2 text-xs text-slate-700">{p.assignee_name || "—"}</td>
+                  <td className="px-3 py-2 text-xs font-semibold text-slate-900">{p.fwd_total}</td>
+                  <td className="px-3 py-2 text-xs text-slate-700">
                     {p.fwd_from_competitors}{" "}
                     {p.fwd_competitor_ratio != null ? (
                       <span className="text-xs text-slate-500">({(p.fwd_competitor_ratio * 100).toFixed(1)}%)</span>
                     ) : null}
                   </td>
-                  <td className="px-3 py-2 text-sm text-slate-700">{p.bwd_total}</td>
-                  <td className="px-3 py-2 text-sm text-slate-700">
+                  <td className="px-3 py-2 text-xs text-slate-700">{p.bwd_total}</td>
+                  <td className="px-3 py-2 text-xs text-slate-700">
                     <div className="w-24"><ScoreBar value={p.exposure_score} color="sky" /></div>
                     <div className="text-xs text-slate-500 mt-1">{p.exposure_score.toFixed(1)}</div>
                   </td>
-                  <td className="px-3 py-2 text-sm text-slate-700">
+                  <td className="px-3 py-2 text-xs text-slate-700">
                     <div className="w-24"><ScoreBar value={p.fragility_score} color="amber" /></div>
                     <div className="text-xs text-slate-500 mt-1">{p.fragility_score.toFixed(1)}</div>
                   </td>
-                  <td className="px-3 py-2 text-sm text-slate-800 font-semibold">
+                  <td className="px-3 py-2 text-xs text-slate-800 font-semibold">
                     <div className="w-24"><ScoreBar value={p.overall_risk_score} color="rose" /></div>
                     <div className="text-xs text-slate-500 mt-1">{p.overall_risk_score.toFixed(1)}</div>
                   </td>
@@ -789,7 +789,7 @@ function RiskRadarCard({ scope, scopeVersion, tokenGetter, competitorIds }: Risk
           </table>
         </div>
       ) : (
-        <div className="text-sm text-slate-600">No risk signals found for this scope.</div>
+        <div className="text-xs text-slate-600">No risk signals found for this scope.</div>
       )}
     </div>
   );
@@ -873,17 +873,17 @@ function EncroachmentCard({ scope, scopeVersion, tokenGetter, competitorIds }: E
 
   return (
     <div className={cardClass}>
-      <div className="flex items-start justify-between gap-3 mb-3">
-        <SectionHeader title="Assignee Encroachment" subtitle="Competitor forward citations into your portfolio." />
-        <div className="flex items-center gap-3">
-          <label className="flex items-center gap-2 text-sm text-slate-600">
+      <div className="flex flex-col gap-3 mb-3 sm:flex-row sm:items-start sm:justify-between">
+        <SectionHeader title="Assignee Encroachment" subtitle="Other assignee forward citations into a portfolio." />
+        <div className="flex flex-wrap items-center gap-3">
+          <label className="flex items-center gap-2 text-xs text-slate-600">
             <span>Bucket</span>
-            <select value={bucket} onChange={(e) => setBucket(e.target.value as any)} className="h-9 rounded border border-slate-200 px-2 text-sm">
+            <select value={bucket} onChange={(e) => setBucket(e.target.value as any)} className="h-9 rounded border border-slate-200 px-2 text-xs">
               <option value="month">Month</option>
               <option value="quarter">Quarter</option>
             </select>
           </label>
-          <label className="flex items-center gap-2 text-sm text-slate-600">
+          <label className="flex items-center gap-2 text-xs text-slate-600">
             <span>Top competitors</span>
             <input
               type="number"
@@ -891,26 +891,26 @@ function EncroachmentCard({ scope, scopeVersion, tokenGetter, competitorIds }: E
               max={25}
               value={topK}
               onChange={(e) => setTopK(Number(e.target.value) || 3)}
-              className="h-9 w-20 rounded border border-slate-200 px-2 text-sm"
+              className="h-9 w-20 rounded border border-slate-200 px-2 text-xs"
             />
           </label>
-          <label className="flex items-center gap-2 text-sm text-slate-600">
+          <label className="flex items-center gap-2 text-xs text-slate-600">
             <input type="checkbox" checked={explicitOnly} onChange={(e) => setExplicitOnly(e.target.checked)} />
             <span>Only explicit competitors</span>
           </label>
-          <button className="btn-outline h-9 px-4 text-sm font-semibold" disabled={!hasTargets || loading} onClick={load}>
-            {loading ? "Loading…" : "Refresh"}
+          <button className="btn-outline h-9 px-4 text-xs font-semibold" disabled={!hasTargets || loading} onClick={load}>
+            {loading ? "…" : "↺"}
           </button>
         </div>
       </div>
       {!hasTargets ? (
-        <div className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
+        <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
           Define at least one target assignee in the Scope panel to view encroachment metrics.
         </div>
       ) : error ? (
-        <div className="text-sm text-rose-600">Error: {error}</div>
+        <div className="text-xs text-rose-600">Error: {error}</div>
       ) : loading && !data ? (
-        <div className="text-sm text-slate-500">Loading…</div>
+        <div className="text-xs text-slate-500">…</div>
       ) : data ? (
         <div className="space-y-4">
           {explicitOnly && (!competitorIds || competitorIds.length === 0) ? (
@@ -921,7 +921,7 @@ function EncroachmentCard({ scope, scopeVersion, tokenGetter, competitorIds }: E
           <div>
             <div className="flex items-center justify-between mb-2">
               <h3 className="font-semibold text-slate-800">Encroachment timeline</h3>
-              <div className="text-xs text-slate-500">Top {topK} competitors by citing patents</div>
+              <div className="text-xs text-slate-500">Top {topK} assignees by citing patents</div>
             </div>
             {filteredTimeline.length ? (
               <div className="overflow-x-auto">
@@ -959,14 +959,14 @@ function EncroachmentCard({ scope, scopeVersion, tokenGetter, competitorIds }: E
                 </svg>
               </div>
             ) : (
-              <div className="text-sm text-slate-600">No encroachment signals for this window.</div>
+              <div className="text-xs text-slate-600">No encroachment signals for this window.</div>
             )}
           </div>
           <div className="overflow-x-auto">
             <table className="min-w-full border-collapse">
               <thead>
                 <tr className="text-xs uppercase tracking-wide text-slate-500">
-                  <th className="px-3 py-2 border-b text-left">Competitor assignee</th>
+                  <th className="px-3 py-2 border-b text-left">Assignee</th>
                   <th className="px-3 py-2 border-b text-left">Total citing patents</th>
                   <th className="px-3 py-2 border-b text-left">Encroachment score</th>
                   <th className="px-3 py-2 border-b text-left">Velocity</th>
@@ -978,13 +978,13 @@ function EncroachmentCard({ scope, scopeVersion, tokenGetter, competitorIds }: E
                   .slice(0, topK)
                   .map((c, idx) => (
                     <tr key={`${c.competitor_assignee_id || idx}`} className="odd:bg-white even:bg-slate-50/60">
-                      <td className="px-3 py-2 text-sm text-slate-800">{c.competitor_assignee_name || "Unknown"}</td>
-                      <td className="px-3 py-2 text-sm font-semibold text-slate-900">{c.total_citing_patents}</td>
-                      <td className="px-3 py-2 text-sm text-slate-800">
+                      <td className="px-3 py-2 text-xs text-slate-800">{c.competitor_assignee_name || "Unknown"}</td>
+                      <td className="px-3 py-2 text-xs font-semibold text-slate-900">{c.total_citing_patents}</td>
+                      <td className="px-3 py-2 text-xs text-slate-800">
                         <div className="w-24"><ScoreBar value={c.encroachment_score} color="rose" /></div>
                         <div className="text-xs text-slate-500 mt-1">{c.encroachment_score.toFixed(1)}</div>
                       </td>
-                      <td className="px-3 py-2 text-sm text-slate-700">
+                      <td className="px-3 py-2 text-xs text-slate-700">
                         {c.velocity != null ? `${c.velocity.toFixed(2)} / bucket` : "—"}
                       </td>
                     </tr>
@@ -994,7 +994,7 @@ function EncroachmentCard({ scope, scopeVersion, tokenGetter, competitorIds }: E
           </div>
         </div>
       ) : (
-        <div className="text-sm text-slate-600">No encroachment results for this scope.</div>
+        <div className="text-xs text-slate-600">No encroachment results for this scope.</div>
       )}
     </div>
   );
@@ -1109,17 +1109,19 @@ export default function CitationPage() {
   }, []);
 
   if (!hydrated) {
-    return <div className="mx-auto max-w-7xl px-6 py-6 text-sm text-slate-600">Loading citation workspace…</div>;
+    return <div className="mx-auto max-w-7xl px-6 py-6 text-xs text-slate-600">Loading citation workspace…</div>;
   }
 
   return (
     <div style={pageWrapperStyle}>
       <div className="glass-surface" style={pageSurfaceStyle}>
         <div className="glass-card" style={{ ...cardBaseStyle }}>
-          <h1 className="text-3xl font-bold text-slate-900">Citation Intelligence</h1>
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-sky-600 mb-2">
+            Citation Workspace
+          </p>
+          <h1 style={{ color: TEXT_COLOR, fontSize: 22, fontWeight: 700 }}>Patent & Publication Citation Intelligence</h1>
           <p className="text-slate-700 max-w-4xl">
-            Analyze forward citations, cross-assignee dependencies, risk signals, and competitor encroachment using the patent_citation table. The layout follows the Search,
-            Trends, and IP Overview styling for a cohesive experience.
+            Discover forward citations, cross-assignee dependencies, risk signals, and assignee encroachment based on citation data published on patents and publications.
           </p>
         </div>
 
@@ -1132,7 +1134,7 @@ export default function CitationPage() {
               {(["assignee", "pub", "search"] as ScopeMode[]).map((mode) => (
                 <button
                   key={mode}
-                  className={`px-4 py-2 rounded-full border text-sm font-semibold ${
+                  className={`px-4 py-2 rounded-full border text-xs font-semibold ${
                     scopeState.mode === mode ? "bg-sky-600 text-white border-sky-600" : "bg-white text-slate-700 border-slate-200"
                   }`}
                   onClick={() => switchMode(mode)}
@@ -1150,30 +1152,30 @@ export default function CitationPage() {
                     onChange={(e) => setScopeState((s) => ({ ...s, focusAssigneeIds: parseListInput(e.target.value) }))}
                     rows={3}
                     placeholder="uuid-1, uuid-2"
-                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs"
                   />
                 </div>
                 <div>
-                  <div className={fieldLabel}>Assignee name contains</div>
+                  <div className={fieldLabel}>Assignee name</div>
                   <textarea
                     value={scopeState.focusAssigneeNames.join("\n")}
                     onChange={(e) => setScopeState((s) => ({ ...s, focusAssigneeNames: parseListInput(e.target.value) }))}
                     rows={3}
                     placeholder="IBM, Samsung"
-                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs"
                   />
                 </div>
               </div>
             )}
             {scopeState.mode === "pub" && (
               <div>
-                <div className={fieldLabel}>Portfolio patents (pub IDs)</div>
+                <div className={fieldLabel}>Portfolio patents/publications</div>
                 <textarea
                   value={scopeState.pubIds.join("\n")}
                   onChange={(e) => setScopeState((s) => ({ ...s, pubIds: parseListInput(e.target.value) }))}
                   rows={4}
-                  placeholder="US12345678A1, EP0987654B1"
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                  placeholder="US-12345678-B1, US-20250001234-A1"
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs"
                 />
               </div>
             )}
@@ -1186,7 +1188,7 @@ export default function CitationPage() {
                     value={scopeState.keyword}
                     onChange={(e) => setScopeState((s) => ({ ...s, keyword: e.target.value }))}
                     placeholder="Generative AI safety…"
-                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs"
                   />
                 </div>
                 <div>
@@ -1196,7 +1198,7 @@ export default function CitationPage() {
                     value={scopeState.cpc}
                     onChange={(e) => setScopeState((s) => ({ ...s, cpc: e.target.value }))}
                     placeholder="G06N, H04W…"
-                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs"
                   />
                 </div>
                 <div>
@@ -1206,7 +1208,7 @@ export default function CitationPage() {
                     value={scopeState.assigneeFilter}
                     onChange={(e) => setScopeState((s) => ({ ...s, assigneeFilter: e.target.value }))}
                     placeholder="Nvidia"
-                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs"
                   />
                 </div>
               </div>
@@ -1218,7 +1220,7 @@ export default function CitationPage() {
                   type="date"
                   value={scopeState.from}
                   onChange={(e) => setScopeState((s) => ({ ...s, from: e.target.value }))}
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs"
                 />
               </div>
               <div>
@@ -1227,7 +1229,7 @@ export default function CitationPage() {
                   type="date"
                   value={scopeState.to}
                   onChange={(e) => setScopeState((s) => ({ ...s, to: e.target.value }))}
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs"
                 />
               </div>
               <div>
@@ -1235,20 +1237,20 @@ export default function CitationPage() {
                 <select
                   value={scopeState.bucket}
                   onChange={(e) => setScopeState((s) => ({ ...s, bucket: e.target.value as any }))}
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs"
                 >
                   <option value="month">Month</option>
                   <option value="quarter">Quarter</option>
                 </select>
               </div>
               <div>
-                <div className={fieldLabel}>Competitor assignee(s)</div>
+                <div className={fieldLabel}>Other Assignee(s)</div>
                 <textarea
                   rows={2}
                   value={scopeState.competitors.join("\n")}
                   onChange={(e) => setScopeState((s) => ({ ...s, competitors: parseListInput(e.target.value) }))}
                   placeholder="UUIDs, one per line"
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs"
                 />
                 <label className="mt-1 inline-flex items-center gap-2 text-xs text-slate-600">
                   <input
@@ -1256,15 +1258,15 @@ export default function CitationPage() {
                     checked={scopeState.competitorToggle}
                     onChange={(e) => setScopeState((s) => ({ ...s, competitorToggle: e.target.checked }))}
                   />
-                  Limit competitors to explicit list
+                  Limit other assignees to explicit list
                 </label>
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <button className="btn-modern h-10 px-5 text-sm font-semibold" onClick={applyScope}>
+              <button className="btn-modern h-10 px-5 text-xs font-semibold" onClick={applyScope}>
                 Apply
               </button>
-              <button className="btn-outline h-10 px-5 text-sm font-semibold" onClick={clearScope}>
+              <button className="btn-outline h-10 px-5 text-xs font-semibold" onClick={clearScope}>
                 Clear
               </button>
             </div>
