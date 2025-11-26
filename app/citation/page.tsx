@@ -145,8 +145,8 @@ const sectionSubtitle = "text-xs text-slate-600";
 
 const controlBaseClass =
   "border border-slate-200/70 bg-white/80 text-slate-800 shadow-[0_12px_22px_rgba(15,23,42,0.18)] backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-sky-300 focus:border-sky-300 transition";
-const inputClass = `w-full rounded-xl px-2 py-2 text-xs ${controlBaseClass}`;
-const selectClass = `w-full rounded-xl px-2 py-2 text-xs ${controlBaseClass}`;
+const inputClass = `w-auto rounded-xl px-2 py-2 text-xs ${controlBaseClass}`;
+const selectClass = `w-auto rounded-xl px-2 py-2 text-xs ${controlBaseClass}`;
 const inlineInputClass = `h-8 rounded-lg px-2 text-xs ${controlBaseClass}`;
 
 const ROWS_PER_PAGE = 5;
@@ -1014,17 +1014,10 @@ function EncroachmentCard({ scope, scopeVersion, tokenGetter, competitorNames }:
 
   return (
     <div className={`${cardClass} relative`}>
-      <button
-        className="refresh-btn absolute right-5 top-5 px-4 text-3xl font-semibold"
-        disabled={!hasTargets || loading}
-        onClick={load}
-      >
-        {loading ? "…" : "⟳"}
-      </button>
-      <div className="flex flex-col gap-3 mb-3 pr-12 sm:flex-row sm:items-start sm:justify-between">
+      <div className="flex flex-col gap-3 mb-3 sm:flex-row sm:items-start sm:gap-4">
         <SectionHeader title="Assignee Encroachment" subtitle="Other assignee forward citations into a portfolio." />
-        <div className="flex flex-col gap-2 items-start sm:items-end">
-          <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-col gap-2 items-start sm:ml-auto sm:flex-row sm:items-start sm:gap-3">
+          <div className="flex flex-wrap items-center gap-3 sm:justify-end sm:min-w-[320px]">
             <label className="flex items-center gap-2 text-xs text-slate-600">
               <span>Bucket</span>
               <select value={bucket} onChange={(e) => setBucket(e.target.value as any)} className={inlineInputClass}>
@@ -1040,7 +1033,7 @@ function EncroachmentCard({ scope, scopeVersion, tokenGetter, competitorNames }:
               <span>Top competitors</span>
               <input
                 type="number"
-                min={3}
+                min={1}
                 max={25}
                 value={topK}
                 onChange={(e) => setTopK(Number(e.target.value) || 3)}
@@ -1048,6 +1041,13 @@ function EncroachmentCard({ scope, scopeVersion, tokenGetter, competitorNames }:
               />
             </label>
           </div>
+          <button
+            className="refresh-btn mt-1 shrink-0 px-4 text-3xl font-semibold sm:mt-0"
+            disabled={!hasTargets || loading}
+            onClick={load}
+          >
+            {loading ? "…" : "⟳"}
+          </button>
         </div>
       </div>
       {!hasTargets ? (
