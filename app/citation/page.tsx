@@ -2,6 +2,7 @@
 
 import { useAuth0 } from "@auth0/auth0-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import type { CSSProperties } from "react";
 
 type ScopeMode = "assignee" | "pub" | "search";
 
@@ -119,6 +120,14 @@ const INITIAL_SCOPE_STATE: ScopePanelState = {
   bucket: "month",
   competitors: [],
   competitorToggle: false,
+};
+
+const pageWrapperStyle: React.CSSProperties = {
+  padding: "48px 24px 64px",
+  minHeight: "100vh",
+  display: "flex",
+  flexDirection: "column",
+  gap: 32,
 };
 
 type TokenGetter = () => Promise<string | undefined>;
@@ -1104,169 +1113,220 @@ export default function CitationPage() {
   }
 
   return (
-    <main className="mx-auto max-w-7xl px-6 py-6 space-y-6">
-      <div className="flex flex-col gap-2">
-        <h1 className="text-3xl font-bold text-slate-900">Citation Intelligence</h1>
-        <p className="text-slate-700 max-w-4xl">
-          Analyze forward citations, cross-assignee dependencies, risk signals, and competitor encroachment using the patent_citation table. The layout follows the Search,
-          Trends, and IP Overview styling for a cohesive experience.
-        </p>
-      </div>
-
-      <div className={cardClass}>
-        <div className="flex items-start justify-between gap-3 mb-3">
-          <SectionHeader title="Scope" subtitle="Define portfolio, time window, and competitors for all widgets." />
+    <div style={pageWrapperStyle}>
+      <div className="glass-surface" style={pageSurfaceStyle}>
+        <div className="glass-card" style={{ ...cardBaseStyle }}>
+          <h1 className="text-3xl font-bold text-slate-900">Citation Intelligence</h1>
+          <p className="text-slate-700 max-w-4xl">
+            Analyze forward citations, cross-assignee dependencies, risk signals, and competitor encroachment using the patent_citation table. The layout follows the Search,
+            Trends, and IP Overview styling for a cohesive experience.
+          </p>
         </div>
-        <div className="space-y-4">
-          <div className="flex flex-wrap gap-3">
-            {(["assignee", "pub", "search"] as ScopeMode[]).map((mode) => (
-              <button
-                key={mode}
-                className={`px-4 py-2 rounded-full border text-sm font-semibold ${
-                  scopeState.mode === mode ? "bg-sky-600 text-white border-sky-600" : "bg-white text-slate-700 border-slate-200"
-                }`}
-                onClick={() => switchMode(mode)}
-              >
-                {mode === "assignee" ? "By Assignee" : mode === "pub" ? "By Patent IDs" : "By Search Filters"}
+
+        <div className="glass-card" style={{ ...cardBaseStyle }}>
+          <div className="flex items-start justify-between gap-3 mb-3">
+            <SectionHeader title="Scope" subtitle="Define portfolio, time window, and competitors for all widgets." />
+          </div>
+          <div className="space-y-4">
+            <div className="flex flex-wrap gap-3">
+              {(["assignee", "pub", "search"] as ScopeMode[]).map((mode) => (
+                <button
+                  key={mode}
+                  className={`px-4 py-2 rounded-full border text-sm font-semibold ${
+                    scopeState.mode === mode ? "bg-sky-600 text-white border-sky-600" : "bg-white text-slate-700 border-slate-200"
+                  }`}
+                  onClick={() => switchMode(mode)}
+                >
+                  {mode === "assignee" ? "By Assignee" : mode === "pub" ? "By Patent IDs" : "By Search Filters"}
+                </button>
+              ))}
+            </div>
+            {scopeState.mode === "assignee" && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <div className={fieldLabel}>Target assignee(s) – canonical UUIDs</div>
+                  <textarea
+                    value={scopeState.focusAssigneeIds.join("\n")}
+                    onChange={(e) => setScopeState((s) => ({ ...s, focusAssigneeIds: parseListInput(e.target.value) }))}
+                    rows={3}
+                    placeholder="uuid-1, uuid-2"
+                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                  />
+                </div>
+                <div>
+                  <div className={fieldLabel}>Assignee name contains</div>
+                  <textarea
+                    value={scopeState.focusAssigneeNames.join("\n")}
+                    onChange={(e) => setScopeState((s) => ({ ...s, focusAssigneeNames: parseListInput(e.target.value) }))}
+                    rows={3}
+                    placeholder="IBM, Samsung"
+                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                  />
+                </div>
+              </div>
+            )}
+            {scopeState.mode === "pub" && (
+              <div>
+                <div className={fieldLabel}>Portfolio patents (pub IDs)</div>
+                <textarea
+                  value={scopeState.pubIds.join("\n")}
+                  onChange={(e) => setScopeState((s) => ({ ...s, pubIds: parseListInput(e.target.value) }))}
+                  rows={4}
+                  placeholder="US12345678A1, EP0987654B1"
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                />
+              </div>
+            )}
+            {scopeState.mode === "search" && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <div className={fieldLabel}>Keyword</div>
+                  <input
+                    type="text"
+                    value={scopeState.keyword}
+                    onChange={(e) => setScopeState((s) => ({ ...s, keyword: e.target.value }))}
+                    placeholder="Generative AI safety…"
+                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                  />
+                </div>
+                <div>
+                  <div className={fieldLabel}>CPC</div>
+                  <input
+                    type="text"
+                    value={scopeState.cpc}
+                    onChange={(e) => setScopeState((s) => ({ ...s, cpc: e.target.value }))}
+                    placeholder="G06N, H04W…"
+                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                  />
+                </div>
+                <div>
+                  <div className={fieldLabel}>Assignee contains</div>
+                  <input
+                    type="text"
+                    value={scopeState.assigneeFilter}
+                    onChange={(e) => setScopeState((s) => ({ ...s, assigneeFilter: e.target.value }))}
+                    placeholder="Nvidia"
+                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                  />
+                </div>
+              </div>
+            )}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div>
+                <div className={fieldLabel}>From (citing pub date)</div>
+                <input
+                  type="date"
+                  value={scopeState.from}
+                  onChange={(e) => setScopeState((s) => ({ ...s, from: e.target.value }))}
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                />
+              </div>
+              <div>
+                <div className={fieldLabel}>To (citing pub date)</div>
+                <input
+                  type="date"
+                  value={scopeState.to}
+                  onChange={(e) => setScopeState((s) => ({ ...s, to: e.target.value }))}
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                />
+              </div>
+              <div>
+                <div className={fieldLabel}>Bucket</div>
+                <select
+                  value={scopeState.bucket}
+                  onChange={(e) => setScopeState((s) => ({ ...s, bucket: e.target.value as any }))}
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                >
+                  <option value="month">Month</option>
+                  <option value="quarter">Quarter</option>
+                </select>
+              </div>
+              <div>
+                <div className={fieldLabel}>Competitor assignee(s)</div>
+                <textarea
+                  rows={2}
+                  value={scopeState.competitors.join("\n")}
+                  onChange={(e) => setScopeState((s) => ({ ...s, competitors: parseListInput(e.target.value) }))}
+                  placeholder="UUIDs, one per line"
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                />
+                <label className="mt-1 inline-flex items-center gap-2 text-xs text-slate-600">
+                  <input
+                    type="checkbox"
+                    checked={scopeState.competitorToggle}
+                    onChange={(e) => setScopeState((s) => ({ ...s, competitorToggle: e.target.checked }))}
+                  />
+                  Limit competitors to explicit list
+                </label>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <button className="btn-modern h-10 px-5 text-sm font-semibold" onClick={applyScope}>
+                Apply
               </button>
-            ))}
-          </div>
-          {scopeState.mode === "assignee" && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <div className={fieldLabel}>Target assignee(s) – canonical UUIDs</div>
-                <textarea
-                  value={scopeState.focusAssigneeIds.join("\n")}
-                  onChange={(e) => setScopeState((s) => ({ ...s, focusAssigneeIds: parseListInput(e.target.value) }))}
-                  rows={3}
-                  placeholder="uuid-1, uuid-2"
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
-                />
-              </div>
-              <div>
-                <div className={fieldLabel}>Assignee name contains</div>
-                <textarea
-                  value={scopeState.focusAssigneeNames.join("\n")}
-                  onChange={(e) => setScopeState((s) => ({ ...s, focusAssigneeNames: parseListInput(e.target.value) }))}
-                  rows={3}
-                  placeholder="IBM, Samsung"
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
-                />
-              </div>
-            </div>
-          )}
-          {scopeState.mode === "pub" && (
-            <div>
-              <div className={fieldLabel}>Portfolio patents (pub IDs)</div>
-              <textarea
-                value={scopeState.pubIds.join("\n")}
-                onChange={(e) => setScopeState((s) => ({ ...s, pubIds: parseListInput(e.target.value) }))}
-                rows={4}
-                placeholder="US12345678A1, EP0987654B1"
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
-              />
-            </div>
-          )}
-          {scopeState.mode === "search" && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <div className={fieldLabel}>Keyword</div>
-                <input
-                  type="text"
-                  value={scopeState.keyword}
-                  onChange={(e) => setScopeState((s) => ({ ...s, keyword: e.target.value }))}
-                  placeholder="Generative AI safety…"
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
-                />
-              </div>
-              <div>
-                <div className={fieldLabel}>CPC</div>
-                <input
-                  type="text"
-                  value={scopeState.cpc}
-                  onChange={(e) => setScopeState((s) => ({ ...s, cpc: e.target.value }))}
-                  placeholder="G06N, H04W…"
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
-                />
-              </div>
-              <div>
-                <div className={fieldLabel}>Assignee contains</div>
-                <input
-                  type="text"
-                  value={scopeState.assigneeFilter}
-                  onChange={(e) => setScopeState((s) => ({ ...s, assigneeFilter: e.target.value }))}
-                  placeholder="Nvidia"
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
-                />
-              </div>
-            </div>
-          )}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
-              <div className={fieldLabel}>From (citing pub date)</div>
-              <input
-                type="date"
-                value={scopeState.from}
-                onChange={(e) => setScopeState((s) => ({ ...s, from: e.target.value }))}
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
-              />
-            </div>
-            <div>
-              <div className={fieldLabel}>To (citing pub date)</div>
-              <input
-                type="date"
-                value={scopeState.to}
-                onChange={(e) => setScopeState((s) => ({ ...s, to: e.target.value }))}
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
-              />
-            </div>
-            <div>
-              <div className={fieldLabel}>Bucket</div>
-              <select
-                value={scopeState.bucket}
-                onChange={(e) => setScopeState((s) => ({ ...s, bucket: e.target.value as any }))}
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
-              >
-                <option value="month">Month</option>
-                <option value="quarter">Quarter</option>
-              </select>
-            </div>
-            <div>
-              <div className={fieldLabel}>Competitor assignee(s)</div>
-              <textarea
-                rows={2}
-                value={scopeState.competitors.join("\n")}
-                onChange={(e) => setScopeState((s) => ({ ...s, competitors: parseListInput(e.target.value) }))}
-                placeholder="UUIDs, one per line"
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
-              />
-              <label className="mt-1 inline-flex items-center gap-2 text-xs text-slate-600">
-                <input
-                  type="checkbox"
-                  checked={scopeState.competitorToggle}
-                  onChange={(e) => setScopeState((s) => ({ ...s, competitorToggle: e.target.checked }))}
-                />
-                Limit competitors to explicit list
-              </label>
+              <button className="btn-outline h-10 px-5 text-sm font-semibold" onClick={clearScope}>
+                Clear
+              </button>
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <button className="btn-modern h-10 px-5 text-sm font-semibold" onClick={applyScope}>
-              Apply
-            </button>
-            <button className="btn-outline h-10 px-5 text-sm font-semibold" onClick={clearScope}>
-              Clear
-            </button>
-          </div>
+        </div>
+        <div className="glass-card" style={{ ...cardBaseStyle }}>
+          <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <ForwardImpactCard scope={appliedScope} scopeVersion={scopeVersion} tokenGetter={tokenGetter} />
+            <DependencyMatrixCard scope={appliedScope} scopeVersion={scopeVersion} tokenGetter={tokenGetter} />
+            <RiskRadarCard scope={appliedScope} scopeVersion={scopeVersion} tokenGetter={tokenGetter} competitorIds={appliedCompetitors} />
+            <EncroachmentCard scope={appliedScope} scopeVersion={scopeVersion} tokenGetter={tokenGetter} competitorIds={appliedCompetitors} />
+          </section>
         </div>
       </div>
 
-      <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <ForwardImpactCard scope={appliedScope} scopeVersion={scopeVersion} tokenGetter={tokenGetter} />
-        <DependencyMatrixCard scope={appliedScope} scopeVersion={scopeVersion} tokenGetter={tokenGetter} />
-        <RiskRadarCard scope={appliedScope} scopeVersion={scopeVersion} tokenGetter={tokenGetter} competitorIds={appliedCompetitors} />
-        <EncroachmentCard scope={appliedScope} scopeVersion={scopeVersion} tokenGetter={tokenGetter} competitorIds={appliedCompetitors} />
-      </section>
-    </main>
+      <div className="glass-surface" style={pageSurfaceStyle}>
+        {/* Footer */}
+        <footer style={footerStyle}>
+          2025 © Phaethon Order LLC | <a href="mailto:support@phaethon.llc" target="_blank" rel="noopener noreferrer" className="text-[#312f2f] hover:underline hover:text-blue-400">support@phaethon.llc</a> | <a href="https://phaethonorder.com" target="_blank" rel="noopener noreferrer" className="text-[#312f2f] hover:underline hover:text-blue-400">phaethonorder.com</a> | <a href="/help" className="text-[#312f2f] hover:underline hover:text-blue-400">Help</a> | <a href="/docs" className="text-[#312f2f] hover:underline hover:text-blue-400">Legal</a>
+        </footer>
+      </div>
+    </div>
   );
 }
+const TEXT_COLOR = "#102A43";
+const LINK_COLOR = "#5FA8D2";
+const CARD_BG = "rgba(255, 255, 255, 0.8)";
+const CARD_BORDER = "rgba(255, 255, 255, 0.45)";
+const CARD_SHADOW = "0 26px 54px rgba(15, 23, 42, 0.28)";
+
+const pageSurfaceStyle: React.CSSProperties = {
+  maxWidth: 1240,
+  width: "100%",
+  margin: "0 auto",
+  display: "grid",
+  gap: 20,
+  padding: 28,
+  borderRadius: 28,
+};
+
+const cardBaseStyle: CSSProperties = {
+  background: CARD_BG,
+  border: `1px solid ${CARD_BORDER}`,
+  borderRadius: 20,
+  padding: 22,
+  boxShadow: CARD_SHADOW,
+  backdropFilter: "blur(18px)",
+  WebkitBackdropFilter: "blur(18px)",
+};
+
+const footerStyle: React.CSSProperties = {
+  alignSelf: "center",
+  padding: "16px 24px",
+  borderRadius: 999,
+  background: "rgba(255, 255, 255, 0.22)",
+  border: "1px solid rgba(255, 255, 255, 0.35)",
+  boxShadow: "0 16px 36px rgba(15, 23, 42, 0.26)",
+  backdropFilter: "blur(12px)",
+  WebkitBackdropFilter: "blur(12px)",
+  color: "#102a43",
+  textAlign: "center",
+  fontSize: 13,
+  fontWeight: 500,
+  gap: 4
+};

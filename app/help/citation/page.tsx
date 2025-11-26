@@ -169,6 +169,12 @@ export default function CitationHelpPage() {
           />
         </div>
       </div>
+      <div className="glass-surface" style={surfaceStyle}>
+        {/* Footer */}
+        <footer style={footerStyle}>
+          2025 © Phaethon Order LLC | <a href="mailto:support@phaethon.llc" target="_blank" rel="noopener noreferrer" className="text-[#312f2f] hover:underline hover:text-blue-400">support@phaethon.llc</a> | <a href="https://phaethonorder.com" target="_blank" rel="noopener noreferrer" className="text-[#312f2f] hover:underline hover:text-blue-400">phaethonorder.com</a> | <a href="/help" className="text-[#312f2f] hover:underline hover:text-blue-400">Help</a> | <a href="/docs" className="text-[#312f2f] hover:underline hover:text-blue-400">Legal</a>
+        </footer>
+      </div>
     </div>
   );
 }
@@ -199,3 +205,19 @@ function DetailList({ items }: { items: { title: string; text: string }[] }) {
     </div>
   );
 }
+
+const footerStyle: React.CSSProperties = {
+  alignSelf: "center",
+  padding: "16px 24px",
+  borderRadius: 999,
+  background: "rgba(255, 255, 255, 0.22)",
+  border: "1px solid rgba(255, 255, 255, 0.35)",
+  boxShadow: "0 16px 36px rgba(15, 23, 42, 0.26)",
+  backdropFilter: "blur(12px)",
+  WebkitBackdropFilter: "blur(12px)",
+  color: "#102a43",
+  textAlign: "center",
+  fontSize: 13,
+  fontWeight: 500,
+  gap: 4
+};
