@@ -3,7 +3,7 @@
 > SynapseIP is a data and analytics platform for artificial intelligence (AI) and machine learning (ML) IP. The platform blends hybrid semantic search, trend analytics, IP overview graphing, and proactive alerts on top of a pgvector-powered corpus that is refreshed by automated ETL pipelines. Current corpus includes 57k+ AI/ML-related patents and publications dating back to 2023, with support for multiple data sources including BigQuery, USPTO ODP API, and bulk XML feeds.
 
 ## Overview
-The repository contains the full SynapseIP stack: FastAPI exposes the search, export, trend, saved-query, and overview endpoints; Next.js 15 App Router (React 19) provides the Auth0-gated UI and API proxy; multiple ETL pipelines (BigQuery, USPTO API, bulk XML) with AI embeddings keep the corpus current; and a Mailgun-capable alerts runner notifies subscribers when new filings match their saved scopes. User-specific IP overview analysis tables enable personalized AI/ML IP landscape exploration with isolated graph computation.
+The repository contains the full SynapseIP stack: FastAPI exposes the search, export, trend, saved-query, overview, and citation analytics endpoints; Next.js 15 App Router (React 19) provides the Auth0-gated UI and API proxy; multiple ETL pipelines (BigQuery, USPTO API, bulk XML) with AI embeddings keep the corpus current; and a Mailgun-capable alerts runner notifies subscribers when new filings match their saved scopes. User-specific IP overview analysis tables enable personalized AI/ML IP landscape exploration with isolated graph computation. Citation analytics provide forward impact, dependency matrix, risk radar, and encroachment analysis for patent portfolios.
 
 ## Feature Highlights
 - Hybrid keyword + vector search with semantic embeddings, adaptive result trimming, CSV/PDF export, and patent/application detail expansion ([app/api.py](app/api.py), [app/page.tsx](app/page.tsx)). 
@@ -11,11 +11,16 @@ The repository contains the full SynapseIP stack: FastAPI exposes the search, ex
 - IP Overview that surfaces saturation, activity rates, momentum, and CPC distribution for focus keyword(s) and/or CPC(s), with optional group by assignee signals ([app/overview_api.py](app/overview_api.py), [app/overview_signals.py](app/overview_signals.py), [components/SigmaOverviewGraph.tsx](components/SigmaOverviewGraph.tsx), [app/overview/page.tsx](app/overview/page.tsx)). 
   - Semantic neighbors are dropped when distances jump or exceed a threshold so the counts and timelines stay focused on relevant patents and publications.
 - Scope Analysis page adds a preliminary freedom-to-operate (FTO) and infringement-risk tool to the platform: input subject matter of interest (e.g., a product description or draft claim set) and run a KNN search against every embedded independent claim to get a similarity node graph and results table with patent information and similarity-scored claims displayed inline. Results table and similarity scoring information is exportable in PDF format. ([app/api.py](app/api.py#L147), [app/repository.py](app/repository.py#L593), [app/scope-analysis/page.tsx](app/scope-analysis/page.tsx)).
-- Canonical assignee name normalization for improved entity matching and trend analysis ([add_canon_name.py](add_canon_name.py)).
-- Multiple data ingestion pipelines: BigQuery loader ([etl.py](etl.py)), USPTO PEDS API loader ([etl_uspto.py](etl_uspto.py)), and bulk XML parser ([etl_xml_fulltext.py](etl_xml_fulltext.py)) for comprehensive patent and application coverage.
-- Embedding backfill utility for maintaining vector search quality across historical data ([etl_add_embeddings.py](etl_add_embeddings.py)).
+- Citation Analytics for patent portfolio intelligence with four core analysis modes ([app/citation_api.py](app/citation_api.py), [app/citation/page.tsx](app/citation/page.tsx)):
+  - **Forward Impact Analysis**: Track forward citations over time, identify top-cited patents, and measure citation velocity.
+  - **Dependency Matrix**: Visualize cross-assignee citation relationships to understand technology dependencies.
+  - **Risk Radar**: Compute exposure and fragility scores based on competitor citation patterns and backward citation diversity.
+  - **Encroachment Analysis**: Monitor competitor citation activity against your portfolio over time.
+- Canonical assignee name normalization for improved entity matching and trend analysis ([scripts/add_canon_name.py](scripts/add_canon_name.py)).
+- Multiple data ingestion pipelines: BigQuery loader ([etl.py](etl.py)), USPTO PEDS API loader ([scripts/etl_uspto.py](scripts/etl_uspto.py)), and bulk XML parser ([scripts/etl_xml_fulltext.py](scripts/etl_xml_fulltext.py)) for comprehensive patent and application coverage.
+- Embedding backfill utility for maintaining vector search quality across historical data ([scripts/etl_add_embeddings.py](scripts/etl_add_embeddings.py)).
 - Automated Mailgun/console alert notifications for saved queries packaged as standalone runner ([alerts_runner.py](alerts_runner.py)).
-- Comprehensive pytest suite covering authentication, repository search logic, overview signal math, and API contracts ([tests/](tests/)).
+- Comprehensive pytest suite covering authentication, repository search logic, overview signal math, citation metrics, and API contracts ([tests/](tests/)).
 
 ## Live Deployment
 - App: https://www.synapse-ip.com/
@@ -65,11 +70,15 @@ The repository contains the full SynapseIP stack: FastAPI exposes the search, ex
 ├── app/
 │   ├── api.py                       # FastAPI application (search, export, trends, scope, billing)
 │   ├── overview_api.py              # IP overview graph router mounted into the API
+│   ├── citation_api.py              # Citation analytics router (impact, dependency, risk, encroachment)
+│   ├── citation_metrics.py          # Citation calculation utilities (velocity, risk scores)
+│   ├── citation_models.py           # Pydantic models for citation endpoints
 │   ├── payment_api.py               # Stripe customer portal + billing endpoints
 │   ├── stripe_config.py             # Stripe client bootstrap helpers
 │   ├── stripe_webhooks.py           # Webhook verification + processing
 │   ├── subscription_middleware.py   # Shared subscription enforcement logic
 │   ├── repository.py                # SQL query builders & search logic
+│   ├── repository_citation.py       # Citation-specific SQL queries & portfolio resolution
 │   ├── schemas.py                   # Pydantic models shared by API + clients
 │   ├── db.py, db_errors.py          # Async Postgres connection pooling helpers
 │   ├── auth.py, config.py           # Auth0 JWT validation + settings
@@ -78,18 +87,20 @@ The repository contains the full SynapseIP stack: FastAPI exposes the search, ex
 │   ├── instrumentation.ts           # Server-side instrumentation hook for Next.js
 │   ├── api/                         # Next.js Route Handlers proxying backend services
 │   │   ├── search/, scope-analysis/, overview/  # Patent search + graph proxies
+│   │   ├── citation/                # Citation analytics proxies (impact, dependency-matrix, risk-radar, encroachment)
 │   │   ├── trend/, export/, patent-date-range/  # Analytics + CSV/PDF exports
 │   │   ├── saved-queries/           # Alert CRUD handlers
 │   │   └── glitchtip-example-api/   # Observability demo endpoints
 │   ├── page.tsx                     # Landing + patent search UI
 │   ├── overview/page.tsx            # Graph-based overview explorer
 │   ├── scope-analysis/page.tsx      # Claim scope analysis UI
+│   ├── citation/page.tsx            # Citation analytics dashboard
 │   ├── billing/page.tsx             # Customer billing portal
 │   ├── docs/(privacy|tos|dpa)/      # Legal & compliance content
-│   ├── help/(search_trends|overview|scope-analysis)/ # Product documentation pages
+│   ├── help/(search_trends|overview|scope-analysis|citation)/ # Product documentation pages
 │   ├── glitchtip-example-page/      # Client-side observability demo
 │   ├── global-error.tsx, layout.tsx, providers.tsx
-│   ├── globals.css,                # Client-side observability demo
+│   ├── globals.css
 │   └── robots.ts
 ├── components/
 │   ├── NavBar.tsx                   # Auth-aware navigation & alert modal trigger
@@ -100,7 +111,7 @@ The repository contains the full SynapseIP stack: FastAPI exposes the search, ex
 │   └── billing/                     # PricingPlans & SubscriptionStatus widgets
 ├── infrastructure/
 │   └── logger.py                    # Structured logging helper for API + jobs
-├── tests/                           # pytest suite (API, repository, signals, auth, billing)
+├── tests/                           # pytest suite (API, repository, signals, auth, billing, citation)
 │   ├── test_api.py, test_auth.py, test_config.py, test_db.py
 │   ├── test_embed.py, test_repository.py, test_alerts_runner.py
 │   ├── test_overview_signals.py, test_overview_utils.py
@@ -112,15 +123,20 @@ The repository contains the full SynapseIP stack: FastAPI exposes the search, ex
 │   ├── screenshots/                 # UI & API images
 │   └── uspto_odp_api/               # USPTO API schema reference
 ├── scripts/                              # Operational & maintenance scripts
-│   ├── add_canon_name.py
-│   ├── etl_uspto.py
-│   ├── etl_xml_fulltext.py
-│   ├── etl_add_embeddings.py
-│   ├── generate_citations_csv.py
-│   ├── independent_claims_embeddings.py 
-│   ├── process_patent_citations.py
-│   ├── update_patent_staging.py
-│   └── update_stripe_prices.py 
+│   ├── add_canon_name.py                # Canonical assignee name normalizer
+│   ├── backfill_assignee_names.py       # Backfill assignee names from patent data
+│   ├── etl_add_embeddings.py            # Embedding backfill utility
+│   ├── etl_uspto.py                     # USPTO PEDS API loader
+│   ├── etl_xml_fulltext.py              # USPTO bulk XML parser
+│   ├── fetch_patent_complaints.py       # Patent complaint data fetcher
+│   ├── generate_citations_csv.py        # Export citation data to CSV
+│   ├── independent_claims_embeddings.py # Generate embeddings for independent claims
+│   ├── issued_patent_checker.py         # Check issued patent status
+│   ├── load_patent_citations.py         # Load citation data from CSV into database
+│   ├── migrate_staged_patents.py        # Migrate staged patents to production
+│   ├── process_patent_citations.py      # Process and normalize citation relationships
+│   ├── update_patent_staging.py         # Update patent staging table
+│   └── update_stripe_prices.py          # Sync Stripe price configuration 
 ├── public/                          # Static assets (favicons, logos, etc.)
 ├── types/                           # TypeScript ambient declarations
 ├── instrumentation.ts & -client.ts  # Next.js instrumentation entrypoints
@@ -242,28 +258,28 @@ python alerts_runner.py
 
 ## Additional Data Pipeline Scripts
 
-### USPTO PEDS API Loader (`etl_uspto.py`)
+### USPTO PEDS API Loader (`scripts/etl_uspto.py`)
 Alternative to BigQuery ingestion, loads patent publication data directly from the USPTO Open Data Portal (ODP) API. Filters by CPC codes and AI keywords locally:
 ```bash
-python etl_uspto.py \
+python scripts/etl_uspto.py \
   --dsn "postgresql://user:pass@host/db?sslmode=require" \
   --date-from 2024-01-01 \
   --date-to 2024-02-01 \
   --embed --claims
 ```
 
-### USPTO Bulk XML Parser (`etl_xml_fulltext.py`)
+### USPTO Bulk XML Parser (`scripts/etl_xml_fulltext.py`)
 Parses USPTO bulk XML files (weekly patent grant and publication feeds) to extract full-text abstracts and claims. Updates `patent_staging` table with parsed content:
 ```bash
-python etl_xml_fulltext.py \
+python scripts/etl_xml_fulltext.py \
   --xml resources/ipa250220.xml \
   --dsn "postgresql://user:pass@host/db?sslmode=require"
 ```
 
-### Embedding Backfill Utility (`etl_add_embeddings.py`)
+### Embedding Backfill Utility (`scripts/etl_add_embeddings.py`)
 Backfills missing embeddings for patents and applications within a specified date range. Supports both title+abstract (`|ta`) and claims (`|claims`) embedding models:
 ```bash
-python etl_add_embeddings.py \
+python scripts/etl_add_embeddings.py \
   --dsn "postgresql://user:pass@host/db?sslmode=require" \
   --date-from 2024-01-01 \
   --date-to 2024-02-01 \
@@ -271,11 +287,19 @@ python etl_add_embeddings.py \
   --suffix ta
 ```
 
-### Canonical Assignee Normalizer (`add_canon_name.py`)
+### Canonical Assignee Normalizer (`scripts/add_canon_name.py`)
 Generates canonical assignee names by removing common corporate suffixes (Inc., LLC, Corp., etc.) to improve entity matching and trend analysis. Creates entries in `canonical_assignee_name` and `assignee_alias` tables:
 ```bash
-python add_canon_name.py \
+python scripts/add_canon_name.py \
   --dsn "postgresql://user:pass@host/db?sslmode=require"
+```
+
+### Patent Citation Loader (`scripts/load_patent_citations.py`)
+Loads patent citation relationships from CSV files into the `patent_citation` table. CSV rows contain citing_pub_id, cited_pub_id, and cited_application_number. Uses ON CONFLICT DO NOTHING for idempotent inserts:
+```bash
+python scripts/load_patent_citations.py \
+  --dsn "postgresql://user:pass@host/db?sslmode=require" \
+  --csv resources/patent_citations.csv
 ```
 
 ## IP Overview
@@ -284,7 +308,17 @@ python add_canon_name.py \
 - `/overview/overview` composes analysis and insights for IP Overview. For any keyword/CPC scope it returns exact and semantic saturation counts, activity rate (per month), momentum slope/CAGR with labeled Up/Flat/Down, top CPC slices, recent filing tallies (6/12/18/24 months), and the full monthly timeline used across the UI.
 - `/overview/graph` builds a user-specific embedding graph when the optional “Group by Assignee” facet is enabled. It selects an embedding model (`OVERVIEW_EMBEDDING_MODEL`, falling back to `WS_EMBEDDING_MODEL`), computes cosine KNN neighborhoods, applies Leiden community detection, and scores intensity per grouping. Signal detection logic in [app/overview_signals.py](app/overview_signals.py) evaluates convergence, emerging gaps, crowd-out, and bridge opportunities.
 
-The React UI ([app/overview/page.tsx](app/overview/page.tsx)) defaults to the overview primitives: four tiles (Crowding, Density, Momentum, Top CPCs), a timeline sparkline, CPC bar chart, and a patent results table with semantic toggle. Enabling “Group by Assignee” pulls in a Sigma.js visualization and signal cards for assignee clustering context.
+The React UI ([app/overview/page.tsx](app/overview/page.tsx)) defaults to the overview primitives: four tiles (Crowding, Density, Momentum, Top CPCs), a timeline sparkline, CPC bar chart, and a patent results table with semantic toggle. Enabling "Group by Assignee" pulls in a Sigma.js visualization and signal cards for assignee clustering context.
+
+## Citation Analytics
+[app/citation_api.py](app/citation_api.py) provides patent citation intelligence through four analysis endpoints:
+
+- `/citation/impact` – **Forward Impact Analysis**: Tracks forward citations over time for a patent portfolio. Returns total citations, distinct citing patents, monthly/quarterly timelines, and top-cited patents ranked by citation count and velocity.
+- `/citation/dependency-matrix` – **Cross-Assignee Dependencies**: Builds a citation dependency matrix showing how different assignees cite each other's patents. Useful for identifying technology dependencies and licensing opportunities.
+- `/citation/risk-radar` – **Risk Assessment**: Computes exposure and fragility scores for patents based on competitor citation patterns, backward citation CPC entropy, and assignee diversity. Highlights patents with high risk profiles.
+- `/citation/encroachment` – **Competitive Encroachment**: Monitors competitor citation activity against your portfolio over time, surfacing encroachment trends and identifying which competitors are most actively citing your IP.
+
+The React UI ([app/citation/page.tsx](app/citation/page.tsx)) provides an interactive dashboard with four analysis tabs. Users can define portfolio scope by assignee name, publication IDs, or search filters, then explore citation patterns through charts, tables, and exportable summaries.
 
 ## Screenshots
 - Search & Trends UI – ![docs/screenshots/search-ui.png](docs/screenshots/search-ui.png)
@@ -294,7 +328,7 @@ The React UI ([app/overview/page.tsx](app/overview/page.tsx)) defaults to the ov
 - SynapseIP API Docs – ![docs/screenshots/api-docs.png](docs/screenshots/api-docs.png)
 
 ## Documentation & Legal Pages
-- **Help Documentation**: Interactive help pages available at `/help`, including detailed guides for [Search & Trends](app/help/search_trends/page.tsx), [IP Overview](app/help/overview/page.tsx), and [Scope Analysis](app/help/scope-analysis/page.tsx).
+- **Help Documentation**: Interactive help pages available at `/help`, including detailed guides for [Search & Trends](app/help/search_trends/page.tsx), [IP Overview](app/help/overview/page.tsx), [Scope Analysis](app/help/scope-analysis/page.tsx), and [Citation Analytics](app/help/citation/page.tsx).
 - **Legal Pages**: Privacy policy ([app/docs/privacy/page.tsx](app/docs/privacy/page.tsx)), Terms of Service ([app/docs/tos/page.tsx](app/docs/tos/page.tsx)), and Data Processing Agreement ([app/docs/dpa/page.tsx](app/docs/dpa/page.tsx)).
 
 ## License
