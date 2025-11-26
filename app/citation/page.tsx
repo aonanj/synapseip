@@ -137,12 +137,11 @@ const sectionTitle = "text-sm font-semibold text-slate-800";
 
 const sectionSubtitle = "text-xs text-slate-600";
 
-const inputClass =
-  "w-full rounded-lg border border-slate-200 px-3 py-2 text-xs shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-200 focus:border-sky-300 bg-white";
-const selectClass =
-  "w-full rounded-lg border border-slate-200 px-3 py-2 text-xs shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-200 focus:border-sky-300 bg-white";
-const inlineInputClass =
-  "h-9 rounded border border-slate-200 px-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-200 focus:border-sky-300 bg-white";
+const controlBaseClass =
+  "border border-slate-200/70 bg-white/80 text-slate-800 shadow-[0_12px_22px_rgba(15,23,42,0.18)] backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-sky-300 focus:border-sky-300 transition";
+const inputClass = `w-full rounded-xl px-3 py-2 text-xs ${controlBaseClass}`;
+const selectClass = `w-full rounded-xl px-3 py-2 text-xs ${controlBaseClass}`;
+const inlineInputClass = `h-9 rounded-lg px-3 text-xs ${controlBaseClass}`;
 
 function parseListInput(value: string): string[] {
   return value
@@ -372,7 +371,7 @@ function ForwardImpactCard({ scope, scopeVersion, tokenGetter }: ForwardImpactCa
           </label>
           <button
             onClick={load}
-            className="refresh-btn px-4 text-2xl font-semibold"
+            className="refresh-btn px-4 mb-2 text-3xl font-semibold"
             disabled={loading || !scope}
           >
             {loading ? "…" : "⟳"}
@@ -381,7 +380,7 @@ function ForwardImpactCard({ scope, scopeVersion, tokenGetter }: ForwardImpactCa
       </div>
 
       {!scope ? (
-        <div className="text-xs text-slate-600">Apply a scope to view citation impact.</div>
+        <div className="text-xs text-slate-400">Apply a scope to view citation impact.</div>
       ) : error ? (
         <div className="text-xs text-rose-600">Error: {error}</div>
       ) : loading && !data ? (
@@ -527,13 +526,13 @@ function DependencyMatrixCard({ scope, scopeVersion, tokenGetter }: DependencyMa
             <input type="checkbox" checked={normalize} onChange={(e) => setNormalize(e.target.checked)} />
             <span>Normalize</span>
           </label>
-          <button onClick={load} className="refresh-btn px-4 text-2xl font-semibold" disabled={!scope || loading}>
+          <button onClick={load} className="refresh-btn px-4 mb-2 text-3xl font-semibold" disabled={!scope || loading}>
             {loading ? "…" : "⟳"}
           </button>
         </div>
       </div>
       {!scope ? (
-        <div className="text-xs text-slate-600">Apply a scope to view dependency insights.</div>
+        <div className="text-xs text-slate-400">Apply a scope to view dependency insights.</div>
       ) : !hasPortfolio ? (
         <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
           Set a target portfolio (assignee or pub IDs) for meaningful dependency analysis.
@@ -736,7 +735,7 @@ function RiskRadarCard({ scope, scopeVersion, tokenGetter, competitorNames }: Ri
         </div>
       </div>
       {!scope ? (
-        <div className="text-xs text-slate-600">Apply a scope to view risk signals.</div>
+        <div className="text-xs text-slate-400">Apply a scope to view risk signals.</div>
       ) : error ? (
         <div className="text-xs text-rose-600">Error: {error}</div>
       ) : loading && !data ? (
@@ -901,13 +900,13 @@ function EncroachmentCard({ scope, scopeVersion, tokenGetter, competitorNames }:
             <input type="checkbox" checked={explicitOnly} onChange={(e) => setExplicitOnly(e.target.checked)} />
             <span>Only explicit competitors</span>
           </label>
-          <button className="refresh-btn px-4 text-2xl font-semibold" disabled={!hasTargets || loading} onClick={load}>
+          <button className="refresh-btn px-4 mb-2 text-3xl font-semibold" disabled={!hasTargets || loading} onClick={load}>
             {loading ? "…" : "⟳"}
           </button>
         </div>
       </div>
       {!hasTargets ? (
-        <div className="text-xs text-slate-600">
+        <div className="text-xs text-slate-400">
           Apply a target assignee in the Scope panel to view.
         </div>
       ) : error ? (
@@ -1119,7 +1118,7 @@ export default function CitationPage() {
             Citation Workspace
           </p>
           <h1 style={{ color: TEXT_COLOR, fontSize: 22, fontWeight: 700 }}>Patent & Publication Citation Intelligence</h1>
-          <p className="text-slate-700 max-w-4xl">
+          <p style={{ margin: 0, fontSize: 14, color: "#475569" }}>
             Discover forward citations, cross-assignee dependencies, risk signals, and assignee encroachment based on citation data published on patents and publications.
           </p>
         </div>
@@ -1165,7 +1164,7 @@ export default function CitationPage() {
                   onChange={(e) => setScopeState((s) => ({ ...s, pubIds: parseListInput(e.target.value) }))}
                   rows={4}
                   placeholder="US-12345678-B1, US-20250001234-A1"
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs"
+                  className={inputClass}
                 />
               </div>
             )}
@@ -1198,7 +1197,7 @@ export default function CitationPage() {
                     value={scopeState.assigneeFilter}
                     onChange={(e) => setScopeState((s) => ({ ...s, assigneeFilter: e.target.value }))}
                     placeholder="Nvidia"
-                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs"
+                    className={inputClass}
                   />
                 </div>
               </div>
@@ -1231,27 +1230,27 @@ export default function CitationPage() {
                 >
                   <option value="month">Month</option>
                   <option value="quarter">Quarter</option>
-              </select>
-            </div>
-            <div>
-              <div className={fieldLabel}>Competitor assignee name(s)</div>
-              <textarea
-                rows={2}
-                value={scopeState.competitors.join("\n")}
-                onChange={(e) => setScopeState((s) => ({ ...s, competitors: parseListInput(e.target.value) }))}
-                placeholder="Competitor names, one per line"
+                </select>
+              </div>
+              <div>
+                <div className={fieldLabel}>Competitor assignee name(s)</div>
+                <textarea
+                  rows={2}
+                  value={scopeState.competitors.join("\n")}
+                  onChange={(e) => setScopeState((s) => ({ ...s, competitors: parseListInput(e.target.value) }))}
+                  placeholder="Competitor names, one per line"
                   className={inputClass}
-              />
-              <label className="mt-1 inline-flex items-center gap-2 text-xs text-slate-600">
-                <input
-                  type="checkbox"
-                  checked={scopeState.competitorToggle}
-                  onChange={(e) => setScopeState((s) => ({ ...s, competitorToggle: e.target.checked }))}
                 />
-                Limit competitors to explicit list
-              </label>
+                <label className="mt-1 inline-flex items-center gap-2 text-xs text-slate-600">
+                  <input
+                    type="checkbox"
+                    checked={scopeState.competitorToggle}
+                    onChange={(e) => setScopeState((s) => ({ ...s, competitorToggle: e.target.checked }))}
+                  />
+                  Limit competitors to explicit list
+                </label>
+              </div>
             </div>
-          </div>
             <div className="flex items-center gap-3">
               <button className="btn-modern h-10 px-5 text-xs font-semibold" onClick={applyScope}>
                 Apply
