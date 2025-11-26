@@ -32,10 +32,8 @@ from infrastructure.logger import get_logger
 
 from .auth import get_current_user
 from .db import get_conn
-from .embed import embed as embed_text
 from .db_errors import is_recoverable_operational_error
-from .repository import CANONICAL_ASSIGNEE_LATERAL, SEARCH_EXPR
-from .subscription_middleware import SubscriptionRequiredError
+from .embed import embed as embed_text
 from .overview_signals import (
     SignalComputation,
     SignalKind,
@@ -44,6 +42,8 @@ from .overview_signals import (
     signal_emerging_gap,
     signal_focus_shift,
 )
+from .repository import CANONICAL_ASSIGNEE_LATERAL, SEARCH_EXPR
+from .subscription_middleware import SubscriptionRequiredError
 
 router = APIRouter(
     prefix="/overview",

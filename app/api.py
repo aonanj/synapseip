@@ -26,11 +26,19 @@ from infrastructure.logger import get_logger
 
 # Local application imports
 from .auth import ensure_auth0_configured, get_current_user
+from .citation_api import router as citation_router
 from .db import get_conn, init_pool
 from .embed import embed as embed_text
 from .observability import init_glitchtip_if_configured
+from .overview_api import router as overview_router
 from .payment_api import router as payment_router
-from .repository import export_rows, get_patent_detail, scope_claim_knn, search_hybrid, trend_volume
+from .repository import (
+    export_rows,
+    get_patent_detail,
+    scope_claim_knn,
+    search_hybrid,
+    trend_volume,
+)
 from .schemas import (
     PatentDetail,
     ScopeAnalysisRequest,
@@ -45,7 +53,6 @@ from .schemas import (
 from .stripe_config import ensure_stripe_configured
 from .stripe_webhooks import process_webhook_event, verify_webhook_signature
 from .subscription_middleware import ActiveSubscription
-from .overview_api import router as overview_router
 
 # Load environment variables from .env file
 load_dotenv()
@@ -109,6 +116,7 @@ app.add_middleware(
 )
 
 app.include_router(overview_router)
+app.include_router(citation_router)
 app.include_router(payment_router)
 
 class DateRangeReponse(BaseModel):

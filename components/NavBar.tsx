@@ -161,6 +161,7 @@ export default function NavBar() {
         <div className="hidden md:flex items-center gap-2">
           <Link href="/" className="px-3 py-1.5 text-sm font-semibold rounded-md hover:bg-[#d9e1eb] hover:underline text-[#3A506B]">Search & Trends</Link>
           <Link href="/overview" className="px-3 py-1.5 text-sm font-semibold rounded-md hover:bg-[#d9e1eb] hover:underline text-[#3A506B]">IP Overview</Link>
+          <Link href="/citation" className="px-3 py-1.5 text-sm font-semibold rounded-md hover:bg-[#d9e1eb] hover:underline text-[#3A506B]">Citation</Link>
           <Link href="/scope-analysis" className="px-3 py-1.5 text-sm font-semibold rounded-md hover:bg-[#d9e1eb] hover:underline text-[#3A506B]">Scope Analysis</Link>
         </div>
 
@@ -217,6 +218,7 @@ export default function NavBar() {
         <div className="md:hidden flex items-center gap-1">
           <Link href="/" className="px-2 py-1 text-xs rounded hover:bg-slate-100">Search</Link>
           <Link href="/overview" className="px-2 py-1 text-xs rounded hover:bg-slate-100">IP Overview</Link>
+          <Link href="/citation" className="px-2 py-1 text-xs rounded hover:bg-slate-100">Citation</Link>
           <Link href="/scope-analysis" className="px-2 py-1 text-xs rounded hover:bg-slate-100">Scope</Link>
           <button onClick={openAlerts} className="px-2 py-1 text-xs rounded hover:bg-slate-100">Alerts</button>
           <Link href="/billing" className="px-2 py-1 text-xs rounded hover:bg-slate-100">Billing</Link>

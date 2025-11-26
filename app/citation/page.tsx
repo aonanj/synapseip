@@ -1,0 +1,1272 @@
+"use client";
+
+import { useAuth0 } from "@auth0/auth0-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+
+type ScopeMode = "assignee" | "pub" | "search";
+
+type CitationScope = {
+  focus_pub_ids?: string[] | null;
+  focus_assignee_ids?: string[] | null;
+  focus_assignee_names?: string[] | null;
+  filters?: Record<string, any> | null;
+  citing_pub_date_from?: string | null;
+  citing_pub_date_to?: string | null;
+  bucket?: "month" | "quarter";
+};
+
+type ForwardImpactPoint = {
+  bucket_start: string;
+  citing_count: number;
+};
+
+type PatentImpactSummary = {
+  pub_id: string;
+  title: string;
+  assignee_name: string | null;
+  canonical_assignee_id: string | null;
+  pub_date: string | null;
+  fwd_citation_count: number;
+  fwd_citation_velocity: number;
+  first_citation_date: string | null;
+  last_citation_date: string | null;
+};
+
+type ForwardImpactResponse = {
+  total_forward_citations: number;
+  distinct_citing_patents: number;
+  timeline: ForwardImpactPoint[];
+  top_patents: PatentImpactSummary[];
+};
+
+type DependencyEdge = {
+  citing_assignee_id: string | null;
+  citing_assignee_name: string | null;
+  cited_assignee_id: string | null;
+  cited_assignee_name: string | null;
+  citation_count: number;
+  citing_to_cited_pct: number | null;
+};
+
+type DependencyMatrixResponse = { edges: DependencyEdge[] };
+
+type PatentRiskMetrics = {
+  pub_id: string;
+  title: string;
+  assignee_name: string | null;
+  canonical_assignee_id: string | null;
+  pub_date: string | null;
+  fwd_total: number;
+  fwd_from_competitors: number;
+  fwd_competitor_ratio: number | null;
+  bwd_total: number;
+  bwd_cpc_entropy: number | null;
+  bwd_cpc_top_share: number | null;
+  bwd_assignee_diversity: number | null;
+  exposure_score: number;
+  fragility_score: number;
+  overall_risk_score: number;
+};
+
+type RiskRadarResponse = { patents: PatentRiskMetrics[] };
+
+type EncroachmentTimelinePoint = {
+  bucket_start: string;
+  competitor_assignee_id: string | null;
+  competitor_assignee_name: string | null;
+  citing_patent_count: number;
+};
+
+type AssigneeEncroachmentSummary = {
+  competitor_assignee_id: string | null;
+  competitor_assignee_name: string | null;
+  total_citing_patents: number;
+  encroachment_score: number;
+  velocity: number | null;
+};
+
+type EncroachmentResponse = {
+  target_assignee_ids: string[];
+  timeline: EncroachmentTimelinePoint[];
+  competitors: AssigneeEncroachmentSummary[];
+};
+
+type ScopePanelState = {
+  mode: ScopeMode;
+  focusAssigneeIds: string[];
+  focusAssigneeNames: string[];
+  pubIds: string[];
+  keyword: string;
+  cpc: string;
+  assigneeFilter: string;
+  from: string;
+  to: string;
+  bucket: "month" | "quarter";
+  competitors: string[];
+  competitorToggle: boolean;
+};
+
+const INITIAL_SCOPE_STATE: ScopePanelState = {
+  mode: "assignee",
+  focusAssigneeIds: [],
+  focusAssigneeNames: [],
+  pubIds: [],
+  keyword: "",
+  cpc: "",
+  assigneeFilter: "",
+  from: "",
+  to: "",
+  bucket: "month",
+  competitors: [],
+  competitorToggle: false,
+};
+
+type TokenGetter = () => Promise<string | undefined>;
+
+const cardClass = "glass-card p-5 rounded-xl shadow-xl border border-white/50";
+
+const fieldLabel = "text-xs font-semibold uppercase tracking-wide text-slate-500";
+
+const sectionTitle = "text-lg font-semibold text-slate-800";
+
+const sectionSubtitle = "text-sm text-slate-600";
+
+function parseListInput(value: string): string[] {
+  return value
+    .split(/[\n, ]+/)
+    .map((v) => v.trim())
+    .filter(Boolean);
+}
+
+function fmtDate(value: string | null | undefined): string {
+  if (!value) return "—";
+  const s = String(value);
+  if (/^\d{8}$/.test(s)) {
+    return `${s.slice(0, 4)}-${s.slice(4, 6)}-${s.slice(6, 8)}`;
+  }
+  const d = new Date(s);
+  if (!isNaN(d.getTime())) return d.toISOString().slice(0, 10);
+  return s;
+}
+
+function googlePatentsUrl(pubId: string): string {
+  const cleaned = pubId.replace(/[-\s]/g, "");
+  return `https://patents.google.com/patent/${cleaned}`;
+}
+
+function ScoreBar({ value, color = "sky" }: { value: number; color?: "sky" | "amber" | "rose" }) {
+  const clamped = Math.max(0, Math.min(100, value));
+  const palette: Record<string, string> = {
+    sky: "bg-sky-500",
+    amber: "bg-amber-500",
+    rose: "bg-rose-500",
+  };
+  return (
+    <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+      <div className={`${palette[color]} h-2`} style={{ width: `${clamped}%` }} />
+    </div>
+  );
+}
+
+function MetricTile({ label, value, hint }: { label: string; value: string | number; hint?: string }) {
+  return (
+    <div className="rounded-xl bg-white/70 border border-slate-200 px-4 py-3 shadow-sm">
+      <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide">{label}</div>
+      <div className="text-2xl font-semibold text-slate-900 mt-1">{value}</div>
+      {hint ? <div className="text-xs text-slate-500 mt-1">{hint}</div> : null}
+    </div>
+  );
+}
+
+function LineChart({
+  points,
+  valueKey = "citing_count",
+  height = 220,
+  accent = "#0ea5e9",
+}: {
+  points: Array<{ bucket_start: string; [k: string]: any }>;
+  valueKey?: string;
+  height?: number;
+  accent?: string;
+}) {
+  if (!points.length) {
+    return (
+      <div className="h-[220px] grid place-items-center text-sm text-slate-500">
+        No timeline data for this scope.
+      </div>
+    );
+  }
+  const values = points.map((p) => Number(p[valueKey] ?? 0));
+  const maxVal = Math.max(...values, 1);
+  const width = Math.max(360, points.length * 70);
+  const margin = 24;
+  const step = points.length > 1 ? (width - margin * 2) / (points.length - 1) : 0;
+  const coords = points.map((p, idx) => {
+    const x = margin + idx * step;
+    const y = margin + (1 - (Number(p[valueKey] ?? 0) / maxVal)) * (height - margin * 2);
+    return [x, y];
+  });
+  const path = coords.map(([x, y], i) => `${i === 0 ? "M" : "L"}${x},${y}`).join(" ");
+
+  return (
+    <div className="overflow-x-auto">
+      <svg width={width} height={height} className="min-w-full">
+        <defs>
+          <linearGradient id="chartFill" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={accent} stopOpacity="0.26" />
+            <stop offset="100%" stopColor={accent} stopOpacity="0" />
+          </linearGradient>
+        </defs>
+        <path d={`${path} V${height - margin} H${margin} Z`} fill="url(#chartFill)" />
+        <path d={path} fill="none" stroke={accent} strokeWidth={2.5} strokeLinejoin="round" strokeLinecap="round" />
+        {coords.map(([x, y], idx) => (
+          <g key={idx}>
+            <circle cx={x} cy={y} r={4} fill="#fff" stroke={accent} strokeWidth={2} />
+            <text x={x} y={height - 6} textAnchor="middle" className="text-[11px] fill-slate-600">
+              {fmtDate(points[idx].bucket_start).slice(0, 7)}
+            </text>
+          </g>
+        ))}
+      </svg>
+    </div>
+  );
+}
+
+async function postCitation(path: string, payload: any, tokenGetter: TokenGetter) {
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  const token = await tokenGetter();
+  if (token) headers.Authorization = `Bearer ${token}`;
+  const resp = await fetch(path, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(payload),
+    cache: "no-store",
+  });
+  if (!resp.ok) {
+    const text = await resp.text();
+    throw new Error(text || `HTTP ${resp.status}`);
+  }
+  return resp.json();
+}
+
+function updateUrlFromScope(scope: CitationScope, mode: ScopeMode, competitors: string[]) {
+  const params = new URLSearchParams();
+  params.set("mode", mode);
+  params.set("bucket", scope.bucket || "month");
+  if (scope.focus_assignee_ids?.length) params.set("assignees", scope.focus_assignee_ids.join(","));
+  if (scope.focus_assignee_names?.length) params.set("assignee_names", scope.focus_assignee_names.join(","));
+  if (scope.focus_pub_ids?.length) params.set("pub_ids", scope.focus_pub_ids.join(","));
+  if (scope.filters?.keyword) params.set("keyword", scope.filters.keyword);
+  if (scope.filters?.cpc) params.set("cpc", scope.filters.cpc);
+  if (scope.filters?.assignee) params.set("assignee", scope.filters.assignee);
+  if (scope.citing_pub_date_from) params.set("from", scope.citing_pub_date_from);
+  if (scope.citing_pub_date_to) params.set("to", scope.citing_pub_date_to);
+  if (competitors.length) params.set("competitors", competitors.join(","));
+  const url = `${window.location.pathname}?${params.toString()}`;
+  window.history.replaceState({}, "", url);
+}
+
+function SectionHeader({ title, subtitle }: { title: string; subtitle: string }) {
+  return (
+    <div>
+      <h2 className={sectionTitle}>{title}</h2>
+      <p className={sectionSubtitle}>{subtitle}</p>
+    </div>
+  );
+}
+
+type ForwardImpactCardProps = {
+  scope: CitationScope | null;
+  scopeVersion: number;
+  tokenGetter: TokenGetter;
+};
+
+function ForwardImpactCard({ scope, scopeVersion, tokenGetter }: ForwardImpactCardProps) {
+  const [topN, setTopN] = useState(50);
+  const [bucketOverride, setBucketOverride] = useState<"month" | "quarter" | "">("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [data, setData] = useState<ForwardImpactResponse | null>(null);
+
+  const load = useCallback(async () => {
+    if (!scope) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const payload = {
+        scope: { ...scope, bucket: (bucketOverride || scope.bucket || "month") as "month" | "quarter" },
+        top_n: topN,
+      };
+      const json = await postCitation("/api/citation/impact", payload, tokenGetter);
+      setData(json);
+    } catch (err: any) {
+      setError(err?.message ?? "Failed to load impact");
+    } finally {
+      setLoading(false);
+    }
+  }, [scope, bucketOverride, topN, tokenGetter]);
+
+  useEffect(() => {
+    load();
+  }, [load, scopeVersion]);
+
+  const medianVelocity = useMemo(() => {
+    if (!data?.top_patents?.length) return 0;
+    const values = data.top_patents.map((p) => p.fwd_citation_velocity || 0).sort((a, b) => a - b);
+    const mid = Math.floor(values.length / 2);
+    return values.length % 2 ? values[mid] : (values[mid - 1] + values[mid]) / 2;
+  }, [data]);
+
+  const [sortKey, setSortKey] = useState<"fwd" | "velocity">("fwd");
+  const sortedPatents = useMemo(() => {
+    if (!data?.top_patents) return [];
+    const copy = [...data.top_patents];
+    copy.sort((a, b) => {
+      if (sortKey === "velocity") {
+        return (b.fwd_citation_velocity ?? 0) - (a.fwd_citation_velocity ?? 0);
+      }
+      return (b.fwd_citation_count ?? 0) - (a.fwd_citation_count ?? 0);
+    });
+    return copy;
+  }, [data, sortKey]);
+
+  return (
+    <div className={cardClass}>
+      <div className="flex items-start justify-between gap-3 mb-3">
+        <SectionHeader title="Forward-Citation Impact" subtitle="Velocity, timeline, and top cited patents." />
+        <div className="flex items-center gap-2">
+          <label className="flex items-center gap-2 text-sm text-slate-600">
+            <span>Top N</span>
+            <input
+              type="number"
+              min={1}
+              max={200}
+              value={topN}
+              onChange={(e) => setTopN(Number(e.target.value) || 1)}
+              className="h-9 w-20 rounded border border-slate-200 px-2 text-sm"
+            />
+          </label>
+          <label className="flex items-center gap-2 text-sm text-slate-600">
+            <span>Bucket</span>
+            <select
+              value={bucketOverride}
+              onChange={(e) => setBucketOverride(e.target.value as any)}
+              className="h-9 rounded border border-slate-200 px-2 text-sm"
+            >
+              <option value="">Use scope</option>
+              <option value="month">Month</option>
+              <option value="quarter">Quarter</option>
+            </select>
+          </label>
+          <button
+            onClick={load}
+            className="btn-outline h-9 px-4 text-sm font-semibold"
+            disabled={loading || !scope}
+          >
+            {loading ? "Loading…" : "Refresh"}
+          </button>
+        </div>
+      </div>
+
+      {!scope ? (
+        <div className="text-sm text-slate-600">Apply a scope to view citation impact.</div>
+      ) : error ? (
+        <div className="text-sm text-rose-600">Error: {error}</div>
+      ) : loading && !data ? (
+        <div className="text-sm text-slate-500">Loading…</div>
+      ) : data ? (
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <MetricTile label="Total forward citations" value={data.total_forward_citations} />
+            <MetricTile label="Distinct citing patents" value={data.distinct_citing_patents} />
+            <MetricTile label="Median velocity" value={`${medianVelocity.toFixed(2)}/mo`} />
+          </div>
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="font-semibold text-slate-800">Influence timeline</h3>
+              <div className="text-xs text-slate-500">Count of citing patents by bucket</div>
+            </div>
+            <LineChart points={data.timeline} />
+          </div>
+          <div className="overflow-x-auto">
+            <table className="min-w-full border-collapse">
+              <thead>
+                <tr className="text-left text-xs uppercase tracking-wide text-slate-500">
+                  <th className="px-3 py-2 border-b">Patent</th>
+                  <th className="px-3 py-2 border-b">Assignee</th>
+                  <th className="px-3 py-2 border-b">Pub date</th>
+                  <th className="px-3 py-2 border-b cursor-pointer" onClick={() => setSortKey("fwd")}>
+                    Forward citations
+                  </th>
+                  <th className="px-3 py-2 border-b cursor-pointer" onClick={() => setSortKey("velocity")}>
+                    Velocity
+                  </th>
+                  <th className="px-3 py-2 border-b">First citation</th>
+                  <th className="px-3 py-2 border-b">Last citation</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sortedPatents.map((p) => (
+                  <tr key={p.pub_id} className="odd:bg-white even:bg-slate-50/60">
+                    <td className="px-3 py-2 align-top">
+                      <a href={googlePatentsUrl(p.pub_id)} target="_blank" rel="noreferrer" className="text-sky-700 font-semibold hover:underline">
+                        {p.pub_id}
+                      </a>
+                      <div className="text-slate-700 text-sm">{p.title}</div>
+                    </td>
+                    <td className="px-3 py-2 align-top text-sm text-slate-700">{p.assignee_name || "—"}</td>
+                    <td className="px-3 py-2 align-top text-sm text-slate-700">{fmtDate(p.pub_date)}</td>
+                    <td className="px-3 py-2 align-top text-sm font-semibold text-slate-800">{p.fwd_citation_count}</td>
+                    <td className="px-3 py-2 align-top text-sm text-slate-700">
+                      <div className="flex items-center gap-2">
+                        <div className="w-16">
+                          <ScoreBar value={Math.min(100, p.fwd_citation_velocity * 20)} />
+                        </div>
+                        <span>{p.fwd_citation_velocity.toFixed(2)}/mo</span>
+                      </div>
+                    </td>
+                    <td className="px-3 py-2 align-top text-sm text-slate-700">{fmtDate(p.first_citation_date)}</td>
+                    <td className="px-3 py-2 align-top text-sm text-slate-700">{fmtDate(p.last_citation_date)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ) : (
+        <div className="text-sm text-slate-600">No data for this scope.</div>
+      )}
+    </div>
+  );
+}
+
+type DependencyMatrixCardProps = {
+  scope: CitationScope | null;
+  scopeVersion: number;
+  tokenGetter: TokenGetter;
+};
+
+function DependencyMatrixCard({ scope, scopeVersion, tokenGetter }: DependencyMatrixCardProps) {
+  const [minCitations, setMinCitations] = useState(5);
+  const [normalize, setNormalize] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [data, setData] = useState<DependencyMatrixResponse | null>(null);
+
+  const hasPortfolio = Boolean(scope?.focus_assignee_ids?.length || scope?.focus_pub_ids?.length);
+
+  const load = useCallback(async () => {
+    if (!scope) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const payload = { scope, min_citations: minCitations, normalize };
+      const json = await postCitation("/api/citation/dependency-matrix", payload, tokenGetter);
+      setData(json);
+    } catch (err: any) {
+      setError(err?.message ?? "Failed to load matrix");
+    } finally {
+      setLoading(false);
+    }
+  }, [scope, minCitations, normalize, tokenGetter]);
+
+  useEffect(() => {
+    load();
+  }, [load, scopeVersion]);
+
+  const topEdges = useMemo(() => (data?.edges || []).slice().sort((a, b) => b.citation_count - a.citation_count), [data]);
+  const citingNames = useMemo(() => {
+    const names: string[] = [];
+    for (const e of topEdges) {
+      const name = e.citing_assignee_name || "Unknown";
+      if (!names.includes(name)) names.push(name);
+      if (names.length >= 8) break;
+    }
+    return names;
+  }, [topEdges]);
+  const citedNames = useMemo(() => {
+    const names: string[] = [];
+    for (const e of topEdges) {
+      const name = e.cited_assignee_name || "Unknown";
+      if (!names.includes(name)) names.push(name);
+      if (names.length >= 8) break;
+    }
+    return names;
+  }, [topEdges]);
+  const maxVal = topEdges.reduce((m, e) => Math.max(m, e.citation_count), 0) || 1;
+
+  return (
+    <div className={cardClass}>
+      <div className="flex items-start justify-between gap-3 mb-3">
+        <SectionHeader title="Cross-Assignee Dependency" subtitle="Citing → cited relationships across portfolios." />
+        <div className="flex items-center gap-3">
+          <label className="flex items-center gap-2 text-sm text-slate-600">
+            <span>Min citations</span>
+            <input
+              type="number"
+              min={1}
+              max={50}
+              value={minCitations}
+              onChange={(e) => setMinCitations(Number(e.target.value) || 1)}
+              className="h-9 w-20 rounded border border-slate-200 px-2 text-sm"
+            />
+          </label>
+          <label className="flex items-center gap-2 text-sm text-slate-600">
+            <input type="checkbox" checked={normalize} onChange={(e) => setNormalize(e.target.checked)} />
+            <span>Normalize</span>
+          </label>
+          <button onClick={load} className="btn-outline h-9 px-4 text-sm font-semibold" disabled={!scope || loading}>
+            {loading ? "Loading…" : "Refresh"}
+          </button>
+        </div>
+      </div>
+      {!scope ? (
+        <div className="text-sm text-slate-600">Apply a scope to view dependency insights.</div>
+      ) : !hasPortfolio ? (
+        <div className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
+          Set a target portfolio (assignee or pub IDs) for meaningful dependency analysis.
+        </div>
+      ) : error ? (
+        <div className="text-sm text-rose-600">Error: {error}</div>
+      ) : loading && !data ? (
+        <div className="text-sm text-slate-500">Loading…</div>
+      ) : data ? (
+        <div className="space-y-4">
+          <div className="overflow-x-auto">
+            <table className="min-w-full border-collapse">
+              <thead>
+                <tr>
+                  <th className="px-3 py-2 border-b"></th>
+                  {citedNames.map((name) => (
+                    <th key={name} className="px-3 py-2 border-b text-xs text-slate-600 text-left">
+                      {name}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {citingNames.map((row) => (
+                  <tr key={row}>
+                    <th className="px-3 py-2 border-b text-xs text-slate-700 text-left">{row}</th>
+                    {citedNames.map((col) => {
+                      const edge = topEdges.find(
+                        (e) => (e.citing_assignee_name || "Unknown") === row && (e.cited_assignee_name || "Unknown") === col
+                      );
+                      const val = edge?.citation_count || 0;
+                      const pct = val / maxVal;
+                      const bg = `rgba(14,165,233,${0.15 + pct * 0.6})`;
+                      return (
+                        <td key={col} className="px-3 py-2 border-b text-sm text-slate-800" style={{ background: bg }}>
+                          {val}
+                          {normalize && edge?.citing_to_cited_pct != null ? (
+                            <div className="text-[11px] text-slate-600">{(edge.citing_to_cited_pct * 100).toFixed(1)}%</div>
+                          ) : null}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="min-w-full border-collapse">
+              <thead>
+                <tr className="text-xs uppercase tracking-wide text-slate-500">
+                  <th className="px-3 py-2 border-b text-left">From (citing)</th>
+                  <th className="px-3 py-2 border-b text-left">To (cited)</th>
+                  <th className="px-3 py-2 border-b text-left">Citations</th>
+                  <th className="px-3 py-2 border-b text-left">% of from&apos;s outgoing</th>
+                </tr>
+              </thead>
+              <tbody>
+                {topEdges.map((e, idx) => (
+                  <tr key={`${e.citing_assignee_name}-${idx}`} className="odd:bg-white even:bg-slate-50/60">
+                    <td className="px-3 py-2 text-sm text-slate-800">{e.citing_assignee_name || "Unknown"}</td>
+                    <td className="px-3 py-2 text-sm text-slate-800">{e.cited_assignee_name || "Unknown"}</td>
+                    <td className="px-3 py-2 text-sm font-semibold text-slate-900">{e.citation_count}</td>
+                    <td className="px-3 py-2 text-sm text-slate-700">
+                      {normalize && e.citing_to_cited_pct != null ? `${(e.citing_to_cited_pct * 100).toFixed(1)}%` : "—"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ) : (
+        <div className="text-sm text-slate-600">No dependency edges for this scope.</div>
+      )}
+    </div>
+  );
+}
+
+type RiskRadarCardProps = {
+  scope: CitationScope | null;
+  scopeVersion: number;
+  tokenGetter: TokenGetter;
+  competitorIds: string[] | null;
+};
+
+function RiskRadarCard({ scope, scopeVersion, tokenGetter, competitorIds }: RiskRadarCardProps) {
+  const [topN, setTopN] = useState(200);
+  const [sortKey, setSortKey] = useState<"overall" | "exposure" | "fragility" | "fwd">("overall");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [data, setData] = useState<RiskRadarResponse | null>(null);
+
+  const load = useCallback(async () => {
+    if (!scope) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const payload = {
+        scope,
+        competitor_assignee_ids: competitorIds && competitorIds.length ? competitorIds : null,
+        top_n: topN,
+      };
+      const json = await postCitation("/api/citation/risk-radar", payload, tokenGetter);
+      setData(json);
+    } catch (err: any) {
+      setError(err?.message ?? "Failed to load risk data");
+    } finally {
+      setLoading(false);
+    }
+  }, [scope, competitorIds, topN, tokenGetter]);
+
+  useEffect(() => {
+    load();
+  }, [load, scopeVersion]);
+
+  const sortedRows = useMemo(() => {
+    if (!data?.patents) return [];
+    const copy = [...data.patents];
+    copy.sort((a, b) => {
+      switch (sortKey) {
+        case "exposure":
+          return b.exposure_score - a.exposure_score;
+        case "fragility":
+          return b.fragility_score - a.fragility_score;
+        case "fwd":
+          return b.fwd_total - a.fwd_total;
+        default:
+          return b.overall_risk_score - a.overall_risk_score;
+      }
+    });
+    return copy;
+  }, [data, sortKey]);
+
+  const exportCsv = useCallback(() => {
+    if (!data?.patents?.length) return;
+    const header = [
+      "pub_id",
+      "title",
+      "assignee",
+      "fwd_total",
+      "fwd_from_competitors",
+      "fwd_competitor_ratio",
+      "bwd_total",
+      "exposure_score",
+      "fragility_score",
+      "overall_risk_score",
+    ];
+    const rows = data.patents.map((p) => [
+      p.pub_id,
+      `"${(p.title || "").replace(/"/g, '""')}"`,
+      `"${(p.assignee_name || "").replace(/"/g, '""')}"`,
+      p.fwd_total,
+      p.fwd_from_competitors,
+      p.fwd_competitor_ratio ?? "",
+      p.bwd_total,
+      p.exposure_score.toFixed(2),
+      p.fragility_score.toFixed(2),
+      p.overall_risk_score.toFixed(2),
+    ]);
+    const csv = [header.join(","), ...rows.map((r) => r.join(","))].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "risk_radar.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [data]);
+
+  return (
+    <div className={cardClass}>
+      <div className="flex items-start justify-between gap-3 mb-3">
+        <SectionHeader title="Risk Radar" subtitle="Forward exposure + backward fragility indicators." />
+        <div className="flex items-center gap-3">
+          <label className="flex items-center gap-2 text-sm text-slate-600">
+            <span>Top N</span>
+            <input
+              type="number"
+              min={10}
+              max={400}
+              value={topN}
+              onChange={(e) => setTopN(Number(e.target.value) || 10)}
+              className="h-9 w-20 rounded border border-slate-200 px-2 text-sm"
+            />
+          </label>
+          <select
+            value={sortKey}
+            onChange={(e) => setSortKey(e.target.value as any)}
+            className="h-9 rounded border border-slate-200 px-3 text-sm"
+          >
+            <option value="overall">Overall risk</option>
+            <option value="exposure">Exposure</option>
+            <option value="fragility">Fragility</option>
+            <option value="fwd">Forward citations</option>
+          </select>
+          <button className="btn-outline h-9 px-4 text-sm font-semibold" onClick={exportCsv} disabled={!data?.patents?.length}>
+            Export CSV
+          </button>
+        </div>
+      </div>
+      {!scope ? (
+        <div className="text-sm text-slate-600">Apply a scope to view risk signals.</div>
+      ) : error ? (
+        <div className="text-sm text-rose-600">Error: {error}</div>
+      ) : loading && !data ? (
+        <div className="text-sm text-slate-500">Loading…</div>
+      ) : data ? (
+        <div className="overflow-x-auto">
+          <table className="min-w-full border-collapse">
+            <thead>
+              <tr className="text-xs uppercase tracking-wide text-slate-500">
+                <th className="px-3 py-2 border-b text-left">Patent</th>
+                <th className="px-3 py-2 border-b text-left">Assignee</th>
+                <th className="px-3 py-2 border-b text-left">Forward citations</th>
+                <th className="px-3 py-2 border-b text-left">From competitors</th>
+                <th className="px-3 py-2 border-b text-left">Backward cites</th>
+                <th className="px-3 py-2 border-b text-left">Exposure</th>
+                <th className="px-3 py-2 border-b text-left">Fragility</th>
+                <th className="px-3 py-2 border-b text-left">Overall</th>
+              </tr>
+            </thead>
+            <tbody>
+              {sortedRows.map((p) => (
+                <tr key={p.pub_id} className="odd:bg-white even:bg-slate-50/60">
+                  <td className="px-3 py-2 align-top">
+                    <a href={googlePatentsUrl(p.pub_id)} target="_blank" rel="noreferrer" className="text-sky-700 font-semibold hover:underline">
+                      {p.pub_id}
+                    </a>
+                    <div className="text-sm text-slate-700">{p.title}</div>
+                  </td>
+                  <td className="px-3 py-2 text-sm text-slate-700">{p.assignee_name || "—"}</td>
+                  <td className="px-3 py-2 text-sm font-semibold text-slate-900">{p.fwd_total}</td>
+                  <td className="px-3 py-2 text-sm text-slate-700">
+                    {p.fwd_from_competitors}{" "}
+                    {p.fwd_competitor_ratio != null ? (
+                      <span className="text-xs text-slate-500">({(p.fwd_competitor_ratio * 100).toFixed(1)}%)</span>
+                    ) : null}
+                  </td>
+                  <td className="px-3 py-2 text-sm text-slate-700">{p.bwd_total}</td>
+                  <td className="px-3 py-2 text-sm text-slate-700">
+                    <div className="w-24"><ScoreBar value={p.exposure_score} color="sky" /></div>
+                    <div className="text-xs text-slate-500 mt-1">{p.exposure_score.toFixed(1)}</div>
+                  </td>
+                  <td className="px-3 py-2 text-sm text-slate-700">
+                    <div className="w-24"><ScoreBar value={p.fragility_score} color="amber" /></div>
+                    <div className="text-xs text-slate-500 mt-1">{p.fragility_score.toFixed(1)}</div>
+                  </td>
+                  <td className="px-3 py-2 text-sm text-slate-800 font-semibold">
+                    <div className="w-24"><ScoreBar value={p.overall_risk_score} color="rose" /></div>
+                    <div className="text-xs text-slate-500 mt-1">{p.overall_risk_score.toFixed(1)}</div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <div className="text-sm text-slate-600">No risk signals found for this scope.</div>
+      )}
+    </div>
+  );
+}
+
+type EncroachmentCardProps = {
+  scope: CitationScope | null;
+  scopeVersion: number;
+  tokenGetter: TokenGetter;
+  competitorIds: string[] | null;
+};
+
+function EncroachmentCard({ scope, scopeVersion, tokenGetter, competitorIds }: EncroachmentCardProps) {
+  const [bucket, setBucket] = useState<"month" | "quarter">("quarter");
+  const [topK, setTopK] = useState(10);
+  const [explicitOnly, setExplicitOnly] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [data, setData] = useState<EncroachmentResponse | null>(null);
+
+  const hasTargets = Boolean(scope?.focus_assignee_ids?.length);
+
+  const load = useCallback(async () => {
+    if (!scope || !hasTargets) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const payload = {
+        target_assignee_ids: scope.focus_assignee_ids,
+        competitor_assignee_ids: explicitOnly ? competitorIds : null,
+        citing_pub_date_from: scope.citing_pub_date_from || null,
+        citing_pub_date_to: scope.citing_pub_date_to || null,
+        bucket,
+      };
+      const json = await postCitation("/api/citation/encroachment", payload, tokenGetter);
+      setData(json);
+    } catch (err: any) {
+      setError(err?.message ?? "Failed to load encroachment");
+    } finally {
+      setLoading(false);
+    }
+  }, [scope, hasTargets, explicitOnly, competitorIds, bucket, tokenGetter]);
+
+  useEffect(() => {
+    load();
+  }, [load, scopeVersion]);
+
+  const totalsByComp = useMemo(() => {
+    if (!data?.timeline) return new Map<string, number>();
+    const map = new Map<string, number>();
+    for (const pt of data.timeline) {
+      const key = pt.competitor_assignee_id || pt.competitor_assignee_name || "Unknown";
+      map.set(key, (map.get(key) || 0) + (pt.citing_patent_count || 0));
+    }
+    return map;
+  }, [data]);
+
+  const topCompetitorKeys = useMemo(() => {
+    const entries = Array.from(totalsByComp.entries()).sort((a, b) => b[1] - a[1]);
+    return entries.slice(0, topK).map(([k]) => k);
+  }, [totalsByComp, topK]);
+
+  const filteredTimeline = useMemo(() => {
+    if (!data?.timeline) return [];
+    return data.timeline.filter((pt) => {
+      const key = pt.competitor_assignee_id || pt.competitor_assignee_name || "Unknown";
+      return topCompetitorKeys.includes(key);
+    });
+  }, [data, topCompetitorKeys]);
+
+  const groupedSeries = useMemo(() => {
+    const groups: Record<string, EncroachmentTimelinePoint[]> = {};
+    for (const pt of filteredTimeline) {
+      const key = pt.competitor_assignee_id || pt.competitor_assignee_name || "Unknown";
+      groups[key] = groups[key] || [];
+      groups[key].push(pt);
+    }
+    Object.values(groups).forEach((arr) => arr.sort((a, b) => (a.bucket_start > b.bucket_start ? 1 : -1)));
+    return groups;
+  }, [filteredTimeline]);
+
+  return (
+    <div className={cardClass}>
+      <div className="flex items-start justify-between gap-3 mb-3">
+        <SectionHeader title="Assignee Encroachment" subtitle="Competitor forward citations into your portfolio." />
+        <div className="flex items-center gap-3">
+          <label className="flex items-center gap-2 text-sm text-slate-600">
+            <span>Bucket</span>
+            <select value={bucket} onChange={(e) => setBucket(e.target.value as any)} className="h-9 rounded border border-slate-200 px-2 text-sm">
+              <option value="month">Month</option>
+              <option value="quarter">Quarter</option>
+            </select>
+          </label>
+          <label className="flex items-center gap-2 text-sm text-slate-600">
+            <span>Top competitors</span>
+            <input
+              type="number"
+              min={3}
+              max={25}
+              value={topK}
+              onChange={(e) => setTopK(Number(e.target.value) || 3)}
+              className="h-9 w-20 rounded border border-slate-200 px-2 text-sm"
+            />
+          </label>
+          <label className="flex items-center gap-2 text-sm text-slate-600">
+            <input type="checkbox" checked={explicitOnly} onChange={(e) => setExplicitOnly(e.target.checked)} />
+            <span>Only explicit competitors</span>
+          </label>
+          <button className="btn-outline h-9 px-4 text-sm font-semibold" disabled={!hasTargets || loading} onClick={load}>
+            {loading ? "Loading…" : "Refresh"}
+          </button>
+        </div>
+      </div>
+      {!hasTargets ? (
+        <div className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
+          Define at least one target assignee in the Scope panel to view encroachment metrics.
+        </div>
+      ) : error ? (
+        <div className="text-sm text-rose-600">Error: {error}</div>
+      ) : loading && !data ? (
+        <div className="text-sm text-slate-500">Loading…</div>
+      ) : data ? (
+        <div className="space-y-4">
+          {explicitOnly && (!competitorIds || competitorIds.length === 0) ? (
+            <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-3 py-2 inline-block">
+              Add competitor IDs in the scope panel to limit the chart.
+            </div>
+          ) : null}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="font-semibold text-slate-800">Encroachment timeline</h3>
+              <div className="text-xs text-slate-500">Top {topK} competitors by citing patents</div>
+            </div>
+            {filteredTimeline.length ? (
+              <div className="overflow-x-auto">
+                <svg width={Math.max(480, filteredTimeline.length * 60)} height={260} className="min-w-full">
+                  {Object.entries(groupedSeries).map(([key, series], idx) => {
+                    const values = series.map((s) => s.citing_patent_count || 0);
+                    const maxVal = Math.max(...values, 1);
+                    const width = Math.max(420, series.length * 80);
+                    const margin = 30;
+                    const step = series.length > 1 ? (width - margin * 2) / (series.length - 1) : 0;
+                    const color = ["#0ea5e9", "#f59e0b", "#ef4444", "#10b981", "#6366f1"][idx % 5];
+                    const coords = series.map((pt, i) => {
+                      const x = margin + i * step;
+                      const y = margin + (1 - (pt.citing_patent_count || 0) / maxVal) * (220 - margin);
+                      return [x, y];
+                    });
+                    const path = coords.map(([x, y], i) => `${i === 0 ? "M" : "L"}${x},${y}`).join(" ");
+                    return (
+                      <g key={key}>
+                        <path d={path} fill="none" stroke={color} strokeWidth={2.2} strokeLinejoin="round" strokeLinecap="round" />
+                        {coords.map(([x, y], i) => (
+                          <g key={`${key}-${i}`}>
+                            <circle cx={x} cy={y} r={4} fill="#fff" stroke={color} strokeWidth={2} />
+                            <text x={x} y={240} textAnchor="middle" className="text-[11px] fill-slate-600">
+                              {fmtDate(series[i].bucket_start).slice(0, 7)}
+                            </text>
+                          </g>
+                        ))}
+                        <text x={Math.max(...coords.map(([x]) => x)) + 10} y={coords[0][1]} className="text-xs fill-slate-700">
+                          {key}
+                        </text>
+                      </g>
+                    );
+                  })}
+                </svg>
+              </div>
+            ) : (
+              <div className="text-sm text-slate-600">No encroachment signals for this window.</div>
+            )}
+          </div>
+          <div className="overflow-x-auto">
+            <table className="min-w-full border-collapse">
+              <thead>
+                <tr className="text-xs uppercase tracking-wide text-slate-500">
+                  <th className="px-3 py-2 border-b text-left">Competitor assignee</th>
+                  <th className="px-3 py-2 border-b text-left">Total citing patents</th>
+                  <th className="px-3 py-2 border-b text-left">Encroachment score</th>
+                  <th className="px-3 py-2 border-b text-left">Velocity</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.competitors
+                  .filter((c) => topCompetitorKeys.includes(c.competitor_assignee_id || c.competitor_assignee_name || "Unknown"))
+                  .slice(0, topK)
+                  .map((c, idx) => (
+                    <tr key={`${c.competitor_assignee_id || idx}`} className="odd:bg-white even:bg-slate-50/60">
+                      <td className="px-3 py-2 text-sm text-slate-800">{c.competitor_assignee_name || "Unknown"}</td>
+                      <td className="px-3 py-2 text-sm font-semibold text-slate-900">{c.total_citing_patents}</td>
+                      <td className="px-3 py-2 text-sm text-slate-800">
+                        <div className="w-24"><ScoreBar value={c.encroachment_score} color="rose" /></div>
+                        <div className="text-xs text-slate-500 mt-1">{c.encroachment_score.toFixed(1)}</div>
+                      </td>
+                      <td className="px-3 py-2 text-sm text-slate-700">
+                        {c.velocity != null ? `${c.velocity.toFixed(2)} / bucket` : "—"}
+                      </td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ) : (
+        <div className="text-sm text-slate-600">No encroachment results for this scope.</div>
+      )}
+    </div>
+  );
+}
+
+export default function CitationPage() {
+  const { getAccessTokenSilently, isAuthenticated } = useAuth0();
+  const [hydrated, setHydrated] = useState(false);
+  const [scopeState, setScopeState] = useState<ScopePanelState>({ ...INITIAL_SCOPE_STATE });
+
+  const [appliedScope, setAppliedScope] = useState<CitationScope | null>(null);
+  const [appliedCompetitors, setAppliedCompetitors] = useState<string[] | null>(null);
+  const [scopeVersion, setScopeVersion] = useState(0);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const nextState: ScopePanelState = {
+      ...INITIAL_SCOPE_STATE,
+      mode: (params.get("mode") as ScopeMode) || INITIAL_SCOPE_STATE.mode,
+      bucket: (params.get("bucket") as "month" | "quarter") || INITIAL_SCOPE_STATE.bucket,
+      focusAssigneeIds: parseListInput(params.get("assignees") || ""),
+      focusAssigneeNames: parseListInput(params.get("assignee_names") || ""),
+      pubIds: parseListInput(params.get("pub_ids") || ""),
+      keyword: params.get("keyword") || "",
+      cpc: params.get("cpc") || "",
+      assigneeFilter: params.get("assignee") || "",
+      from: params.get("from") || "",
+      to: params.get("to") || "",
+      competitors: parseListInput(params.get("competitors") || ""),
+      competitorToggle: !!params.get("competitors"),
+    };
+    setScopeState(nextState);
+    setHydrated(true);
+    const shouldApply =
+      nextState.focusAssigneeIds.length ||
+      nextState.focusAssigneeNames.length ||
+      nextState.pubIds.length ||
+      nextState.keyword ||
+      nextState.cpc ||
+      nextState.assigneeFilter;
+    if (shouldApply) {
+      const scope = buildScopeFromState(nextState);
+      const competitors = nextState.competitorToggle ? nextState.competitors : [];
+      setAppliedScope(scope);
+      setAppliedCompetitors(competitors.length ? competitors : null);
+      setScopeVersion((v) => v + 1);
+    }
+  }, []);
+
+  const tokenGetter = useCallback(async () => {
+    if (!isAuthenticated) return undefined;
+    try {
+      return await getAccessTokenSilently();
+    } catch (err) {
+      console.error("Token fetch failed", err);
+      return undefined;
+    }
+  }, [getAccessTokenSilently, isAuthenticated]);
+
+  function buildScopeFromState(state: ScopePanelState): CitationScope {
+    const scope: CitationScope = {
+      bucket: state.bucket,
+      citing_pub_date_from: state.from || null,
+      citing_pub_date_to: state.to || null,
+    };
+    if (state.mode === "assignee") {
+      scope.focus_assignee_ids = state.focusAssigneeIds;
+      scope.focus_assignee_names = state.focusAssigneeNames;
+    } else if (state.mode === "pub") {
+      scope.focus_pub_ids = state.pubIds;
+    } else {
+      scope.filters = {
+        keyword: state.keyword || undefined,
+        cpc: state.cpc || undefined,
+        assignee: state.assigneeFilter || undefined,
+        date_from: state.from || undefined,
+        date_to: state.to || undefined,
+      };
+    }
+    return scope;
+  }
+
+  const applyScope = useCallback(() => {
+    const scope = buildScopeFromState(scopeState);
+    setAppliedScope(scope);
+    const competitors = scopeState.competitorToggle ? scopeState.competitors : [];
+    setAppliedCompetitors(competitors.length ? competitors : null);
+    setScopeVersion((v) => v + 1);
+    updateUrlFromScope(scope, scopeState.mode, competitors);
+  }, [scopeState]);
+
+  const clearScope = useCallback(() => {
+    const cleared: ScopePanelState = { ...INITIAL_SCOPE_STATE };
+    setScopeState({ ...cleared });
+    setAppliedScope(null);
+    setAppliedCompetitors(null);
+    setScopeVersion((v) => v + 1);
+    updateUrlFromScope({ bucket: "month" }, "assignee", []);
+  }, []);
+
+  const switchMode = useCallback((mode: ScopeMode) => {
+    setScopeState((s) => ({
+      ...s,
+      mode,
+      focusAssigneeIds: mode === "assignee" ? s.focusAssigneeIds : [],
+      focusAssigneeNames: mode === "assignee" ? s.focusAssigneeNames : [],
+      pubIds: mode === "pub" ? s.pubIds : [],
+      keyword: mode === "search" ? s.keyword : "",
+      cpc: mode === "search" ? s.cpc : "",
+      assigneeFilter: mode === "search" ? s.assigneeFilter : "",
+    }));
+  }, []);
+
+  if (!hydrated) {
+    return <div className="mx-auto max-w-7xl px-6 py-6 text-sm text-slate-600">Loading citation workspace…</div>;
+  }
+
+  return (
+    <main className="mx-auto max-w-7xl px-6 py-6 space-y-6">
+      <div className="flex flex-col gap-2">
+        <h1 className="text-3xl font-bold text-slate-900">Citation Intelligence</h1>
+        <p className="text-slate-700 max-w-4xl">
+          Analyze forward citations, cross-assignee dependencies, risk signals, and competitor encroachment using the patent_citation table. The layout follows the Search,
+          Trends, and IP Overview styling for a cohesive experience.
+        </p>
+      </div>
+
+      <div className={cardClass}>
+        <div className="flex items-start justify-between gap-3 mb-3">
+          <SectionHeader title="Scope" subtitle="Define portfolio, time window, and competitors for all widgets." />
+        </div>
+        <div className="space-y-4">
+          <div className="flex flex-wrap gap-3">
+            {(["assignee", "pub", "search"] as ScopeMode[]).map((mode) => (
+              <button
+                key={mode}
+                className={`px-4 py-2 rounded-full border text-sm font-semibold ${
+                  scopeState.mode === mode ? "bg-sky-600 text-white border-sky-600" : "bg-white text-slate-700 border-slate-200"
+                }`}
+                onClick={() => switchMode(mode)}
+              >
+                {mode === "assignee" ? "By Assignee" : mode === "pub" ? "By Patent IDs" : "By Search Filters"}
+              </button>
+            ))}
+          </div>
+          {scopeState.mode === "assignee" && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <div className={fieldLabel}>Target assignee(s) – canonical UUIDs</div>
+                <textarea
+                  value={scopeState.focusAssigneeIds.join("\n")}
+                  onChange={(e) => setScopeState((s) => ({ ...s, focusAssigneeIds: parseListInput(e.target.value) }))}
+                  rows={3}
+                  placeholder="uuid-1, uuid-2"
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                />
+              </div>
+              <div>
+                <div className={fieldLabel}>Assignee name contains</div>
+                <textarea
+                  value={scopeState.focusAssigneeNames.join("\n")}
+                  onChange={(e) => setScopeState((s) => ({ ...s, focusAssigneeNames: parseListInput(e.target.value) }))}
+                  rows={3}
+                  placeholder="IBM, Samsung"
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                />
+              </div>
+            </div>
+          )}
+          {scopeState.mode === "pub" && (
+            <div>
+              <div className={fieldLabel}>Portfolio patents (pub IDs)</div>
+              <textarea
+                value={scopeState.pubIds.join("\n")}
+                onChange={(e) => setScopeState((s) => ({ ...s, pubIds: parseListInput(e.target.value) }))}
+                rows={4}
+                placeholder="US12345678A1, EP0987654B1"
+                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+              />
+            </div>
+          )}
+          {scopeState.mode === "search" && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <div className={fieldLabel}>Keyword</div>
+                <input
+                  type="text"
+                  value={scopeState.keyword}
+                  onChange={(e) => setScopeState((s) => ({ ...s, keyword: e.target.value }))}
+                  placeholder="Generative AI safety…"
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                />
+              </div>
+              <div>
+                <div className={fieldLabel}>CPC</div>
+                <input
+                  type="text"
+                  value={scopeState.cpc}
+                  onChange={(e) => setScopeState((s) => ({ ...s, cpc: e.target.value }))}
+                  placeholder="G06N, H04W…"
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                />
+              </div>
+              <div>
+                <div className={fieldLabel}>Assignee contains</div>
+                <input
+                  type="text"
+                  value={scopeState.assigneeFilter}
+                  onChange={(e) => setScopeState((s) => ({ ...s, assigneeFilter: e.target.value }))}
+                  placeholder="Nvidia"
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                />
+              </div>
+            </div>
+          )}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+              <div className={fieldLabel}>From (citing pub date)</div>
+              <input
+                type="date"
+                value={scopeState.from}
+                onChange={(e) => setScopeState((s) => ({ ...s, from: e.target.value }))}
+                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+              />
+            </div>
+            <div>
+              <div className={fieldLabel}>To (citing pub date)</div>
+              <input
+                type="date"
+                value={scopeState.to}
+                onChange={(e) => setScopeState((s) => ({ ...s, to: e.target.value }))}
+                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+              />
+            </div>
+            <div>
+              <div className={fieldLabel}>Bucket</div>
+              <select
+                value={scopeState.bucket}
+                onChange={(e) => setScopeState((s) => ({ ...s, bucket: e.target.value as any }))}
+                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+              >
+                <option value="month">Month</option>
+                <option value="quarter">Quarter</option>
+              </select>
+            </div>
+            <div>
+              <div className={fieldLabel}>Competitor assignee(s)</div>
+              <textarea
+                rows={2}
+                value={scopeState.competitors.join("\n")}
+                onChange={(e) => setScopeState((s) => ({ ...s, competitors: parseListInput(e.target.value) }))}
+                placeholder="UUIDs, one per line"
+                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+              />
+              <label className="mt-1 inline-flex items-center gap-2 text-xs text-slate-600">
+                <input
+                  type="checkbox"
+                  checked={scopeState.competitorToggle}
+                  onChange={(e) => setScopeState((s) => ({ ...s, competitorToggle: e.target.checked }))}
+                />
+                Limit competitors to explicit list
+              </label>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <button className="btn-modern h-10 px-5 text-sm font-semibold" onClick={applyScope}>
+              Apply
+            </button>
+            <button className="btn-outline h-10 px-5 text-sm font-semibold" onClick={clearScope}>
+              Clear
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <ForwardImpactCard scope={appliedScope} scopeVersion={scopeVersion} tokenGetter={tokenGetter} />
+        <DependencyMatrixCard scope={appliedScope} scopeVersion={scopeVersion} tokenGetter={tokenGetter} />
+        <RiskRadarCard scope={appliedScope} scopeVersion={scopeVersion} tokenGetter={tokenGetter} competitorIds={appliedCompetitors} />
+        <EncroachmentCard scope={appliedScope} scopeVersion={scopeVersion} tokenGetter={tokenGetter} competitorIds={appliedCompetitors} />
+      </section>
+    </main>
+  );
+}
