@@ -145,9 +145,9 @@ const sectionSubtitle = "text-xs text-slate-600";
 
 const controlBaseClass =
   "border border-slate-200/70 bg-white/80 text-slate-800 shadow-[0_12px_22px_rgba(15,23,42,0.18)] backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-sky-300 focus:border-sky-300 transition";
-const inputClass = `w-full rounded-xl px-3 py-2 text-xs ${controlBaseClass}`;
-const selectClass = `w-full rounded-xl px-3 py-2 text-xs ${controlBaseClass}`;
-const inlineInputClass = `h-9 rounded-lg px-3 text-xs ${controlBaseClass}`;
+const inputClass = `w-full rounded-xl px-2 py-2 text-xs ${controlBaseClass}`;
+const selectClass = `w-full rounded-xl px-2 py-2 text-xs ${controlBaseClass}`;
+const inlineInputClass = `h-8 rounded-lg px-2 text-xs ${controlBaseClass}`;
 
 const ROWS_PER_PAGE = 5;
 
@@ -1034,7 +1034,7 @@ function EncroachmentCard({ scope, scopeVersion, tokenGetter, competitorNames }:
             </label>
             <label className="flex items-center gap-2 text-xs text-slate-600">
               <input type="checkbox" checked={explicitOnly} onChange={(e) => setExplicitOnly(e.target.checked)} />
-              <span>Only explicit competitors</span>
+              <span>Only listed</span>
             </label>
           </div>
           <div className="flex flex-wrap items-center gap-3">
@@ -1475,7 +1475,7 @@ export default function CitationPage() {
                     checked={scopeState.competitorToggle}
                     onChange={(e) => setScopeState((s) => ({ ...s, competitorToggle: e.target.checked }))}
                   />
-                  Limit competitors to explicit list
+                  Limit competitors to listed
                 </label>
               </div>
             </div>
