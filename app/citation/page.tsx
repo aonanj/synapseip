@@ -1017,7 +1017,7 @@ function EncroachmentCard({ scope, scopeVersion, tokenGetter, competitorNames }:
       <div className="flex flex-col gap-3 mb-3 sm:flex-row sm:items-start sm:gap-4">
         <SectionHeader title="Assignee Encroachment" subtitle="Other assignee forward citations into a portfolio." />
         <div className="flex flex-col gap-2 items-start sm:ml-auto sm:flex-row sm:items-start sm:gap-3">
-          <div className="flex flex-wrap items-center gap-3 sm:justify-end sm:min-w-[320px]">
+          <div className="flex flex-wrap items-center gap-3 sm:justify-end sm:min-w-[200px]">
             <label className="flex items-center gap-2 text-xs text-slate-600">
               <span>Bucket</span>
               <select value={bucket} onChange={(e) => setBucket(e.target.value as any)} className={inlineInputClass}>
