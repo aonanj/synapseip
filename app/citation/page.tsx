@@ -1033,12 +1033,6 @@ function EncroachmentCard({ scope, scopeVersion, tokenGetter, competitorNames }:
               </select>
             </label>
             <label className="flex items-center gap-2 text-xs text-slate-600">
-              <input type="checkbox" checked={explicitOnly} onChange={(e) => setExplicitOnly(e.target.checked)} />
-              <span>Only listed</span>
-            </label>
-          </div>
-          <div className="flex flex-wrap items-center gap-3">
-            <label className="flex items-center gap-2 text-xs text-slate-600">
               <span>Top competitors</span>
               <input
                 type="number"
@@ -1048,6 +1042,10 @@ function EncroachmentCard({ scope, scopeVersion, tokenGetter, competitorNames }:
                 onChange={(e) => setTopK(Number(e.target.value) || 3)}
                 className={inlineInputClass}
               />
+            </label>
+            <label className="flex items-center gap-2 text-xs text-slate-600">
+              <input type="checkbox" checked={explicitOnly} onChange={(e) => setExplicitOnly(e.target.checked)} />
+              <span>Only listed</span>
             </label>
           </div>
         </div>
