@@ -137,14 +137,16 @@ type TokenGetter = () => Promise<string | undefined>;
 
 const cardClass = "glass-card p-5 rounded-xl shadow-xl border border-white/50";
 
-const fieldLabel = "text-xs font-semibold uppercase tracking-wide text-slate-500";
+const fieldLabel = "text-xs font-semibold uppercase tracking-wide text-[#3A506B]";
 
-const sectionTitle = "text-sm font-semibold text-slate-800";
+const mainTitle = "text-base uppercase font-medium text-[#102A43]";
 
-const sectionSubtitle = "text-xs text-slate-600";
+const sectionTitle = "text-sm font-semibold text-[#102A43]";
+
+const sectionSubtitle = "text-xs text-[#3A506B]";
 
 const controlBaseClass =
-  "border border-slate-200/70 bg-white/80 text-slate-800 shadow-[0_12px_22px_rgba(15,23,42,0.18)] backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-sky-300 focus:border-sky-300 transition";
+  "border border-slate-200/70 bg-white/80 text-[#102A43] shadow-[0_12px_22px_rgba(15,23,42,0.18)] backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-sky-300 focus:border-sky-300 transition";
 const inputClass = `w-full rounded-xl px-2 py-2 text-xs ${controlBaseClass}`;
 const selectClass = `w-full rounded-xl px-2 py-2 text-xs ${controlBaseClass}`;
 const inlineInputClass = `h-8 rounded-lg px-2 text-xs ${controlBaseClass}`;
@@ -194,9 +196,9 @@ function ScoreBar({ value, color = "sky" }: { value: number; color?: "sky" | "am
 function MetricTile({ label, value, hint }: { label: string; value: string | number; hint?: string }) {
   return (
     <div className="rounded-xl bg-white/70 border border-slate-200 px-4 py-3 shadow-sm">
-      <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide">{label}</div>
-      <div className="text-xs font-semibold text-slate-900 mt-1">{value}</div>
-      {hint ? <div className="text-xs text-slate-500 mt-1">{hint}</div> : null}
+      <div className="text-xs font-semibold text-[#3A506B] uppercase tracking-wide">{label}</div>
+      <div className="text-xs font-semibold text-[#102A43] mt-1">{value}</div>
+      {hint ? <div className="text-xs text-[#3A506B] mt-1">{hint}</div> : null}
     </div>
   );
 }
@@ -214,7 +216,7 @@ function LineChart({
 }) {
   if (!points.length) {
     return (
-      <div className="h-[220px] grid place-items-center text-xs text-slate-500">
+      <div className="h-[220px] grid place-items-center text-xs text-[#3A506B]">
         No timeline data for this scope.
       </div>
     );
@@ -245,7 +247,7 @@ function LineChart({
         {coords.map(([x, y], idx) => (
           <g key={idx}>
             <circle cx={x} cy={y} r={4} fill="#fff" stroke={accent} strokeWidth={2} />
-            <text x={x} y={height - 6} textAnchor="middle" className="text-[11px] fill-slate-600">
+            <text x={x} y={height - 6} textAnchor="middle" className="text-[11px] fill-[#3A506B]">
               {fmtDate(points[idx].bucket_start).slice(0, 7)}
             </text>
           </g>
@@ -286,6 +288,15 @@ function updateUrlFromScope(scope: CitationScope, mode: ScopeMode, competitors: 
   if (competitors.length) params.set("competitors", competitors.join(","));
   const url = `${window.location.pathname}?${params.toString()}`;
   window.history.replaceState({}, "", url);
+}
+
+function MainHeader({ title, subtitle }: { title: string; subtitle: string }) {
+  return (
+    <div>
+      <h2 className={sectionTitle}>{title}</h2>
+      <p className={sectionSubtitle}>{subtitle}</p>
+    </div>
+  );
 }
 
 function SectionHeader({ title, subtitle }: { title: string; subtitle: string }) {
@@ -376,7 +387,7 @@ function ForwardImpactCard({ scope, scopeVersion, tokenGetter }: ForwardImpactCa
       <div className="flex items-start justify-between gap-3 mb-3 pr-12">
         <SectionHeader title="Forward-Citation Impact" subtitle="Velocity, timeline, and top cited patents." />
         <div className="flex items-center gap-2">
-          <label className="flex items-center gap-2 text-xs text-slate-600">
+          <label className="flex items-center gap-2 text-xs text-[#3A506B]">
             <span>Top N</span>
             <input
               type="number"
@@ -387,7 +398,7 @@ function ForwardImpactCard({ scope, scopeVersion, tokenGetter }: ForwardImpactCa
               className={inlineInputClass}
             />
           </label>
-          <label className="flex items-center gap-2 text-xs text-slate-600">
+          <label className="flex items-center gap-2 text-xs text-[#3A506B]">
             <span>Bucket</span>
             <select
               value={bucketOverride}
@@ -407,7 +418,7 @@ function ForwardImpactCard({ scope, scopeVersion, tokenGetter }: ForwardImpactCa
       ) : error ? (
         <div className="text-xs text-rose-600">Error: {error}</div>
       ) : loading && !data ? (
-        <div className="text-xs text-slate-500">…</div>
+        <div className="text-xs text-[#3A506B]">…</div>
       ) : data ? (
         <div className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -417,15 +428,15 @@ function ForwardImpactCard({ scope, scopeVersion, tokenGetter }: ForwardImpactCa
           </div>
           <div>
             <div className="flex items-center justify-between mb-2">
-              <h3 className="font-semibold text-slate-800">Influence timeline</h3>
-              <div className="text-xs text-slate-500">Count of citing patents by bucket</div>
+              <h3 className="font-semibold text-[#102A43]">Influence timeline</h3>
+              <div className="text-xs text-[#3A506B]">Count of citing patents by bucket</div>
             </div>
             <LineChart points={data.timeline} />
           </div>
           <div className="overflow-x-auto">
             <table className="min-w-full border-collapse">
               <thead>
-                <tr className="text-left text-xs uppercase tracking-wide text-slate-500">
+                <tr className="text-left text-xs uppercase tracking-wide text-[#3A506B]">
                   <th className="px-3 py-2 border-b">Patent</th>
                   <th className="px-3 py-2 border-b">Assignee</th>
                   <th className="px-3 py-2 border-b">Pub date</th>
@@ -443,15 +454,15 @@ function ForwardImpactCard({ scope, scopeVersion, tokenGetter }: ForwardImpactCa
                 {pagedPatents.map((p) => (
                   <tr key={p.pub_id} className="odd:bg-white even:bg-slate-50/60">
                     <td className="px-3 py-2 align-top text-xs">
-                      <a href={googlePatentsUrl(p.pub_id)} target="_blank" rel="noreferrer" className="text-sky-700 font-semibold hover:underline text-xs">
+                      <a href={googlePatentsUrl(p.pub_id)} target="_blank" rel="noreferrer" className="text-[#5FA8D2] font-semibold hover:underline text-xs">
                         {p.pub_id}
                       </a>
-                      <div className="text-slate-700 text-xs">{p.title}</div>
+                      <div className="text-[#102A43] text-xs">{p.title}</div>
                     </td>
-                    <td className="px-3 py-2 align-top text-xs text-slate-700">{p.assignee_name || "—"}</td>
-                    <td className="px-3 py-2 align-top text-xs text-slate-700">{fmtDate(p.pub_date)}</td>
-                    <td className="px-3 py-2 align-top text-xs font-semibold text-slate-800">{p.fwd_citation_count}</td>
-                    <td className="px-3 py-2 align-top text-xs text-slate-700">
+                    <td className="px-3 py-2 align-top text-xs text-[#102A43]">{p.assignee_name || "—"}</td>
+                    <td className="px-3 py-2 align-top text-xs text-[#102A43]">{fmtDate(p.pub_date)}</td>
+                    <td className="px-3 py-2 align-top text-xs font-semibold text-[#102A43]">{p.fwd_citation_count}</td>
+                    <td className="px-3 py-2 align-top text-xs text-[#102A43]">
                       <div className="flex items-center gap-2">
                         <div className="w-16">
                           <ScoreBar value={Math.min(100, p.fwd_citation_velocity * 20)} />
@@ -459,15 +470,15 @@ function ForwardImpactCard({ scope, scopeVersion, tokenGetter }: ForwardImpactCa
                         <span>{p.fwd_citation_velocity.toFixed(2)}/mo</span>
                       </div>
                     </td>
-                    <td className="px-3 py-2 align-top text-xs text-slate-700">{fmtDate(p.first_citation_date)}</td>
-                    <td className="px-3 py-2 align-top text-xs text-slate-700">{fmtDate(p.last_citation_date)}</td>
+                    <td className="px-3 py-2 align-top text-xs text-[#102A43]">{fmtDate(p.first_citation_date)}</td>
+                    <td className="px-3 py-2 align-top text-xs text-[#102A43]">{fmtDate(p.last_citation_date)}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
           {sortedPatents.length ? (
-            <div className="flex items-center justify-between mt-3 text-xs text-slate-700">
+            <div className="flex items-center justify-between mt-3 text-xs text-[#102A43]">
               <span>
                 Showing {(currentImpactPage - 1) * ROWS_PER_PAGE + 1}-
                 {Math.min(currentImpactPage * ROWS_PER_PAGE, sortedPatents.length)} of {sortedPatents.length}
@@ -495,7 +506,7 @@ function ForwardImpactCard({ scope, scopeVersion, tokenGetter }: ForwardImpactCa
           ) : null}
         </div>
       ) : (
-        <div className="text-xs text-slate-600">No data for this scope.</div>
+        <div className="text-xs text-[#3A506B]">No data for this scope.</div>
       )}
     </div>
   );
@@ -564,7 +575,7 @@ function DependencyMatrixCard({ scope, scopeVersion, tokenGetter }: DependencyMa
       <div className="flex items-start justify-between gap-3 mb-3 pr-12">
         <SectionHeader title="Cross-Assignee Dependency" subtitle="Citing → cited relationships across portfolios." />
         <div className="flex items-center gap-3">
-          <label className="flex items-center gap-2 text-xs text-slate-600">
+          <label className="flex items-center gap-2 text-xs text-[#3A506B]">
             <span>Min citations</span>
             <input
               type="number"
@@ -575,7 +586,7 @@ function DependencyMatrixCard({ scope, scopeVersion, tokenGetter }: DependencyMa
               className={inlineInputClass}
             />
           </label>
-          <label className="flex items-center gap-2 text-xs text-slate-600">
+          <label className="flex items-center gap-2 text-xs text-[#3A506B]">
             <input type="checkbox" checked={normalize} onChange={(e) => setNormalize(e.target.checked)} />
             <span>Normalize</span>
           </label>
@@ -590,7 +601,7 @@ function DependencyMatrixCard({ scope, scopeVersion, tokenGetter }: DependencyMa
       ) : error ? (
         <div className="text-xs text-rose-600">Error: {error}</div>
       ) : loading && !data ? (
-        <div className="text-xs text-slate-500">…</div>
+        <div className="text-xs text-[#3A506B]">…</div>
       ) : data ? (
         <div className="space-y-4">
           <div className="overflow-x-auto">
@@ -599,7 +610,7 @@ function DependencyMatrixCard({ scope, scopeVersion, tokenGetter }: DependencyMa
                 <tr>
                   <th className="px-3 py-2 border-b"></th>
                   {citedNames.map((name) => (
-                    <th key={name} className="px-3 py-2 border-b text-xs text-slate-600 text-left">
+                    <th key={name} className="px-3 py-2 border-b text-xs text-[#3A506B] text-left">
                       {name}
                     </th>
                   ))}
@@ -608,7 +619,7 @@ function DependencyMatrixCard({ scope, scopeVersion, tokenGetter }: DependencyMa
               <tbody>
                 {citingNames.map((row) => (
                   <tr key={row}>
-                    <th className="px-3 py-2 border-b text-xs text-slate-700 text-left">{row}</th>
+                    <th className="px-3 py-2 border-b text-xs text-[#102A43] text-left">{row}</th>
                     {citedNames.map((col) => {
                       const edge = topEdges.find(
                         (e) => (e.citing_assignee_name || "Unknown") === row && (e.cited_assignee_name || "Unknown") === col
@@ -617,10 +628,10 @@ function DependencyMatrixCard({ scope, scopeVersion, tokenGetter }: DependencyMa
                       const pct = val / maxVal;
                       const bg = `rgba(14,165,233,${0.15 + pct * 0.6})`;
                       return (
-                        <td key={col} className="px-3 py-2 border-b text-xs text-slate-800" style={{ background: bg }}>
+                        <td key={col} className="px-3 py-2 border-b text-xs text-[#102A43]" style={{ background: bg }}>
                           {val}
                           {normalize && edge?.citing_to_cited_pct != null ? (
-                            <div className="text-[11px] text-slate-600">{(edge.citing_to_cited_pct * 100).toFixed(1)}%</div>
+                            <div className="text-[11px] text-[#3A506B]">{(edge.citing_to_cited_pct * 100).toFixed(1)}%</div>
                           ) : null}
                         </td>
                       );
@@ -633,7 +644,7 @@ function DependencyMatrixCard({ scope, scopeVersion, tokenGetter }: DependencyMa
           <div className="overflow-x-auto">
             <table className="min-w-full border-collapse">
               <thead>
-                <tr className="text-xs uppercase tracking-wide text-slate-500">
+                <tr className="text-xs uppercase tracking-wide text-[#3A506B]">
                   <th className="px-3 py-2 border-b text-left">From (citing)</th>
                   <th className="px-3 py-2 border-b text-left">To (cited)</th>
                   <th className="px-3 py-2 border-b text-left">Citations</th>
@@ -643,10 +654,10 @@ function DependencyMatrixCard({ scope, scopeVersion, tokenGetter }: DependencyMa
               <tbody>
                 {topEdges.map((e, idx) => (
                   <tr key={`${e.citing_assignee_name}-${idx}`} className="odd:bg-white even:bg-slate-50/60">
-                    <td className="px-3 py-2 text-xs text-slate-800">{e.citing_assignee_name || "Unknown"}</td>
-                    <td className="px-3 py-2 text-xs text-slate-800">{e.cited_assignee_name || "Unknown"}</td>
-                    <td className="px-3 py-2 text-xs font-semibold text-slate-900">{e.citation_count}</td>
-                    <td className="px-3 py-2 text-xs text-slate-700">
+                    <td className="px-3 py-2 text-xs text-[#102A43]">{e.citing_assignee_name || "Unknown"}</td>
+                    <td className="px-3 py-2 text-xs text-[#102A43]">{e.cited_assignee_name || "Unknown"}</td>
+                    <td className="px-3 py-2 text-xs font-semibold text-[#102A43]">{e.citation_count}</td>
+                    <td className="px-3 py-2 text-xs text-[#102A43]">
                       {normalize && e.citing_to_cited_pct != null ? `${(e.citing_to_cited_pct * 100).toFixed(1)}%` : "—"}
                     </td>
                   </tr>
@@ -656,7 +667,7 @@ function DependencyMatrixCard({ scope, scopeVersion, tokenGetter }: DependencyMa
           </div>
         </div>
       ) : (
-        <div className="text-xs text-slate-600">No dependency edges for this scope.</div>
+        <div className="text-xs text-[#3A506B]">No dependency edges for this scope.</div>
       )}
     </div>
   );
@@ -780,7 +791,7 @@ function RiskRadarCard({ scope, scopeVersion, tokenGetter, competitorNames }: Ri
       <div className="flex items-start justify-between gap-3 mb-3">
         <SectionHeader title="Risk Radar" subtitle="Forward exposure + backward fragility indicators." />
         <div className="flex items-center gap-3">
-          <label className="flex items-center gap-2 text-xs text-slate-600">
+          <label className="flex items-center gap-2 text-xs text-[#3A506B]">
             <span>Top N</span>
             <input
               type="number"
@@ -815,12 +826,12 @@ function RiskRadarCard({ scope, scopeVersion, tokenGetter, competitorNames }: Ri
       ) : error ? (
         <div className="text-xs text-rose-600">Error: {error}</div>
       ) : loading && !data ? (
-        <div className="text-xs text-slate-500">…</div>
+        <div className="text-xs text-[#3A506B]">…</div>
       ) : data ? (
         <div className="overflow-x-auto">
           <table className="min-w-full border-collapse">
             <thead>
-              <tr className="text-xs uppercase tracking-wide text-slate-500">
+              <tr className="text-xs uppercase tracking-wide text-[#3A506B]">
                 <th className="px-3 py-2 border-b text-left">Patent</th>
                 <th className="px-3 py-2 border-b text-left">Assignee</th>
                 <th className="px-3 py-2 border-b text-left">Forward citations</th>
@@ -835,38 +846,38 @@ function RiskRadarCard({ scope, scopeVersion, tokenGetter, competitorNames }: Ri
               {pagedRiskRows.map((p) => (
                 <tr key={p.pub_id} className="odd:bg-white even:bg-slate-50/60">
                   <td className="px-3 py-2 align-top">
-                    <a href={googlePatentsUrl(p.pub_id)} target="_blank" rel="noreferrer" className="text-sky-700 font-semibold hover:underline">
+                    <a href={googlePatentsUrl(p.pub_id)} target="_blank" rel="noreferrer" className="text-[#5FA8D2] font-semibold hover:underline">
                       {p.pub_id}
                     </a>
-                    <div className="text-xs text-slate-700">{p.title}</div>
+                    <div className="text-xs text-[#102A43]">{p.title}</div>
                   </td>
-                  <td className="px-3 py-2 text-xs text-slate-700">{p.assignee_name || "—"}</td>
-                  <td className="px-3 py-2 text-xs font-semibold text-slate-900">{p.fwd_total}</td>
-                  <td className="px-3 py-2 text-xs text-slate-700">
+                  <td className="px-3 py-2 text-xs text-[#102A43]">{p.assignee_name || "—"}</td>
+                  <td className="px-3 py-2 text-xs font-semibold text-[#102A43]">{p.fwd_total}</td>
+                  <td className="px-3 py-2 text-xs text-[#102A43]">
                     {p.fwd_from_competitors}{" "}
                     {p.fwd_competitor_ratio != null ? (
-                      <span className="text-xs text-slate-500">({(p.fwd_competitor_ratio * 100).toFixed(1)}%)</span>
+                      <span className="text-xs text-[#3A506B]">({(p.fwd_competitor_ratio * 100).toFixed(1)}%)</span>
                     ) : null}
                   </td>
-                  <td className="px-3 py-2 text-xs text-slate-700">{p.bwd_total}</td>
-                  <td className="px-3 py-2 text-xs text-slate-700">
+                  <td className="px-3 py-2 text-xs text-[#102A43]">{p.bwd_total}</td>
+                  <td className="px-3 py-2 text-xs text-[#102A43]">
                     <div className="w-24"><ScoreBar value={p.exposure_score} color="sky" /></div>
-                    <div className="text-xs text-slate-500 mt-1">{p.exposure_score.toFixed(1)}</div>
+                    <div className="text-xs text-[#3A506B] mt-1">{p.exposure_score.toFixed(1)}</div>
                   </td>
-                  <td className="px-3 py-2 text-xs text-slate-700">
+                  <td className="px-3 py-2 text-xs text-[#102A43]">
                     <div className="w-24"><ScoreBar value={p.fragility_score} color="amber" /></div>
-                    <div className="text-xs text-slate-500 mt-1">{p.fragility_score.toFixed(1)}</div>
+                    <div className="text-xs text-[#3A506B] mt-1">{p.fragility_score.toFixed(1)}</div>
                   </td>
-                  <td className="px-3 py-2 text-xs text-slate-800 font-semibold">
+                  <td className="px-3 py-2 text-xs text-[#102A43] font-semibold">
                     <div className="w-24"><ScoreBar value={p.overall_risk_score} color="rose" /></div>
-                    <div className="text-xs text-slate-500 mt-1">{p.overall_risk_score.toFixed(1)}</div>
+                    <div className="text-xs text-[#3A506B] mt-1">{p.overall_risk_score.toFixed(1)}</div>
                   </td>
                 </tr>
                 ))}
             </tbody>
           </table>
           {sortedRows.length ? (
-            <div className="flex items-center justify-between mt-3 text-xs text-slate-700">
+            <div className="flex items-center justify-between mt-3 text-xs text-[#102A43]">
               <span>
                 Showing {(currentRiskPage - 1) * ROWS_PER_PAGE + 1}-
                 {Math.min(currentRiskPage * ROWS_PER_PAGE, sortedRows.length)} of {sortedRows.length}
@@ -894,7 +905,7 @@ function RiskRadarCard({ scope, scopeVersion, tokenGetter, competitorNames }: Ri
           ) : null}
         </div>
       ) : (
-        <div className="text-xs text-slate-600">No risk signals found for this scope.</div>
+        <div className="text-xs text-[#3A506B]">No risk signals found for this scope.</div>
       )}
     </div>
   );
@@ -1018,18 +1029,18 @@ function EncroachmentCard({ scope, scopeVersion, tokenGetter, competitorNames }:
         <SectionHeader title="Assignee Encroachment" subtitle="Other assignee forward citations into a portfolio." />
         <div className="flex flex-col gap-2 items-start sm:ml-auto sm:flex-row sm:items-start sm:gap-3">
           <div className="flex flex-wrap items-center gap-3 sm:justify-end sm:min-w-[200px]">
-            <label className="flex items-center gap-2 text-xs text-slate-600">
+            <label className="flex items-center gap-2 text-xs text-[#3A506B]">
               <span>Bucket</span>
               <select value={bucket} onChange={(e) => setBucket(e.target.value as any)} className={inlineInputClass}>
                 <option value="month">Month</option>
                 <option value="quarter">Quarter</option>
               </select>
             </label>
-            <label className="flex items-center gap-2 text-xs text-slate-600">
+            <label className="flex items-center gap-2 text-xs text-[#3A506B]">
               <input type="checkbox" checked={explicitOnly} onChange={(e) => setExplicitOnly(e.target.checked)} />
               <span>Only listed</span>
             </label>
-            <label className="flex items-center gap-2 text-xs text-slate-600">
+            <label className="flex items-center gap-2 text-xs text-[#3A506B]">
               <span>Top competitors</span>
               <input
                 type="number"
@@ -1057,7 +1068,7 @@ function EncroachmentCard({ scope, scopeVersion, tokenGetter, competitorNames }:
       ) : error ? (
         <div className="text-xs text-rose-600">Error: {error}</div>
       ) : loading && !data ? (
-        <div className="text-xs text-slate-500">…</div>
+        <div className="text-xs text-[#3A506B]">…</div>
       ) : data ? (
         <div className="space-y-4">
           {explicitOnly && (!competitorNames || competitorNames.length === 0) ? (
@@ -1067,8 +1078,8 @@ function EncroachmentCard({ scope, scopeVersion, tokenGetter, competitorNames }:
           ) : null}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <h3 className="font-semibold text-slate-800">Encroachment timeline</h3>
-              <div className="text-xs text-slate-500">Top {topK} assignees by citing patents/pubs</div>
+              <h3 className="font-semibold text-[#102A43]">Encroachment timeline</h3>
+              <div className="text-xs text-[#3A506B]">Top {topK} assignees by citing patents/pubs</div>
             </div>
             {filteredTimeline.length ? (
               <div className="overflow-x-auto">
@@ -1104,7 +1115,7 @@ function EncroachmentCard({ scope, scopeVersion, tokenGetter, competitorNames }:
                         return (
                           <g key={`y-${tick}`}>
                             <line x1={margin.left} x2={chartWidth - margin.right} y1={y} y2={y} stroke="#e2e8f0" strokeDasharray="4 4" />
-                            <text x={margin.left - 10} y={y + 4} textAnchor="end" className="text-[11px] fill-slate-500">
+                            <text x={margin.left - 10} y={y + 4} textAnchor="end" className="text-[11px] fill-[#3A506B]">
                               {tick}
                             </text>
                           </g>
@@ -1115,7 +1126,7 @@ function EncroachmentCard({ scope, scopeVersion, tokenGetter, competitorNames }:
                         return (
                           <g key={`x-${bucket}`}>
                             <line x1={x} x2={x} y1={margin.top} y2={chartHeight - margin.bottom + 4} stroke="#e2e8f0" />
-                            <text x={x} y={chartHeight - 12} textAnchor="middle" className="text-[11px] fill-slate-600">
+                            <text x={x} y={chartHeight - 12} textAnchor="middle" className="text-[11px] fill-[#3A506B]">
                               {fmtDate(bucket).slice(0, 7)}
                             </text>
                           </g>
@@ -1146,7 +1157,7 @@ function EncroachmentCard({ scope, scopeVersion, tokenGetter, competitorNames }:
                     </svg>
                   );
                 })()}
-                <div className="flex flex-wrap gap-3 mt-3 text-xs text-slate-700">
+                <div className="flex flex-wrap gap-3 mt-3 text-xs text-[#102A43]">
                   {topCompetitorKeys.map((key, idx) => (
                     <span key={key} className="inline-flex items-center gap-2 px-2 py-1 rounded-lg bg-white/70 border border-slate-200 shadow-sm">
                       <span className="w-3 h-3 rounded-full" style={{ backgroundColor: colorPalette[idx % colorPalette.length] }} />
@@ -1156,13 +1167,13 @@ function EncroachmentCard({ scope, scopeVersion, tokenGetter, competitorNames }:
                 </div>
               </div>
             ) : (
-              <div className="text-xs text-slate-600">No encroachment signals for this window.</div>
+              <div className="text-xs text-[#3A506B]">No encroachment signals for this window.</div>
             )}
           </div>
           <div className="overflow-x-auto">
             <table className="min-w-full border-collapse">
               <thead>
-                <tr className="text-xs uppercase tracking-wide text-slate-500">
+                <tr className="text-xs uppercase tracking-wide text-[#3A506B]">
                   <th className="px-3 py-2 border-b text-left">Assignee</th>
                   <th className="px-3 py-2 border-b text-left">Total citing patents</th>
                   <th className="px-3 py-2 border-b text-left">Encroachment score</th>
@@ -1179,13 +1190,13 @@ function EncroachmentCard({ scope, scopeVersion, tokenGetter, competitorNames }:
                       competitorLabelMap.get(compKey) || c.competitor_assignee_name || c.competitor_assignee_id || "Unknown";
                     return (
                       <tr key={compKey} className="odd:bg-white even:bg-slate-50/60">
-                        <td className="px-3 py-2 text-xs text-slate-800">{displayName}</td>
-                        <td className="px-3 py-2 text-xs font-semibold text-slate-900">{c.total_citing_patents}</td>
-                        <td className="px-3 py-2 text-xs text-slate-800">
+                        <td className="px-3 py-2 text-xs text-[#102A43]">{displayName}</td>
+                        <td className="px-3 py-2 text-xs font-semibold text-[#102A43]">{c.total_citing_patents}</td>
+                        <td className="px-3 py-2 text-xs text-[#102A43]">
                           <div className="w-24"><ScoreBar value={c.encroachment_score} color="rose" /></div>
-                          <div className="text-xs text-slate-500 mt-1">{c.encroachment_score.toFixed(1)}</div>
+                          <div className="text-xs text-[#3A506B] mt-1">{c.encroachment_score.toFixed(1)}</div>
                         </td>
-                        <td className="px-3 py-2 text-xs text-slate-700">
+                        <td className="px-3 py-2 text-xs text-[#102A43]">
                           {c.velocity != null ? `${c.velocity.toFixed(2)} / bucket` : "—"}
                         </td>
                       </tr>
@@ -1196,7 +1207,7 @@ function EncroachmentCard({ scope, scopeVersion, tokenGetter, competitorNames }:
           </div>
         </div>
       ) : (
-        <div className="text-xs text-slate-600">No encroachment results for this scope.</div>
+        <div className="text-xs text-[#3A506B]">No encroachment results for this scope.</div>
       )}
     </div>
   );
@@ -1315,7 +1326,7 @@ export default function CitationPage() {
   }, []);
 
   if (!hydrated) {
-    return <div className="mx-auto max-w-7xl px-6 py-6 text-xs text-slate-600">Loading citation workspace…</div>;
+    return <div className="mx-auto max-w-7xl px-6 py-6 text-xs text-[#3A506B]">Loading citation workspace…</div>;
   }
 
   return (
@@ -1333,7 +1344,7 @@ export default function CitationPage() {
 
         <div className="glass-card" style={{ ...cardBaseStyle }}>
           <div className="flex items-start justify-between gap-3 mb-3">
-            <SectionHeader title="Scope" subtitle="Define portfolio, time window, and competitors for all widgets." />
+            <MainHeader title="Scope" subtitle="Define portfolio, time window, and competitors for all widgets." />
           </div>
           <div className="space-y-4">
             <div className="flex flex-wrap gap-3">
@@ -1341,7 +1352,7 @@ export default function CitationPage() {
                 <button
                   key={mode}
                   className={`px-4 py-2 rounded-full border text-xs font-semibold ${
-                    scopeState.mode === mode ? "bg-sky-600 text-white border-sky-600" : "bg-white text-slate-700 border-slate-200"
+                    scopeState.mode === mode ? "bg-sky-600 text-white border-sky-600" : "bg-white text-[#102A43] border-slate-200"
                   }`}
                   onClick={() => switchMode(mode)}
                 >
@@ -1351,7 +1362,7 @@ export default function CitationPage() {
             </div>
             {scopeState.mode === "assignee" && (
               <div>
-                <div className={fieldLabel}>Target assignee name(s)</div>
+                <div className={fieldLabel}>Target assignee(s)</div>
                 <textarea
                   value={scopeState.focusAssigneeInput}
                   onChange={(e) =>
@@ -1365,7 +1376,7 @@ export default function CitationPage() {
                   placeholder="NVIDIA, IBM, Samsung"
                   className={inputClass}
                 />
-                <p className="text-[11px] text-slate-500 mt-1">
+                <p className="text-[11px] text-[#3A506B] mt-1">
                   Enter one name per line; similarity matching will include aliases automatically.
                 </p>
               </div>
@@ -1411,7 +1422,7 @@ export default function CitationPage() {
                   />
                 </div>
                 <div>
-                  <div className={fieldLabel}>Assignee contains</div>
+                  <div className={fieldLabel}>Assignee</div>
                   <input
                     type="text"
                     value={scopeState.assigneeFilter}
@@ -1453,7 +1464,7 @@ export default function CitationPage() {
                 </select>
               </div>
               <div>
-                <div className={fieldLabel}>Competitor assignee name(s)</div>
+                <div className={fieldLabel}>Competitor assignee(s)</div>
                 <textarea
                   rows={2}
                   value={scopeState.competitorsInput}
@@ -1467,7 +1478,7 @@ export default function CitationPage() {
                   placeholder="Competitor names, one per line"
                   className={inputClass}
                 />
-                <label className="mt-1 inline-flex items-center gap-2 text-xs text-slate-600">
+                <label className="mt-1 inline-flex items-center gap-2 text-xs text-[#3A506B]">
                   <input
                     type="checkbox"
                     checked={scopeState.competitorToggle}

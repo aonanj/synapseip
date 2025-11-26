@@ -396,15 +396,15 @@ export default function ScopeAnalysisPage() {
             </p>
             <h1 style={{ color: TEXT_COLOR, fontSize: 22, fontWeight: 700 }}>Preliminary FTO / Infringement Radar</h1>
             <p style={{ margin: 0, fontSize: 14, color: "#475569" }}>
-              Input subject matter to search for comparison against independent claims of patents in the SynapseIP database. 
+              Input subject matter to search (e.g., product description, invention disclosure, draft claim(s), etc.) for comparison against independent claims of patents in the SynapseIP database. 
               A semantic search is executed over the available independent claims, and semantically similar claims are returned with similarity scores and risk analyses.
             </p>
           </header>
 
           <section className="glass-card" style={{ ...cardBaseStyle }}>
             <div className="flex flex-col gap-2">
-              <label htmlFor="scope-text" className="text-sm font-semibold" style={{ color: TEXT_COLOR }}>
-                Input subject matter to search (e.g., product description, invention disclosure, draft claim(s), etc.)
+              <label htmlFor="scope-text" className="text-base uppercase font-medium" style={{ color: TEXT_COLOR }}>
+                Subject matter to search 
               </label>
               <textarea
                 id="scope-text"
@@ -416,7 +416,7 @@ export default function ScopeAnalysisPage() {
             </div>
             <div className="mt-6 flex flex-wrap items-center gap-4">
               <div>
-                <label htmlFor="topk" className="text-sm font-semibold" style={{ color: TEXT_COLOR }}>
+                <label htmlFor="topk" className="text-sm font-medium" style={{ color: TEXT_COLOR }}>
                   # of claim comparisons: 
                 </label>
                 <input

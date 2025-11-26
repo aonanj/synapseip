@@ -77,7 +77,7 @@ export default function CitationHelpPage() {
             </a>
           </div>
           <p style={{ marginTop: 16, fontSize: 16, lineHeight: 1.5, color: TEXT_COLOR, marginBottom: 0 }}>
-            Citation Tracker provides patent citation intelligence to answer critical IP strategy questions: "Who is citing our portfolio?", "What prior art do we depend on?", and "Which competitors are encroaching on our technology space?" The interface uses a shared Scope card to define your portfolio and time window, then refreshes four analytics widgets in parallel—Forward Impact, Dependency Matrix, Risk Radar, and Encroachment—so you configure filters once and analyze from multiple strategic angles.
+            Citation Tracker provides patent citation intelligence to answer critical IP strategy questions: "Who is citing our portfolio?", "What prior art do we depend on?", and "Which competitors are encroaching on our technology space?" The interface uses a shared Scope card to define a portfolio and time window, then refreshes four analytics widgets in parallel: Forward-Citation Impact, Dependency Matrix, Risk Radar, and Encroachment.
           </p>
         </div>
 
@@ -88,10 +88,10 @@ export default function CitationHelpPage() {
             Citation analysis reveals relationships between patents that keyword search alone cannot surface. When a patent examiner or applicant cites prior art, that citation establishes a formal link indicating technological relevance, potential blocking relationships, or design-around requirements. Citation Tracker transforms this citation network into actionable intelligence:
           </p>
           <ul style={{ marginLeft: 20, marginTop: 12, fontSize: 14, lineHeight: 1.5, listStyleType: "disc", listStylePosition: "outside", color: TEXT_COLOR }}>
-            <li><strong>Forward citations</strong> (patents that cite your portfolio) signal market influence, potential licensing opportunities, and competitor attention.</li>
-            <li><strong>Backward citations</strong> (prior art your patents rely upon) reveal the conceptual foundation and potential validity risks.</li>
+            <li><strong>Forward citations</strong> (patents that cite a portfolio) signal market influence, potential licensing opportunities, and competitor attention.</li>
+            <li><strong>Backward citations</strong> (prior art a patent relies upon) reveal the conceptual foundation and potential validity risks.</li>
             <li><strong>Cross-assignee dependencies</strong> expose technology relationships between companies and potential freedom-to-operate considerations.</li>
-            <li><strong>Competitive encroachment</strong> patterns show which competitors are building on or around your protected innovations.</li>
+            <li><strong>Competitive encroachment</strong> patterns show which competitors are building on or around patented technologies.</li>
           </ul>
         </div>
 
@@ -99,15 +99,15 @@ export default function CitationHelpPage() {
         <div className="glass-card" style={{ ...cardBaseStyle }}>
           <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: TEXT_COLOR, marginBottom: 16 }}>Scope & Filters</h2>
           <p style={{ fontSize: 14, lineHeight: 1.5, color: TEXT_COLOR, marginBottom: 12 }}>
-            The Scope card defines your portfolio and analysis parameters once, then applies them across all four widgets:
+            The Scope card defines portfolio and analysis parameters that are applied across four widgets:
           </p>
           <div style={{ display: "grid", gap: 20 }}>
             <InputDescription
               label="Portfolio Mode"
               description="Select how to define the patent portfolio under analysis. Three modes are available:"
-              example="Mode: Target Assignee Names, Explicit Patent/Publication Numbers, or Search Filters"
+              example="Mode: Target Assignee Names, Patent/Publication Numbers, or Search Filters"
               tips={[
-                "Target Assignee Names: Enter one or more assignee names (e.g., 'Google LLC', 'Microsoft Corporation') to analyze all patents held by those entities.",
+                "Target Assignee Names: Enter one or more assignee names (e.g., 'Google', 'Microsoft') to analyze all patents/publications held by those entities.",
                 "Patent/Publication Numbers: Enter specific patent or publication numbers for precise portfolio analysis.",
                 "Search Filters: Use keyword, CPC, or assignee-contains filters to dynamically build a portfolio based on search criteria."
               ]}
@@ -142,7 +142,7 @@ export default function CitationHelpPage() {
         <div className="glass-card" style={{ ...cardBaseStyle }}>
           <SectionHeader title="Forward-Citation Impact" link="/citation" />
           <p style={{ fontSize: 14, lineHeight: 1.5, color: TEXT_COLOR, marginBottom: 16 }}>
-            Forward-Citation Impact quantifies the influence and market relevance of your portfolio by analyzing which patents cite your assets. Patents with high forward citation counts tend to represent foundational innovations that shape subsequent R&D directions. This section helps identify your most influential IP and track how that influence evolves over time.
+            Forward-Citation Impact quantifies the influence and market relevance of a target assignee's portfolio by analyzing which patents cite the target assignee's patents/publications. Patents with high forward citation counts tend to represent foundational innovations that shape subsequent R&D directions. This section helps identify the most influential IP and track how that influence evolves over time.
           </p>
           <DetailList
             items={[
@@ -156,9 +156,9 @@ export default function CitationHelpPage() {
           <div style={{ marginTop: 16, padding: 16, background: "rgba(107, 174, 219, 0.12)", borderRadius: 12, border: "1px solid rgba(107, 174, 219, 0.25)" }}>
             <h4 style={{ margin: 0, fontSize: 14, fontWeight: 600, color: TEXT_COLOR, marginBottom: 8 }}>Key Terms</h4>
             <ul style={{ marginLeft: 20, fontSize: 13, lineHeight: 1.6, listStyleType: "disc", listStylePosition: "outside", color: TEXT_COLOR, marginBottom: 0 }}>
-              <li><strong>Forward Citation</strong>: A citation from a later-filed patent to an earlier patent in your portfolio. The citing patent acknowledges technological relevance or prior art status.</li>
+              <li><strong>Forward Citation</strong>: A citation from a later-filed patent to an earlier patent (e.g., in a target assignee's portfolio). The citing patent acknowledges technological relevance or prior art status.</li>
               <li><strong>Velocity</strong>: Citation accumulation rate, calculated as forward citation count divided by months between the first and last citation. Higher velocity indicates accelerating influence.</li>
-              <li><strong>First/Last Citation Date</strong>: The publication dates of the earliest and most recent patents citing a portfolio asset, defining the citation activity window.</li>
+              <li><strong>First/Last Citation Date</strong>: The publication dates of the earliest and most recent patents citing a patent/publication, defining the citation activity window.</li>
             </ul>
           </div>
         </div>
@@ -167,7 +167,7 @@ export default function CitationHelpPage() {
         <div className="glass-card" style={{ ...cardBaseStyle }}>
           <SectionHeader title="Cross-Assignee Dependency Matrix" link="/citation" />
           <p style={{ fontSize: 14, lineHeight: 1.5, color: TEXT_COLOR, marginBottom: 16 }}>
-            The Dependency Matrix visualizes citation relationships between assignees (patent owners) to reveal technology dependencies, potential licensing relationships, and competitive dynamics. When Assignee A frequently cites Assignee B, it suggests A's innovations build upon B's prior work—a dependency that may have freedom-to-operate, licensing, or strategic implications.
+            The Dependency Matrix visualizes citation relationships between assignees to expose technology dependencies, potential licensing relationships, and competitive dynamics. Frequent citations from one assignee to another may suggest freedom-to-operate, infringement, licensing, or other strategic implications.
           </p>
           <DetailList
             items={[
@@ -180,9 +180,9 @@ export default function CitationHelpPage() {
           <div style={{ marginTop: 16, padding: 16, background: "rgba(107, 174, 219, 0.12)", borderRadius: 12, border: "1px solid rgba(107, 174, 219, 0.25)" }}>
             <h4 style={{ margin: 0, fontSize: 14, fontWeight: 600, color: TEXT_COLOR, marginBottom: 8 }}>Use Cases</h4>
             <ul style={{ marginLeft: 20, fontSize: 13, lineHeight: 1.6, listStyleType: "disc", listStylePosition: "outside", color: TEXT_COLOR, marginBottom: 0 }}>
-              <li><strong>Licensing Intelligence</strong>: Identify assignees heavily dependent on your portfolio who may be licensing candidates.</li>
-              <li><strong>FTO Analysis</strong>: Discover which assignees' patents your portfolio depends upon, flagging potential blocking relationships.</li>
-              <li><strong>Competitive Mapping</strong>: Visualize citation networks to understand technology flow between competitors.</li>
+              <li><strong>Licensing Intelligence</strong>: Identify assignees heavily dependent on a target assignee's portfolio who may be licensing candidates.</li>
+              <li><strong>FTO Analysis</strong>: Discover which patents a target assignee's portfolio depends upon, flagging potential blocking relationships.</li>
+              <li><strong>Competitive Mapping</strong>: Visualize citation networks to understand AI/ML IP relationships between assignees.</li>
             </ul>
           </div>
         </div>
@@ -191,7 +191,7 @@ export default function CitationHelpPage() {
         <div className="glass-card" style={{ ...cardBaseStyle }}>
           <SectionHeader title="Risk Radar" link="/citation" />
           <p style={{ fontSize: 14, lineHeight: 1.5, color: TEXT_COLOR, marginBottom: 16 }}>
-            Risk Radar ranks patents in your portfolio by strategic risk, combining two complementary signals: <strong>Exposure</strong> (external pressure from competitor citations) and <strong>Fragility</strong> (internal structural weakness in the prior art foundation). The resulting <strong>Overall Risk Score</strong> provides a single, sortable metric for prioritizing legal review, design-around analysis, and portfolio management decisions.
+            Risk Radar ranks patents in a target assignee's portfolio by strategic risk, combining two complementary signals: <strong>Exposure</strong> (external pressure from competitor citations) and <strong>Fragility</strong> (internal structural weakness in the prior art foundation). The resulting <strong>Overall Risk Score</strong> provides a single, sortable metric for prioritizing legal review, design-around analysis, and portfolio management decisions.
           </p>
           <DetailList
             items={[
@@ -273,7 +273,7 @@ export default function CitationHelpPage() {
         <div className="glass-card" style={{ ...cardBaseStyle }}>
           <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: TEXT_COLOR, marginBottom: 16 }}>Overall Risk Score</h2>
           <p style={{ fontSize: 14, lineHeight: 1.5, color: TEXT_COLOR, marginBottom: 12 }}>
-            <strong>What it measures:</strong> Overall Risk Score blends <strong>Exposure</strong> (external pressure from competitors) and <strong>Fragility</strong> (internal robustness weakness) to estimate the <em>strategic risk</em> associated with a patent. It answers: <em>"How risky is this patent, given both competitor attention and structural fragility?"</em>
+            <strong>What it measures:</strong> Overall Risk Score blends <strong>Exposure</strong> (external pressure from competitors) and <strong>Fragility</strong> (internal robustness/weakness) to estimate the <em>strategic risk</em> associated with a patent. It answers: <em>"How risky is this patent, given both competitor attention and structural fragility?"</em>
           </p>
           <p style={{ fontSize: 14, lineHeight: 1.5, color: TEXT_COLOR, marginBottom: 12 }}>
             <strong>Why it's included:</strong> Executives and portfolio managers need a single, sortable metric to identify patents that are high-risk and high-attention, prioritize legal review or design-around analysis, support pruning/licensing/divestiture decisions, catch patents that are both under attack and weakly supported, and flag patents needing immediate strategic attention. This is a <em>portfolio prioritization heuristic</em>, not a legal invalidity score.
@@ -284,7 +284,7 @@ export default function CitationHelpPage() {
               Overall = 55 × (Exposure / 100) + 45 × (Fragility / 100)
             </p>
             <p style={{ fontSize: 12, color: "#627D98", marginTop: 8, marginBottom: 0 }}>
-              The 55/45 weighting slightly prioritizes Exposure because competitor attention represents more urgent external pressure, but Fragility remains nearly equal in importance.
+              The 55/45 weighting slightly prioritizes Exposure because competitor attention represents more urgent external pressure than Fragility.
             </p>
           </div>
           <div style={{ marginTop: 16 }}>
@@ -308,8 +308,8 @@ export default function CitationHelpPage() {
                   <th style={{ padding: "12px 16px", textAlign: "left", fontWeight: 600, borderBottom: "2px solid rgba(107, 174, 219, 0.3)" }}>Score</th>
                   <th style={{ padding: "12px 16px", textAlign: "left", fontWeight: 600, borderBottom: "2px solid rgba(107, 174, 219, 0.3)" }}>Measures</th>
                   <th style={{ padding: "12px 16px", textAlign: "left", fontWeight: 600, borderBottom: "2px solid rgba(107, 174, 219, 0.3)" }}>Type of Risk</th>
-                  <th style={{ padding: "12px 16px", textAlign: "left", fontWeight: 600, borderBottom: "2px solid rgba(107, 174, 219, 0.3)" }}>Who Cares</th>
-                  <th style={{ padding: "12px 16px", textAlign: "left", fontWeight: 600, borderBottom: "2px solid rgba(107, 174, 219, 0.3)" }}>Why Important</th>
+                  <th style={{ padding: "12px 16px", textAlign: "left", fontWeight: 600, borderBottom: "2px solid rgba(107, 174, 219, 0.3)" }}>Relevance</th>
+                  <th style={{ padding: "12px 16px", textAlign: "left", fontWeight: 600, borderBottom: "2px solid rgba(107, 174, 219, 0.3)" }}>Significance</th>
                 </tr>
               </thead>
               <tbody>
@@ -348,7 +348,7 @@ export default function CitationHelpPage() {
         <div className="glass-card" style={{ ...cardBaseStyle }}>
           <SectionHeader title="Assignee Encroachment" link="/citation" />
           <p style={{ fontSize: 14, lineHeight: 1.5, color: TEXT_COLOR, marginBottom: 16 }}>
-            Encroachment analysis tracks how competitor assignees are citing patents held by your target assignees over time. When a competitor's patent cites your portfolio, it indicates they're working in adjacent or overlapping technology space. Monitoring encroachment trends helps identify emerging competitive threats and potential infringement scenarios before they escalate.
+            Encroachment analysis tracks how competitor assignees are citing patents/publications held by a target assignee over time. When a competitor's patent cites a target assignee's portfolio, it indicates they're working in adjacent or overlapping technology space. Monitoring encroachment trends may assist in early identification of emerging competitive threats and potential infringement scenarios.
           </p>
           <DetailList
             items={[
@@ -361,8 +361,8 @@ export default function CitationHelpPage() {
           <div style={{ marginTop: 16, padding: 16, background: "rgba(107, 174, 219, 0.12)", borderRadius: 12, border: "1px solid rgba(107, 174, 219, 0.25)" }}>
             <h4 style={{ margin: 0, fontSize: 14, fontWeight: 600, color: TEXT_COLOR, marginBottom: 8 }}>Key Terms</h4>
             <ul style={{ marginLeft: 20, fontSize: 13, lineHeight: 1.6, listStyleType: "disc", listStylePosition: "outside", color: TEXT_COLOR, marginBottom: 0 }}>
-              <li><strong>Encroachment Score</strong>: Normalized measure (0–100) of how many patents from a competitor cite the target assignees, scaled across all competitors and boosted by trend. Combines 70% volume weight with 30% velocity weight.</li>
-              <li><strong>Velocity</strong>: Slope of citing counts over time. Positive velocity means increasing encroachment; negative means declining competitor activity in your space.</li>
+              <li><strong>Encroachment Score</strong>: Normalized measure (0–100) of how many patents from a competitor cite the target assignee's patents/publications, scaled across all competitors and boosted by trend. Combines 70% volume weight with 30% velocity weight.</li>
+              <li><strong>Velocity</strong>: Slope of citing counts over time. Positive velocity means increasing encroachment; negative means declining competitor activity in an area.</li>
               <li><strong>Total Citing Patents</strong>: Count of unique patents from this competitor that cite the target assignee's portfolio.</li>
             </ul>
           </div>
@@ -375,31 +375,31 @@ export default function CitationHelpPage() {
             <WorkflowCard
               title="Competitive Intelligence"
               steps={[
-                "Set scope to your company's assignee name(s).",
-                "Add key competitors to the Competitors field.",
-                "Review Encroachment timeline to see if competitor citing activity is increasing.",
-                "Check Risk Radar for high-Exposure patents that competitors are citing heavily.",
-                "Use Dependency Matrix to understand if you're also citing competitors' patents (mutual dependency)."
+                "Input Target Assignee(s) to set scope to assignee(s) of interest.",
+                "Add key competitors to the Competitor Assignees field.",
+                "Review Assignee Encroachment timeline to see if Competitor Assignee citing activity is increasing.",
+                "Check Risk Radar for high-exposure patents/publications that Competitor Assignees are citing.",
+                "Evaluate Dependency Matrix for Target Assignee citing to Competitor Assignees' patents/publications (mutual dependency)."
               ]}
             />
             <WorkflowCard
               title="Portfolio Risk Assessment"
               steps={[
-                "Enter your portfolio's patent numbers directly in Scope.",
+                "Enter a portfolio's patent numbers directly in Scope.",
                 "Sort Risk Radar by Overall Risk to identify highest-priority patents.",
-                "For high-risk patents, check both Exposure (are competitors citing it?) and Fragility (is prior art narrow?).",
-                "Export PDF report for legal team review.",
-                "Cross-reference with Forward Impact to see full citation context."
+                "For high-risk patents, check both Exposure (are Competitor Assignees citing it?) and Fragility (is prior art narrow?).",
+                "Export PDF report for offline research and review.",
+                "Cross-reference with Forward-Citation Impact to see full citation context."
               ]}
             />
             <WorkflowCard
               title="Licensing Opportunity Identification"
               steps={[
-                "Set scope to your target assignee name.",
-                "Review Dependency Matrix to find assignees with high citation counts into your portfolio.",
-                "Sort by normalized percentage to see which assignees are most dependent on your IP.",
-                "Check Forward Impact for your most-cited patents—these are strongest licensing candidates.",
-                "Verify Fragility is low (robust patents are more valuable for licensing)."
+                "Set scope to a Target Assignee.",
+                "Review Dependency Matrix to find Competitor Assignees with high citation counts into Target Assignee's portfolio.",
+                "Sort by normalized percentage to see which Competitor Assignees are most dependent on Target Assignee's IP.",
+                "Check Forward-Citation Impact for Target Assignee's most-cited patents (potential licensing candidates).",
+                "Verify Fragility is low for potential licensing candidates (robust patents are more valuable for licensing)."
               ]}
             />
           </div>
