@@ -236,20 +236,31 @@ async def get_cross_assignee_dependency_matrix(
         LEFT JOIN patent cited_app ON cited_app.application_number = pc.cited_application_number AND pc.cited_pub_id IS NULL
         WHERE pc.citing_pub_id = ANY(%s) OR COALESCE(pc.cited_pub_id, cited_app.pub_id) = ANY(%s)
     ),
-    edges AS (
+    edges_base AS (
         SELECT
+            COALESCE(citing.canonical_assignee_name_id::text, LOWER(TRIM(citing.assignee_name))) AS citing_key,
+            COALESCE(cited.canonical_assignee_name_id::text, LOWER(TRIM(cited.assignee_name))) AS cited_key,
             citing.canonical_assignee_name_id AS citing_assignee_id,
-            COALESCE(citing_can.canonical_assignee_name, citing.assignee_name) AS citing_assignee_name,
+            COALESCE(citing_can.canonical_assignee_name, citing.assignee_name, 'Unknown') AS citing_assignee_name,
             cited.canonical_assignee_name_id AS cited_assignee_id,
-            COALESCE(cited_can.canonical_assignee_name, cited.assignee_name) AS cited_assignee_name,
-            COUNT(*) AS citation_count
+            COALESCE(cited_can.canonical_assignee_name, cited.assignee_name, 'Unknown') AS cited_assignee_name
         FROM resolved r
         JOIN patent citing ON citing.pub_id = r.citing_pub_id
         JOIN patent cited ON cited.pub_id = r.cited_pub_id
         LEFT JOIN canonical_assignee_name citing_can ON citing_can.id = citing.canonical_assignee_name_id
         LEFT JOIN canonical_assignee_name cited_can ON cited_can.id = cited.canonical_assignee_name_id
-        GROUP BY citing.canonical_assignee_name_id, citing_can.canonical_assignee_name, citing.assignee_name,
-                 cited.canonical_assignee_name_id, cited_can.canonical_assignee_name, cited.assignee_name
+    ),
+    edges AS (
+        SELECT
+            citing_key,
+            cited_key,
+            MAX(citing_assignee_id) FILTER (WHERE citing_assignee_id IS NOT NULL) AS citing_assignee_id,
+            MAX(cited_assignee_id) FILTER (WHERE cited_assignee_id IS NOT NULL) AS cited_assignee_id,
+            MAX(citing_assignee_name) AS citing_assignee_name,
+            MAX(cited_assignee_name) AS cited_assignee_name,
+            COUNT(*) AS citation_count
+        FROM edges_base
+        GROUP BY citing_key, cited_key
     )
     SELECT
         citing_assignee_id,
@@ -257,7 +268,7 @@ async def get_cross_assignee_dependency_matrix(
         cited_assignee_id,
         cited_assignee_name,
         citation_count,
-        CASE WHEN %s THEN citation_count::float / NULLIF(SUM(citation_count) OVER (PARTITION BY citing_assignee_id), 0) END AS citing_to_cited_pct
+        CASE WHEN %s THEN citation_count::float / NULLIF(SUM(citation_count) OVER (PARTITION BY citing_key), 0) END AS citing_to_cited_pct
     FROM edges
     WHERE citation_count >= %s
     ORDER BY citation_count DESC;
