@@ -365,8 +365,15 @@ function ForwardImpactCard({ scope, scopeVersion, tokenGetter }: ForwardImpactCa
   );
 
   return (
-    <div className={cardClass}>
-      <div className="flex items-start justify-between gap-3 mb-3">
+    <div className={`${cardClass} relative`}>
+      <button
+        onClick={load}
+        className="refresh-btn absolute right-5 top-5 px-4 text-3xl font-semibold"
+        disabled={loading || !scope}
+      >
+        {loading ? "…" : "⟳"}
+      </button>
+      <div className="flex items-start justify-between gap-3 mb-3 pr-12">
         <SectionHeader title="Forward-Citation Impact" subtitle="Velocity, timeline, and top cited patents." />
         <div className="flex items-center gap-2">
           <label className="flex items-center gap-2 text-xs text-slate-600">
@@ -392,13 +399,6 @@ function ForwardImpactCard({ scope, scopeVersion, tokenGetter }: ForwardImpactCa
               <option value="quarter">Quarter</option>
             </select>
           </label>
-          <button
-            onClick={load}
-            className="refresh-btn px-4 mb-2 text-3xl font-semibold"
-            disabled={loading || !scope}
-          >
-            {loading ? "…" : "⟳"}
-          </button>
         </div>
       </div>
 
@@ -557,8 +557,11 @@ function DependencyMatrixCard({ scope, scopeVersion, tokenGetter }: DependencyMa
   const maxVal = topEdges.reduce((m, e) => Math.max(m, e.citation_count), 0) || 1;
 
   return (
-    <div className={cardClass}>
-      <div className="flex items-start justify-between gap-3 mb-3">
+    <div className={`${cardClass} relative`}>
+      <button onClick={load} className="refresh-btn absolute right-5 top-5 px-4 text-3xl font-semibold" disabled={!scope || loading}>
+        {loading ? "…" : "⟳"}
+      </button>
+      <div className="flex items-start justify-between gap-3 mb-3 pr-12">
         <SectionHeader title="Cross-Assignee Dependency" subtitle="Citing → cited relationships across portfolios." />
         <div className="flex items-center gap-3">
           <label className="flex items-center gap-2 text-xs text-slate-600">
@@ -576,9 +579,6 @@ function DependencyMatrixCard({ scope, scopeVersion, tokenGetter }: DependencyMa
             <input type="checkbox" checked={normalize} onChange={(e) => setNormalize(e.target.checked)} />
             <span>Normalize</span>
           </label>
-          <button onClick={load} className="refresh-btn px-4 mb-2 text-3xl font-semibold" disabled={!scope || loading}>
-            {loading ? "…" : "⟳"}
-          </button>
         </div>
       </div>
       {!scope ? (
@@ -1013,35 +1013,43 @@ function EncroachmentCard({ scope, scopeVersion, tokenGetter, competitorNames }:
   const colorPalette = ["#0ea5e9", "#f59e0b", "#ef4444", "#10b981", "#6366f1", "#8b5cf6", "#14b8a6", "#f97316"];
 
   return (
-    <div className={cardClass}>
-      <div className="flex flex-col gap-3 mb-3 sm:flex-row sm:items-start sm:justify-between">
+    <div className={`${cardClass} relative`}>
+      <button
+        className="refresh-btn absolute right-5 top-5 px-4 text-3xl font-semibold"
+        disabled={!hasTargets || loading}
+        onClick={load}
+      >
+        {loading ? "…" : "⟳"}
+      </button>
+      <div className="flex flex-col gap-3 mb-3 pr-12 sm:flex-row sm:items-start sm:justify-between">
         <SectionHeader title="Assignee Encroachment" subtitle="Other assignee forward citations into a portfolio." />
-        <div className="flex flex-wrap items-center gap-3">
-          <label className="flex items-center gap-2 text-xs text-slate-600">
-            <span>Bucket</span>
-            <select value={bucket} onChange={(e) => setBucket(e.target.value as any)} className={inlineInputClass}>
-              <option value="month">Month</option>
-              <option value="quarter">Quarter</option>
-            </select>
-          </label>
-          <label className="flex items-center gap-2 text-xs text-slate-600">
-            <span>Top competitors</span>
-            <input
-              type="number"
-              min={3}
-              max={25}
-              value={topK}
-              onChange={(e) => setTopK(Number(e.target.value) || 3)}
-              className={inlineInputClass}
-            />
-          </label>
-          <label className="flex items-center gap-2 text-xs text-slate-600">
-            <input type="checkbox" checked={explicitOnly} onChange={(e) => setExplicitOnly(e.target.checked)} />
-            <span>Only explicit competitors</span>
-          </label>
-          <button className="refresh-btn px-4 mb-2 text-3xl font-semibold" disabled={!hasTargets || loading} onClick={load}>
-            {loading ? "…" : "⟳"}
-          </button>
+        <div className="flex flex-col gap-2 items-start sm:items-end">
+          <div className="flex flex-wrap items-center gap-3">
+            <label className="flex items-center gap-2 text-xs text-slate-600">
+              <span>Bucket</span>
+              <select value={bucket} onChange={(e) => setBucket(e.target.value as any)} className={inlineInputClass}>
+                <option value="month">Month</option>
+                <option value="quarter">Quarter</option>
+              </select>
+            </label>
+            <label className="flex items-center gap-2 text-xs text-slate-600">
+              <input type="checkbox" checked={explicitOnly} onChange={(e) => setExplicitOnly(e.target.checked)} />
+              <span>Only explicit competitors</span>
+            </label>
+          </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <label className="flex items-center gap-2 text-xs text-slate-600">
+              <span>Top competitors</span>
+              <input
+                type="number"
+                min={3}
+                max={25}
+                value={topK}
+                onChange={(e) => setTopK(Number(e.target.value) || 3)}
+                className={inlineInputClass}
+              />
+            </label>
+          </div>
         </div>
       </div>
       {!hasTargets ? (
