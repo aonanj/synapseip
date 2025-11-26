@@ -63,7 +63,7 @@ export default function CitationHelpPage() {
         <div className="glass-card" style={{ ...cardBaseStyle }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16 }}>
             <div>
-              <h1 style={{ margin: 0, fontSize: 32, fontWeight: 700, color: TEXT_COLOR }}>Citation Intelligence Guide</h1>
+              <h1 style={{ margin: 0, fontSize: 32, fontWeight: 700, color: TEXT_COLOR }}>Citation Tracker Guide</h1>
               <p style={{ marginTop: 8, fontSize: 14, color: "#627D98", marginBottom: 0 }}>
                 <a href="/help" style={{ color: LINK_COLOR, textDecoration: "none" }}>← Back to Help</a>
               </p>
@@ -77,7 +77,7 @@ export default function CitationHelpPage() {
             </a>
           </div>
           <p style={{ marginTop: 16, fontSize: 16, lineHeight: 1.5, color: TEXT_COLOR, marginBottom: 0 }}>
-            Citation Intelligence layers analytics on the patent_citation table to answer “who cites us,” “who we rely on,” and “where competitors are encroaching.” A shared Scope card drives four widgets—Forward Impact, Dependency Matrix, Risk Radar, and Encroachment—so you set filters once and analyze from multiple angles.
+            Citation Tracker provides information on cited patents and publications to answer “who cites us,” “who we rely on,” and “where competitors are encroaching.” A shared Scope card drives four widgets—Forward Impact, Dependency Matrix, Risk Radar, and Encroachment—so you set filters once and analyze from multiple angles.
           </p>
         </div>
 

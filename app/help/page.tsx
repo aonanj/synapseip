@@ -86,7 +86,7 @@ export default function HelpIndexPage() {
             <li><strong>Search & Trends</strong>: Discover patents and publications through hybrid keyword and semantic search, visualize filing trends over time, by CPC code, or by assignee, and set up proactive alerts for new filings that match configurable criteria;</li>
             <li><strong>Scope Analysis</strong>: Input a product description, invention disclosure, or draft claim set to run a semantic comparison against independent claims in the SynapseIP database. The closest matching independent claims are returned with similarity scoring for preliminary FTO and infringement-risk analysis.;</li>
             <li><strong>IP Overview</strong>: Investigate the AI/ML IP landscape through information and insights on subject matter saturation, activity rates, momentum, and CPC distribution of AI/ML-related patents and publications. Option to focus on specific assignees.</li>
-            <li><strong>Citation Intelligence</strong>: Analyze forward-citation impact, cross-assignee dependencies, competitor risk signals, and encroachment trends using the patent_citation dataset with portfolio-aware filters.</li>
+            <li><strong>Citation Tracker</strong>: Analyze forward-citation impact, cross-assignee dependencies, competitor risk signals, and encroachment trends using the patent_citation dataset with portfolio-aware filters.</li>
           </ul>
         </div>
 
@@ -223,7 +223,7 @@ export default function HelpIndexPage() {
           >
             <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: 16 }}>
               <div style={{ flex: 1, minWidth: 250 }}>
-                <h3 style={{ margin: 0, fontSize: 24, fontWeight: 700, color: TEXT_COLOR }}>Citation Intelligence</h3>
+                <h3 style={{ margin: 0, fontSize: 24, fontWeight: 700, color: TEXT_COLOR }}>Citation Tracker</h3>
                 <p style={{ marginTop: 8, fontSize: 13, color: "#627D98", marginBottom: 0 }}>
                   Portfolio-aware forward citations, dependencies, risk radar, and encroachment insights
                 </p>

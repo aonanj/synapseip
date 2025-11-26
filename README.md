@@ -311,7 +311,7 @@ python scripts/load_patent_citations.py \
 The React UI ([app/overview/page.tsx](app/overview/page.tsx)) defaults to the overview primitives: four tiles (Crowding, Density, Momentum, Top CPCs), a timeline sparkline, CPC bar chart, and a patent results table with semantic toggle. Enabling "Group by Assignee" pulls in a Sigma.js visualization and signal cards for assignee clustering context.
 
 ## Citation Analytics
-[app/citation_api.py](app/citation_api.py) provides patent citation intelligence through four analysis endpoints:
+[app/citation_api.py](app/citation_api.py) provides patent and publication citation intelligence through four analysis endpoints:
 
 - `/citation/impact` – **Forward Impact Analysis**: Tracks forward citations over time for a patent portfolio. Returns total citations, distinct citing patents, monthly/quarterly timelines, and top-cited patents ranked by citation count and velocity.
 - `/citation/dependency-matrix` – **Cross-Assignee Dependencies**: Builds a citation dependency matrix showing how different assignees cite each other's patents. Useful for identifying technology dependencies and licensing opportunities.

@@ -161,7 +161,7 @@ export default function NavBar() {
         <div className="hidden md:flex items-center gap-2">
           <Link href="/" className="px-3 py-1.5 text-sm font-semibold rounded-md hover:bg-[#d9e1eb] hover:underline text-[#3A506B]">Search & Trends</Link>
           <Link href="/overview" className="px-3 py-1.5 text-sm font-semibold rounded-md hover:bg-[#d9e1eb] hover:underline text-[#3A506B]">IP Overview</Link>
-          <Link href="/citation" className="px-3 py-1.5 text-sm font-semibold rounded-md hover:bg-[#d9e1eb] hover:underline text-[#3A506B]">Citation</Link>
+          <Link href="/citation" className="px-3 py-1.5 text-sm font-semibold rounded-md hover:bg-[#d9e1eb] hover:underline text-[#3A506B]">Citation Tracker</Link>
           <Link href="/scope-analysis" className="px-3 py-1.5 text-sm font-semibold rounded-md hover:bg-[#d9e1eb] hover:underline text-[#3A506B]">Scope Analysis</Link>
         </div>
 

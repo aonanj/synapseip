@@ -1288,9 +1288,9 @@ export default function CitationPage() {
       <div className="glass-surface" style={pageSurfaceStyle}>
         <div className="glass-card" style={{ ...cardBaseStyle }}>
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-sky-600 mb-2">
-            Citation Workspace
+            Citation Intelligence
           </p>
-          <h1 style={{ color: TEXT_COLOR, fontSize: 22, fontWeight: 700 }}>Patent & Publication Citation Intelligence</h1>
+          <h1 style={{ color: TEXT_COLOR, fontSize: 22, fontWeight: 700 }}>Patent & Publication Citation Tracker</h1>
           <p style={{ margin: 0, fontSize: 14, color: "#475569" }}>
             Discover forward citations, cross-assignee dependencies, risk signals, and assignee encroachment based on citation data published on patents and publications.
           </p>
