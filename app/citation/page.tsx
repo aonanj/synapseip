@@ -143,6 +143,8 @@ const inputClass = `w-full rounded-xl px-3 py-2 text-xs ${controlBaseClass}`;
 const selectClass = `w-full rounded-xl px-3 py-2 text-xs ${controlBaseClass}`;
 const inlineInputClass = `h-9 rounded-lg px-3 text-xs ${controlBaseClass}`;
 
+const ROWS_PER_PAGE = 5;
+
 function parseListInput(value: string): string[] {
   return value
     .split(/[\n, ]+/)
@@ -163,7 +165,9 @@ function fmtDate(value: string | null | undefined): string {
 
 function googlePatentsUrl(pubId: string): string {
   const cleaned = pubId.replace(/[-\s]/g, "");
-  return `https://patents.google.com/patent/${cleaned}`;
+  const match = cleaned.match(/^(US)(\d{4})(\d{6})(A\d{1,2})$/);
+  const normalized = match ? `${match[1]}${match[2]}0${match[3]}${match[4]}` : cleaned;
+  return `https://patents.google.com/patent/${normalized}`;
 }
 
 function ScoreBar({ value, color = "sky" }: { value: number; color?: "sky" | "amber" | "rose" }) {
@@ -183,8 +187,8 @@ function ScoreBar({ value, color = "sky" }: { value: number; color?: "sky" | "am
 function MetricTile({ label, value, hint }: { label: string; value: string | number; hint?: string }) {
   return (
     <div className="rounded-xl bg-white/70 border border-slate-200 px-4 py-3 shadow-sm">
-      <div className="text-base font-semibold text-slate-500 uppercase tracking-wide">{label}</div>
-      <div className="text-base font-semibold text-slate-900 mt-1">{value}</div>
+      <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide">{label}</div>
+      <div className="text-xs font-semibold text-slate-900 mt-1">{value}</div>
       {hint ? <div className="text-xs text-slate-500 mt-1">{hint}</div> : null}
     </div>
   );
@@ -298,6 +302,7 @@ function ForwardImpactCard({ scope, scopeVersion, tokenGetter }: ForwardImpactCa
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<ForwardImpactResponse | null>(null);
+  const [impactPage, setImpactPage] = useState(1);
 
   const load = useCallback(async () => {
     if (!scope) return;
@@ -340,6 +345,17 @@ function ForwardImpactCard({ scope, scopeVersion, tokenGetter }: ForwardImpactCa
     });
     return copy;
   }, [data, sortKey]);
+
+  useEffect(() => {
+    setImpactPage(1);
+  }, [data, sortKey]);
+
+  const impactTotalPages = Math.max(1, Math.ceil(sortedPatents.length / ROWS_PER_PAGE));
+  const currentImpactPage = Math.min(impactPage, impactTotalPages);
+  const pagedPatents = sortedPatents.slice(
+    (currentImpactPage - 1) * ROWS_PER_PAGE,
+    currentImpactPage * ROWS_PER_PAGE
+  );
 
   return (
     <div className={cardClass}>
@@ -417,10 +433,10 @@ function ForwardImpactCard({ scope, scopeVersion, tokenGetter }: ForwardImpactCa
                 </tr>
               </thead>
               <tbody>
-                {sortedPatents.map((p) => (
+                {pagedPatents.map((p) => (
                   <tr key={p.pub_id} className="odd:bg-white even:bg-slate-50/60">
-                    <td className="px-3 py-2 align-top">
-                      <a href={googlePatentsUrl(p.pub_id)} target="_blank" rel="noreferrer" className="text-sky-700 font-semibold hover:underline">
+                    <td className="px-3 py-2 align-top text-xs">
+                      <a href={googlePatentsUrl(p.pub_id)} target="_blank" rel="noreferrer" className="text-sky-700 font-semibold hover:underline text-xs">
                         {p.pub_id}
                       </a>
                       <div className="text-slate-700 text-xs">{p.title}</div>
@@ -443,6 +459,33 @@ function ForwardImpactCard({ scope, scopeVersion, tokenGetter }: ForwardImpactCa
               </tbody>
             </table>
           </div>
+          {sortedPatents.length ? (
+            <div className="flex items-center justify-between mt-3 text-xs text-slate-700">
+              <span>
+                Showing {(currentImpactPage - 1) * ROWS_PER_PAGE + 1}-
+                {Math.min(currentImpactPage * ROWS_PER_PAGE, sortedPatents.length)} of {sortedPatents.length}
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  className="px-3 py-1 rounded-lg border border-slate-200 bg-white/80 disabled:opacity-50"
+                  onClick={() => setImpactPage((p) => Math.max(1, p - 1))}
+                  disabled={currentImpactPage === 1}
+                >
+                  Prev
+                </button>
+                <span>
+                  Page {currentImpactPage} / {impactTotalPages}
+                </span>
+                <button
+                  className="px-3 py-1 rounded-lg border border-slate-200 bg-white/80 disabled:opacity-50"
+                  onClick={() => setImpactPage((p) => Math.min(impactTotalPages, p + 1))}
+                  disabled={currentImpactPage === impactTotalPages}
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          ) : null}
         </div>
       ) : (
         <div className="text-xs text-slate-600">No data for this scope.</div>
@@ -625,6 +668,7 @@ function RiskRadarCard({ scope, scopeVersion, tokenGetter, competitorNames }: Ri
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<RiskRadarResponse | null>(null);
+  const [riskPage, setRiskPage] = useState(1);
 
   const load = useCallback(async () => {
     if (!scope) return;
@@ -666,6 +710,17 @@ function RiskRadarCard({ scope, scopeVersion, tokenGetter, competitorNames }: Ri
     });
     return copy;
   }, [data, sortKey]);
+
+  useEffect(() => {
+    setRiskPage(1);
+  }, [data, sortKey]);
+
+  const riskTotalPages = Math.max(1, Math.ceil(sortedRows.length / ROWS_PER_PAGE));
+  const currentRiskPage = Math.min(riskPage, riskTotalPages);
+  const pagedRiskRows = sortedRows.slice(
+    (currentRiskPage - 1) * ROWS_PER_PAGE,
+    currentRiskPage * ROWS_PER_PAGE
+  );
 
   const exportCsv = useCallback(() => {
     if (!data?.patents?.length) return;
@@ -756,7 +811,7 @@ function RiskRadarCard({ scope, scopeVersion, tokenGetter, competitorNames }: Ri
               </tr>
             </thead>
             <tbody>
-              {sortedRows.map((p) => (
+              {pagedRiskRows.map((p) => (
                 <tr key={p.pub_id} className="odd:bg-white even:bg-slate-50/60">
                   <td className="px-3 py-2 align-top">
                     <a href={googlePatentsUrl(p.pub_id)} target="_blank" rel="noreferrer" className="text-sky-700 font-semibold hover:underline">
@@ -786,9 +841,36 @@ function RiskRadarCard({ scope, scopeVersion, tokenGetter, competitorNames }: Ri
                     <div className="text-xs text-slate-500 mt-1">{p.overall_risk_score.toFixed(1)}</div>
                   </td>
                 </tr>
-              ))}
+                ))}
             </tbody>
           </table>
+          {sortedRows.length ? (
+            <div className="flex items-center justify-between mt-3 text-xs text-slate-700">
+              <span>
+                Showing {(currentRiskPage - 1) * ROWS_PER_PAGE + 1}-
+                {Math.min(currentRiskPage * ROWS_PER_PAGE, sortedRows.length)} of {sortedRows.length}
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  className="px-3 py-1 rounded-lg border border-slate-200 bg-white/80 disabled:opacity-50"
+                  onClick={() => setRiskPage((p) => Math.max(1, p - 1))}
+                  disabled={currentRiskPage === 1}
+                >
+                  Prev
+                </button>
+                <span>
+                  Page {currentRiskPage} / {riskTotalPages}
+                </span>
+                <button
+                  className="px-3 py-1 rounded-lg border border-slate-200 bg-white/80 disabled:opacity-50"
+                  onClick={() => setRiskPage((p) => Math.min(riskTotalPages, p + 1))}
+                  disabled={currentRiskPage === riskTotalPages}
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          ) : null}
         </div>
       ) : (
         <div className="text-xs text-slate-600">No risk signals found for this scope.</div>
@@ -862,16 +944,52 @@ function EncroachmentCard({ scope, scopeVersion, tokenGetter, competitorNames }:
     });
   }, [data, topCompetitorKeys]);
 
-  const groupedSeries = useMemo(() => {
-    const groups: Record<string, EncroachmentTimelinePoint[]> = {};
+  const competitorLabelMap = useMemo(() => {
+    const map = new Map<string, string>();
     for (const pt of filteredTimeline) {
       const key = pt.competitor_assignee_id || pt.competitor_assignee_name || "Unknown";
-      groups[key] = groups[key] || [];
-      groups[key].push(pt);
+      if (!map.has(key)) {
+        map.set(key, pt.competitor_assignee_name || pt.competitor_assignee_id || "Unknown");
+      }
     }
-    Object.values(groups).forEach((arr) => arr.sort((a, b) => (a.bucket_start > b.bucket_start ? 1 : -1)));
+    if (data?.competitors) {
+      data.competitors.forEach((c) => {
+        const key = c.competitor_assignee_id || c.competitor_assignee_name || "Unknown";
+        if (!map.has(key)) {
+          map.set(key, c.competitor_assignee_name || c.competitor_assignee_id || "Unknown");
+        }
+      });
+    }
+    return map;
+  }, [filteredTimeline, data?.competitors]);
+
+  const bucketLabels = useMemo(() => {
+    const set = new Set<string>();
+    for (const pt of filteredTimeline) {
+      if (pt.bucket_start) set.add(pt.bucket_start);
+    }
+    return Array.from(set).sort();
+  }, [filteredTimeline]);
+
+  const seriesByKey = useMemo(() => {
+    const groups: Record<string, Record<string, number>> = {};
+    for (const pt of filteredTimeline) {
+      const key = pt.competitor_assignee_id || pt.competitor_assignee_name || "Unknown";
+      groups[key] = groups[key] || {};
+      groups[key][pt.bucket_start] = pt.citing_patent_count || 0;
+    }
     return groups;
   }, [filteredTimeline]);
+
+  const maxTimelineVal = useMemo(() => {
+    let max = 0;
+    for (const pt of filteredTimeline) {
+      max = Math.max(max, pt.citing_patent_count || 0);
+    }
+    return max || 1;
+  }, [filteredTimeline]);
+
+  const colorPalette = ["#0ea5e9", "#f59e0b", "#ef4444", "#10b981", "#6366f1", "#8b5cf6", "#14b8a6", "#f97316"];
 
   return (
     <div className={cardClass}>
@@ -927,38 +1045,88 @@ function EncroachmentCard({ scope, scopeVersion, tokenGetter, competitorNames }:
             </div>
             {filteredTimeline.length ? (
               <div className="overflow-x-auto">
-                <svg width={Math.max(480, filteredTimeline.length * 60)} height={260} className="min-w-full">
-                  {Object.entries(groupedSeries).map(([key, series], idx) => {
-                    const values = series.map((s) => s.citing_patent_count || 0);
-                    const maxVal = Math.max(...values, 1);
-                    const width = Math.max(420, series.length * 80);
-                    const margin = 30;
-                    const step = series.length > 1 ? (width - margin * 2) / (series.length - 1) : 0;
-                    const color = ["#0ea5e9", "#f59e0b", "#ef4444", "#10b981", "#6366f1"][idx % 5];
-                    const coords = series.map((pt, i) => {
-                      const x = margin + i * step;
-                      const y = margin + (1 - (pt.citing_patent_count || 0) / maxVal) * (220 - margin);
-                      return [x, y];
-                    });
-                    const path = coords.map(([x, y], i) => `${i === 0 ? "M" : "L"}${x},${y}`).join(" ");
-                    return (
-                      <g key={key}>
-                        <path d={path} fill="none" stroke={color} strokeWidth={2.2} strokeLinejoin="round" strokeLinecap="round" />
-                        {coords.map(([x, y], i) => (
-                          <g key={`${key}-${i}`}>
-                            <circle cx={x} cy={y} r={4} fill="#fff" stroke={color} strokeWidth={2} />
-                            <text x={x} y={240} textAnchor="middle" className="text-[11px] fill-slate-600">
-                              {fmtDate(series[i].bucket_start).slice(0, 7)}
+                {(() => {
+                  const chartWidth = Math.max(560, bucketLabels.length * 110);
+                  const chartHeight = 280;
+                  const margin = { top: 24, right: 16, bottom: 38, left: 48 };
+                  const innerWidth = chartWidth - margin.left - margin.right;
+                  const innerHeight = chartHeight - margin.top - margin.bottom;
+                  const step = bucketLabels.length > 1 ? innerWidth / (bucketLabels.length - 1) : innerWidth;
+                  const xForIdx = (idx: number) => margin.left + idx * step;
+                  const yForVal = (val: number) => margin.top + (1 - val / maxTimelineVal) * innerHeight;
+                  const yTicks = Array.from(new Set([0, Math.ceil(maxTimelineVal / 2), maxTimelineVal])).sort((a, b) => a - b);
+                  return (
+                    <svg width={chartWidth} height={chartHeight} className="min-w-full">
+                      <defs>
+                        <linearGradient id="encroachBg" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#e2e8f0" stopOpacity="0.35" />
+                          <stop offset="100%" stopColor="#e2e8f0" stopOpacity="0" />
+                        </linearGradient>
+                      </defs>
+                      <rect
+                        x={margin.left - 20}
+                        y={margin.top - 10}
+                        width={chartWidth - margin.left - margin.right + 40}
+                        height={innerHeight + 20}
+                        rx={12}
+                        fill="url(#encroachBg)"
+                        className="fill-slate-50"
+                      />
+                      {yTicks.map((tick) => {
+                        const y = yForVal(tick);
+                        return (
+                          <g key={`y-${tick}`}>
+                            <line x1={margin.left} x2={chartWidth - margin.right} y1={y} y2={y} stroke="#e2e8f0" strokeDasharray="4 4" />
+                            <text x={margin.left - 10} y={y + 4} textAnchor="end" className="text-[11px] fill-slate-500">
+                              {tick}
                             </text>
                           </g>
-                        ))}
-                        <text x={Math.max(...coords.map(([x]) => x)) + 10} y={coords[0][1]} className="text-xs fill-slate-700">
-                          {key}
-                        </text>
-                      </g>
-                    );
-                  })}
-                </svg>
+                        );
+                      })}
+                      {bucketLabels.map((bucket, idx) => {
+                        const x = xForIdx(idx);
+                        return (
+                          <g key={`x-${bucket}`}>
+                            <line x1={x} x2={x} y1={margin.top} y2={chartHeight - margin.bottom + 4} stroke="#e2e8f0" />
+                            <text x={x} y={chartHeight - 12} textAnchor="middle" className="text-[11px] fill-slate-600">
+                              {fmtDate(bucket).slice(0, 7)}
+                            </text>
+                          </g>
+                        );
+                      })}
+                      {topCompetitorKeys.map((key, seriesIdx) => {
+                        const series = seriesByKey[key];
+                        if (!series) return null;
+                        const coords = bucketLabels.map((bucket, idx) => {
+                          const val = series[bucket] ?? 0;
+                          return [xForIdx(idx), yForVal(val), val] as const;
+                        });
+                        const color = colorPalette[seriesIdx % colorPalette.length];
+                        const path = coords.map(([x, y], i) => `${i === 0 ? "M" : "L"}${x},${y}`).join(" ");
+                        return (
+                          <g key={key}>
+                            <path d={path} fill="none" stroke={color} strokeWidth={2.4} strokeLinejoin="round" strokeLinecap="round" />
+                            {coords.map(([x, y, val], idx) =>
+                              val > 0 ? (
+                                <g key={`${key}-${idx}`}>
+                                  <circle cx={x} cy={y} r={4} fill="#fff" stroke={color} strokeWidth={2} />
+                                </g>
+                              ) : null
+                            )}
+                          </g>
+                        );
+                      })}
+                    </svg>
+                  );
+                })()}
+                <div className="flex flex-wrap gap-3 mt-3 text-xs text-slate-700">
+                  {topCompetitorKeys.map((key, idx) => (
+                    <span key={key} className="inline-flex items-center gap-2 px-2 py-1 rounded-lg bg-white/70 border border-slate-200 shadow-sm">
+                      <span className="w-3 h-3 rounded-full" style={{ backgroundColor: colorPalette[idx % colorPalette.length] }} />
+                      <span className="font-semibold">{competitorLabelMap.get(key) || "Unknown"}</span>
+                    </span>
+                  ))}
+                </div>
               </div>
             ) : (
               <div className="text-xs text-slate-600">No encroachment signals for this window.</div>
@@ -978,19 +1146,24 @@ function EncroachmentCard({ scope, scopeVersion, tokenGetter, competitorNames }:
                 {data.competitors
                   .filter((c) => topCompetitorKeys.includes(c.competitor_assignee_id || c.competitor_assignee_name || "Unknown"))
                   .slice(0, topK)
-                  .map((c, idx) => (
-                    <tr key={`${c.competitor_assignee_id || idx}`} className="odd:bg-white even:bg-slate-50/60">
-                      <td className="px-3 py-2 text-xs text-slate-800">{c.competitor_assignee_name || "Unknown"}</td>
-                      <td className="px-3 py-2 text-xs font-semibold text-slate-900">{c.total_citing_patents}</td>
-                      <td className="px-3 py-2 text-xs text-slate-800">
-                        <div className="w-24"><ScoreBar value={c.encroachment_score} color="rose" /></div>
-                        <div className="text-xs text-slate-500 mt-1">{c.encroachment_score.toFixed(1)}</div>
-                      </td>
-                      <td className="px-3 py-2 text-xs text-slate-700">
-                        {c.velocity != null ? `${c.velocity.toFixed(2)} / bucket` : "—"}
-                      </td>
-                    </tr>
-                  ))}
+                  .map((c, idx) => {
+                    const compKey = c.competitor_assignee_id || c.competitor_assignee_name || `unknown-${idx}`;
+                    const displayName =
+                      competitorLabelMap.get(compKey) || c.competitor_assignee_name || c.competitor_assignee_id || "Unknown";
+                    return (
+                      <tr key={compKey} className="odd:bg-white even:bg-slate-50/60">
+                        <td className="px-3 py-2 text-xs text-slate-800">{displayName}</td>
+                        <td className="px-3 py-2 text-xs font-semibold text-slate-900">{c.total_citing_patents}</td>
+                        <td className="px-3 py-2 text-xs text-slate-800">
+                          <div className="w-24"><ScoreBar value={c.encroachment_score} color="rose" /></div>
+                          <div className="text-xs text-slate-500 mt-1">{c.encroachment_score.toFixed(1)}</div>
+                        </td>
+                        <td className="px-3 py-2 text-xs text-slate-700">
+                          {c.velocity != null ? `${c.velocity.toFixed(2)} / bucket` : "—"}
+                        </td>
+                      </tr>
+                    );
+                  })}
               </tbody>
             </table>
           </div>
