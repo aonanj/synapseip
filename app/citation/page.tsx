@@ -94,7 +94,9 @@ type EncroachmentResponse = {
 type ScopePanelState = {
   mode: ScopeMode;
   focusAssigneeNames: string[];
+  focusAssigneeInput: string;
   pubIds: string[];
+  pubIdsInput: string;
   keyword: string;
   cpc: string;
   assigneeFilter: string;
@@ -102,13 +104,16 @@ type ScopePanelState = {
   to: string;
   bucket: "month" | "quarter";
   competitors: string[];
+  competitorsInput: string;
   competitorToggle: boolean;
 };
 
 const INITIAL_SCOPE_STATE: ScopePanelState = {
   mode: "assignee",
   focusAssigneeNames: [],
+  focusAssigneeInput: "",
   pubIds: [],
+  pubIdsInput: "",
   keyword: "",
   cpc: "",
   assigneeFilter: "",
@@ -116,6 +121,7 @@ const INITIAL_SCOPE_STATE: ScopePanelState = {
   to: "",
   bucket: "month",
   competitors: [],
+  competitorsInput: "",
   competitorToggle: false,
 };
 
@@ -145,9 +151,10 @@ const inlineInputClass = `h-9 rounded-lg px-3 text-xs ${controlBaseClass}`;
 
 const ROWS_PER_PAGE = 5;
 
-function parseListInput(value: string): string[] {
+function parseListInput(value: string, opts?: { allowSpaceDelimiter?: boolean }): string[] {
+  const delimiter = opts?.allowSpaceDelimiter ? /[\n,; ]+/ : /[\n,;]+/;
   return value
-    .split(/[\n, ]+/)
+    .split(delimiter)
     .map((v) => v.trim())
     .filter(Boolean);
 }
@@ -1186,18 +1193,24 @@ export default function CitationPage() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
+    const focusAssigneeNames = parseListInput(params.get("assignee_names") || "");
+    const pubIds = parseListInput(params.get("pub_ids") || "", { allowSpaceDelimiter: true });
+    const competitors = parseListInput(params.get("competitors") || "");
     const nextState: ScopePanelState = {
       ...INITIAL_SCOPE_STATE,
       mode: (params.get("mode") as ScopeMode) || INITIAL_SCOPE_STATE.mode,
       bucket: (params.get("bucket") as "month" | "quarter") || INITIAL_SCOPE_STATE.bucket,
-      focusAssigneeNames: parseListInput(params.get("assignee_names") || ""),
-      pubIds: parseListInput(params.get("pub_ids") || ""),
+      focusAssigneeNames,
+      focusAssigneeInput: focusAssigneeNames.join("\n"),
+      pubIds,
+      pubIdsInput: pubIds.join("\n"),
       keyword: params.get("keyword") || "",
       cpc: params.get("cpc") || "",
       assigneeFilter: params.get("assignee") || "",
       from: params.get("from") || "",
       to: params.get("to") || "",
-      competitors: parseListInput(params.get("competitors") || ""),
+      competitors,
+      competitorsInput: competitors.join("\n"),
       competitorToggle: !!params.get("competitors"),
     };
     setScopeState(nextState);
@@ -1272,7 +1285,9 @@ export default function CitationPage() {
       ...s,
       mode,
       focusAssigneeNames: mode === "assignee" ? s.focusAssigneeNames : [],
+      focusAssigneeInput: mode === "assignee" ? s.focusAssigneeInput : "",
       pubIds: mode === "pub" ? s.pubIds : [],
+      pubIdsInput: mode === "pub" ? s.pubIdsInput : "",
       keyword: mode === "search" ? s.keyword : "",
       cpc: mode === "search" ? s.cpc : "",
       assigneeFilter: mode === "search" ? s.assigneeFilter : "",
@@ -1318,8 +1333,14 @@ export default function CitationPage() {
               <div>
                 <div className={fieldLabel}>Target assignee name(s)</div>
                 <textarea
-                  value={scopeState.focusAssigneeNames.join("\n")}
-                  onChange={(e) => setScopeState((s) => ({ ...s, focusAssigneeNames: parseListInput(e.target.value) }))}
+                  value={scopeState.focusAssigneeInput}
+                  onChange={(e) =>
+                    setScopeState((s) => ({
+                      ...s,
+                      focusAssigneeInput: e.target.value,
+                      focusAssigneeNames: parseListInput(e.target.value),
+                    }))
+                  }
                   rows={3}
                   placeholder="NVIDIA, IBM, Samsung"
                   className={inputClass}
@@ -1333,8 +1354,14 @@ export default function CitationPage() {
               <div>
                 <div className={fieldLabel}>Portfolio patents/publications</div>
                 <textarea
-                  value={scopeState.pubIds.join("\n")}
-                  onChange={(e) => setScopeState((s) => ({ ...s, pubIds: parseListInput(e.target.value) }))}
+                  value={scopeState.pubIdsInput}
+                  onChange={(e) =>
+                    setScopeState((s) => ({
+                      ...s,
+                      pubIdsInput: e.target.value,
+                      pubIds: parseListInput(e.target.value, { allowSpaceDelimiter: true }),
+                    }))
+                  }
                   rows={4}
                   placeholder="US-12345678-B1, US-20250001234-A1"
                   className={inputClass}
@@ -1409,8 +1436,14 @@ export default function CitationPage() {
                 <div className={fieldLabel}>Competitor assignee name(s)</div>
                 <textarea
                   rows={2}
-                  value={scopeState.competitors.join("\n")}
-                  onChange={(e) => setScopeState((s) => ({ ...s, competitors: parseListInput(e.target.value) }))}
+                  value={scopeState.competitorsInput}
+                  onChange={(e) =>
+                    setScopeState((s) => ({
+                      ...s,
+                      competitorsInput: e.target.value,
+                      competitors: parseListInput(e.target.value),
+                    }))
+                  }
                   placeholder="Competitor names, one per line"
                   className={inputClass}
                 />
