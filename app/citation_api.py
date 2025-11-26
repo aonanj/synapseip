@@ -5,9 +5,9 @@ from datetime import date
 from io import BytesIO
 from typing import Annotated
 
-from fastapi.responses import StreamingResponse
 import psycopg
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import StreamingResponse
 
 from infrastructure.logger import get_logger
 
@@ -233,7 +233,7 @@ async def export_risk_radar(req: RiskRadarExportRequest, conn: Conn, user: Activ
             f"{req.scope.citing_pub_date_from or '—'} – {req.scope.citing_pub_date_to or '—'}",
         )
     if req.competitor_assignee_names:
-    draw_label_value("Competitors", ", ".join(req.competitor_assignee_names))
+        draw_label_value("Competitors", ", ".join(req.competitor_assignee_names))
     draw_label_value("Time bucket", req.scope.bucket)
     draw_label_value("Top N", str(req.top_n))
     draw_label_value("Sort", sort_label)
