@@ -407,50 +407,35 @@ export default function CitationHelpPage() {
 
         {/* Best Practices */}
         <div className="glass-card" style={{ ...cardBaseStyle }}>
-          <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: TEXT_COLOR, marginBottom: 16 }}>Best Practices</h2>
+          <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: TEXT_COLOR, marginBottom: 16 }}>Implicit Signals</h2>
           <div style={{ display: "grid", gap: 16 }}>
             <BestPractice
               title="Start narrow, then expand"
-              tip="Begin with specific assignee names or patent numbers to establish baseline metrics. Expand scope gradually to avoid overwhelming noise in dependency and risk outputs."
+              tip="Begin with specific assignee names or patent numbers to establish baseline metrics. Expand scope gradually to reduce noise in dependency and risk outputs."
             />
             <BestPractice
-              title="Specify competitors for actionable insights"
-              tip="Exposure Score and Encroachment analysis are most useful when competitors are explicitly listed. Without competitors, these metrics show general market attention rather than competitive threat."
+              title="Discover licensing opportunities"
+              tip="Cross-assignee dependency widget generates a heatmap of citation relationships. Quickly identify specific patents or publications that are heavily cited by other assignees, or one assignee with patents and publications that disproportionately cite another assignee, which may reveal licensing potential."
             />
             <BestPractice
-              title="Use velocity to spot trends"
-              tip="A patent with moderate forward citations but high velocity may be more strategically important than one with high citations but declining velocity. Velocity indicates momentum."
-            />
-            <BestPractice
-              title="Cross-reference scores for validation"
-              tip="High Overall Risk should correlate with either high Exposure, high Fragility, or both. If a patent shows high Overall but low component scores, investigate the underlying data."
+              title="Velocity can imply trend"
+              tip="Velocity indicates momentum, showing whether citation activity is increasing or decreasing over time. A declining velocity may suggest decreasing relevance or obsolescence, whereas an increasing velocity may indicate growing importance or industry adoption."
             />
           </div>
         </div>
-
-        {/* Troubleshooting */}
         <div className="glass-card" style={{ ...cardBaseStyle }}>
-          <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: TEXT_COLOR, marginBottom: 16 }}>Troubleshooting</h2>
+          <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: TEXT_COLOR, marginBottom: 16 }}>Additional Resources</h2>
+
           <div style={{ display: "grid", gap: 16 }}>
-            <Troubleshoot
-              issue="No forward citations returned"
-              solution="Verify the scoped patents exist in the database and have been cited. Newer patents may not yet have accumulated forward citations. Try expanding the time window."
-            />
-            <Troubleshoot
-              issue="Dependency Matrix shows no edges"
-              solution="Increase the scope size (more assignee names or patent numbers) or reduce the Min Citations threshold. Very narrow scopes may not have sufficient cross-assignee citation relationships."
-            />
-            <Troubleshoot
-              issue="All Fragility scores are high"
-              solution="This may indicate the portfolio is concentrated in a narrow technology area. Check that backward citations are being correctly attributed in the underlying data."
-            />
-            <Troubleshoot
-              issue="Encroachment shows no competitors"
-              solution="Ensure at least one target assignee name is specified. Encroachment requires a target to measure citations into. Also verify the time window captures recent activity."
+
+            <ResourceLink
+              title="Note: Terms of Service"
+              description="Please note that citation data for the patents and publications available in the SynapseIP database may be incomplete. For clarity and relevancy, cited patents and publications filed prior to 2007 (approximately) may be absent. Additionally, foreign references and non-patent literature are excluded at this time. As set forth in the SynapseIP Terms of Service, no express or implied warranties are made regarding the completeness or accuracy of the available dataset."
+              href="/docs/tos"
+              external={false}
             />
           </div>
         </div>
-
       </div>
       <div className="glass-surface" style={surfaceStyle}>
         {/* Footer */}
@@ -573,3 +558,20 @@ const footerStyle: React.CSSProperties = {
   fontWeight: 500,
   gap: 4,
 };
+
+function ResourceLink({ title, description, href, external }: { title: string; description: string; href: string; external: boolean }) {
+  return (
+    <div style={{ padding: 16, border: `2px solid ${CARD_BORDER}`, borderRadius: 8 }}>
+      <a
+        href={href}
+        className="hover:underline"
+        target={external ? "_blank" : undefined}
+        rel={external ? "noopener noreferrer" : undefined}
+        style={{ fontSize: 12, fontWeight: 400, color: LINK_COLOR }}
+      >
+        {title} {external && "↗︎"}
+      </a>
+      <p style={{ margin: "6px 0 0 0", fontSize: 11, color: "#627D98" }}>{description}</p>
+    </div>
+  );
+}
