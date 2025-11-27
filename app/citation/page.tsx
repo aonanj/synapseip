@@ -226,7 +226,7 @@ function SortableHeader({
     >
       <span className="inline-flex items-center gap-1 text-xs uppercase tracking-wide text-[#3A506B]">
         <span>{label}</span>
-        <span className="text-[14px] text-[#3A506B]">{active ? (direction === "asc" ? "↑" : "↓") : "⇅"}</span>
+        <span className="text-base text-[#3A506B]">{active ? (direction === "asc" ? "↑" : "↓") : "⇅"}</span>
       </span>
     </th>
   );
@@ -1611,7 +1611,7 @@ export default function CitationPage() {
               <div>
                 <div className={fieldLabel}>Competitor assignee(s)</div>
                 <textarea
-                  rows={2}
+                  rows={3}
                   value={scopeState.competitorsInput}
                   onChange={(e) =>
                     setScopeState((s) => ({

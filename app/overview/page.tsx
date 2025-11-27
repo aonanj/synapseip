@@ -157,7 +157,7 @@ function SortableHeader({
     >
       <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
         <span>{label}</span>
-        <span style={{ fontSize: 14, color: "#64748b" }}>
+        <span style={{ fontSize: 16, color: "#64748b" }}>
           {active ? (direction === "asc" ? "↑" : "↓") : "⇅"}
         </span>
       </span>
