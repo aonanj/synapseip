@@ -622,14 +622,16 @@ type DependencyMatrixCardProps = {
   scope: CitationScope | null;
   scopeVersion: number;
   tokenGetter: TokenGetter;
+  competitorNames: string[] | null;
 };
 
-function DependencyMatrixCard({ scope, scopeVersion, tokenGetter }: DependencyMatrixCardProps) {
+function DependencyMatrixCard({ scope, scopeVersion, tokenGetter, competitorNames }: DependencyMatrixCardProps) {
   const [minCitations, setMinCitations] = useState(1);
   const [normalize, setNormalize] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<DependencyMatrixResponse | null>(null);
+  const [dependencyPage, setDependencyPage] = useState(1);
 
   const hasPortfolio = Boolean(scope?.focus_assignee_names?.length || scope?.focus_pub_ids?.length);
 
@@ -652,7 +654,26 @@ function DependencyMatrixCard({ scope, scopeVersion, tokenGetter }: DependencyMa
     load();
   }, [load, scopeVersion]);
 
-  const topEdges = useMemo(() => (data?.edges || []).slice().sort((a, b) => b.citation_count - a.citation_count), [data]);
+  const filteredEdges = useMemo(() => {
+    if (!data?.edges) return [];
+    if (!competitorNames?.length) return data.edges;
+    const needles = competitorNames.map((n) => n.toLowerCase()).filter(Boolean);
+    return data.edges.filter((e) => {
+      const citing = (e.citing_assignee_name || "").toLowerCase();
+      const cited = (e.cited_assignee_name || "").toLowerCase();
+      return needles.some((n) => citing.includes(n) || cited.includes(n));
+    });
+  }, [data, competitorNames]);
+
+  const topEdges = useMemo(
+    () => filteredEdges.slice().sort((a, b) => b.citation_count - a.citation_count),
+    [filteredEdges]
+  );
+
+  useEffect(() => {
+    setDependencyPage(1);
+  }, [filteredEdges]);
+
   const citingNames = useMemo(() => {
     const names: string[] = [];
     for (const e of topEdges) {
@@ -672,6 +693,13 @@ function DependencyMatrixCard({ scope, scopeVersion, tokenGetter }: DependencyMa
     return names;
   }, [topEdges]);
   const maxVal = topEdges.reduce((m, e) => Math.max(m, e.citation_count), 0) || 1;
+  const hasEdges = topEdges.length > 0;
+  const dependencyTotalPages = Math.max(1, Math.ceil(topEdges.length / ROWS_PER_PAGE));
+  const currentDependencyPage = Math.min(dependencyPage, dependencyTotalPages);
+  const pagedEdges = topEdges.slice(
+    (currentDependencyPage - 1) * ROWS_PER_PAGE,
+    currentDependencyPage * ROWS_PER_PAGE
+  );
 
   return (
     <div className={`${cardClass} relative`}>
@@ -708,7 +736,7 @@ function DependencyMatrixCard({ scope, scopeVersion, tokenGetter }: DependencyMa
         <div className="text-xs text-rose-600">Error: {error}</div>
       ) : loading && !data ? (
         <div className="text-xs text-[#3A506B]">…</div>
-      ) : data ? (
+      ) : data && hasEdges ? (
         <div className="space-y-4">
           <div className="overflow-x-auto">
             <table className="min-w-full border-collapse">
@@ -758,19 +786,53 @@ function DependencyMatrixCard({ scope, scopeVersion, tokenGetter }: DependencyMa
                 </tr>
               </thead>
               <tbody>
-                {topEdges.map((e, idx) => (
-                  <tr key={`${e.citing_assignee_name}-${idx}`} className="odd:bg-white even:bg-slate-50/60">
-                    <td className="px-3 py-2 text-xs text-[#102A43]">{e.citing_assignee_name || "Unknown"}</td>
-                    <td className="px-3 py-2 text-xs text-[#102A43]">{e.cited_assignee_name || "Unknown"}</td>
-                    <td className="px-3 py-2 text-xs font-semibold text-[#102A43]">{e.citation_count}</td>
-                    <td className="px-3 py-2 text-xs text-[#102A43]">
-                      {normalize && e.citing_to_cited_pct != null ? `${(e.citing_to_cited_pct * 100).toFixed(1)}%` : "—"}
-                    </td>
-                  </tr>
-                ))}
+                {pagedEdges.map((e, idx) => {
+                  const rowKey = `${e.citing_assignee_id || e.citing_assignee_name || "unknown"}-${e.cited_assignee_id || e.cited_assignee_name || "unknown"}-${(currentDependencyPage - 1) * ROWS_PER_PAGE + idx}`;
+                  return (
+                    <tr key={rowKey} className="odd:bg-white even:bg-slate-50/60">
+                      <td className="px-3 py-2 text-xs text-[#102A43]">{e.citing_assignee_name || "Unknown"}</td>
+                      <td className="px-3 py-2 text-xs text-[#102A43]">{e.cited_assignee_name || "Unknown"}</td>
+                      <td className="px-3 py-2 text-xs font-semibold text-[#102A43]">{e.citation_count}</td>
+                      <td className="px-3 py-2 text-xs text-[#102A43]">
+                        {normalize && e.citing_to_cited_pct != null ? `${(e.citing_to_cited_pct * 100).toFixed(1)}%` : "—"}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
+          {topEdges.length ? (
+            <div className="flex items-center justify-between mt-3 text-xs text-[#102A43]">
+              <span>
+                Showing {(currentDependencyPage - 1) * ROWS_PER_PAGE + 1}-
+                {Math.min(currentDependencyPage * ROWS_PER_PAGE, topEdges.length)} of {topEdges.length}
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  className="px-3 py-1 rounded-lg border border-slate-200 bg-white/80 disabled:opacity-50"
+                  onClick={() => setDependencyPage((p) => Math.max(1, p - 1))}
+                  disabled={currentDependencyPage === 1}
+                >
+                  Prev
+                </button>
+                <span>
+                  Page {currentDependencyPage} / {dependencyTotalPages}
+                </span>
+                <button
+                  className="px-3 py-1 rounded-lg border border-slate-200 bg-white/80 disabled:opacity-50"
+                  onClick={() => setDependencyPage((p) => Math.min(dependencyTotalPages, p + 1))}
+                  disabled={currentDependencyPage === dependencyTotalPages}
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          ) : null}
+        </div>
+      ) : data ? (
+        <div className="text-xs text-[#3A506B]">
+          No dependency edges for this scope{competitorNames?.length ? " with the listed competitors applied." : "."}
         </div>
       ) : (
         <div className="text-xs text-[#3A506B]">No dependency edges for this scope.</div>
@@ -1629,7 +1691,7 @@ export default function CitationPage() {
                     checked={scopeState.competitorToggle}
                     onChange={(e) => setScopeState((s) => ({ ...s, competitorToggle: e.target.checked }))}
                   />
-                  Limit competitors to listed
+                  Limit to listed competitors
                 </label>
               </div>
               <div>
@@ -1675,7 +1737,7 @@ export default function CitationPage() {
         <div className="glass-card" style={{ ...cardBaseStyle }}>
           <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <ForwardImpactCard scope={appliedScope} scopeVersion={scopeVersion} tokenGetter={tokenGetter} />
-            <DependencyMatrixCard scope={appliedScope} scopeVersion={scopeVersion} tokenGetter={tokenGetter} />
+            <DependencyMatrixCard scope={appliedScope} scopeVersion={scopeVersion} tokenGetter={tokenGetter} competitorNames={appliedCompetitors} />
             <RiskRadarCard scope={appliedScope} scopeVersion={scopeVersion} tokenGetter={tokenGetter} competitorNames={appliedCompetitors} />
             <EncroachmentCard scope={appliedScope} scopeVersion={scopeVersion} tokenGetter={tokenGetter} competitorNames={appliedCompetitors} />
           </section>

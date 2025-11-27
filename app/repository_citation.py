@@ -30,10 +30,11 @@ async def resolve_assignee_ids_by_name(
     cleaned = [n.strip() for n in names if n and str(n).strip()]
     if not cleaned:
         return []
+    patterns = [f"{n}%" for n in cleaned]
     async with conn.cursor(row_factory=dict_row) as cur:
         await cur.execute(
             "SELECT id FROM canonical_assignee_name WHERE canonical_assignee_name ILIKE ANY(%s)",
-            [[f"%{n}%" for n in cleaned]],
+            [patterns],
         )
         rows = await cur.fetchall()
     return [r["id"] for r in rows if r.get("id")]
@@ -67,7 +68,7 @@ async def resolve_portfolio_pub_ids(
         names = [n.strip() for n in scope.focus_assignee_names if n.strip()]
         if names:
             where.append("p.assignee_name ILIKE ANY(%s)")
-            args.append([f"%{n}%" for n in names])
+            args.append([f"{n}%" for n in names])
 
     filters = scope.filters or {}
     keyword = (filters.get("keyword") or filters.get("keywords") or filters.get("q") or "").strip()
