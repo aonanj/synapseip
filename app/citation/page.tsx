@@ -1091,6 +1091,9 @@ function EncroachmentCard({ scope, scopeVersion, tokenGetter, competitorNames }:
   const [data, setData] = useState<EncroachmentResponse | null>(null);
 
   const hasTargets = Boolean(scope?.focus_assignee_names?.length);
+  const scopedCompetitors = competitorNames && competitorNames.length ? competitorNames : null;
+  const scopeEnforcedCompetitors = Boolean(scopedCompetitors);
+  const limitToListed = scopeEnforcedCompetitors || explicitOnly;
 
   const load = useCallback(async () => {
     if (!scope || !hasTargets) return;
@@ -1099,7 +1102,7 @@ function EncroachmentCard({ scope, scopeVersion, tokenGetter, competitorNames }:
     try {
       const payload = {
         target_assignee_names: scope.focus_assignee_names,
-        competitor_assignee_names: explicitOnly ? competitorNames : null,
+        competitor_assignee_names: limitToListed && scopedCompetitors ? scopedCompetitors : null,
         citing_pub_date_from: scope.citing_pub_date_from || null,
         citing_pub_date_to: scope.citing_pub_date_to || null,
         bucket,
@@ -1111,7 +1114,7 @@ function EncroachmentCard({ scope, scopeVersion, tokenGetter, competitorNames }:
     } finally {
       setLoading(false);
     }
-  }, [scope, hasTargets, explicitOnly, competitorNames, bucket, tokenGetter]);
+  }, [scope, hasTargets, limitToListed, scopedCompetitors, bucket, tokenGetter]);
 
   useEffect(() => {
     load();
@@ -1208,8 +1211,13 @@ function EncroachmentCard({ scope, scopeVersion, tokenGetter, competitorNames }:
               </select>
             </label>
             <label className="flex items-center gap-2 text-xs text-[#3A506B]">
-              <input type="checkbox" checked={explicitOnly} onChange={(e) => setExplicitOnly(e.target.checked)} />
-              <span>Only listed</span>
+              <input
+                type="checkbox"
+                checked={limitToListed}
+                disabled={scopeEnforcedCompetitors}
+                onChange={(e) => setExplicitOnly(e.target.checked)}
+              />
+              <span>Only listed{scopeEnforcedCompetitors ? " (scope)" : ""}</span>
             </label>
             <label className="flex items-center gap-2 text-xs text-[#3A506B]">
               <span>Top competitors</span>
@@ -1235,7 +1243,7 @@ function EncroachmentCard({ scope, scopeVersion, tokenGetter, competitorNames }:
         <div className="text-xs text-[#3A506B]">…</div>
       ) : data ? (
         <div className="space-y-4">
-          {explicitOnly && (!competitorNames || competitorNames.length === 0) ? (
+          {limitToListed && !scopedCompetitors ? (
             <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-3 py-2 inline-block">
               Add assignee names in the scope panel to limit the chart.
             </div>

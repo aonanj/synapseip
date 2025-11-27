@@ -467,6 +467,21 @@ def latest_watermark(conn_str: str) -> date | None:
     
         return dt_wm
 
+
+def latest_publication_date(client: bigquery.Client) -> date | None:
+    """
+    Fetch the most recent publication_date from the public patents table.
+    Returns a date or None if the table is empty.
+    """
+    sql = "SELECT MAX(publication_date) AS max_pub_date FROM `patents-public-data.patents.publications`"
+    job = client.query(sql)
+    row = next(job.result(), None)
+    max_pub_date = row["max_pub_date"] if row else None
+    print(f"Latest publication_date in BigQuery: {max_pub_date}", file=sys.stderr)
+    if max_pub_date is None:
+        return None
+    return datetime.strptime(str(max_pub_date), "%Y%m%d").date()
+
 # --------------------------
 # Embeddings stage (OpenAI)
 # --------------------------
@@ -617,13 +632,24 @@ def main() -> int:
         return 2
 
     cpc_regex = os.getenv("CPC_REGEX", AI_CPC_REGEX_DEFAULT)
+    watermark = latest_watermark(args.dsn)
+
+    bq_client = bigquery.Client(project=args.project, location=args.location) if args.location else bigquery.Client(project=args.project)
+
+    latest_pub_date = latest_publication_date(bq_client)
+    if watermark and latest_pub_date and watermark > latest_pub_date:
+        print(
+            f"Watermark {watermark.isoformat()} is after latest BigQuery publication_date "
+            f"{latest_pub_date.isoformat()}. Exiting.",
+            file=sys.stderr,
+        )
+        return 0
 
     # Resolve watermark
     if args.date_from:
         date_from = args.date_from
     else:
-        wm = latest_watermark(args.dsn)
-        date_from = wm.isoformat() if wm else (date.today() - timedelta(days=10)).isoformat()
+        date_from = watermark.isoformat() if watermark else (date.today() - timedelta(days=10)).isoformat()
     print(f"Starting from watermark date {date_from}", file=sys.stderr)
 
     if args.date_to:
@@ -632,14 +658,11 @@ def main() -> int:
         if args.date_from:
             date_to = (date.fromisoformat(args.date_from) + timedelta(days=3)).isoformat()
         else:
-            wm = latest_watermark(args.dsn)
-            date_to = (wm + timedelta(days=3)).isoformat() if wm else date.today().isoformat()
+            date_to = (watermark + timedelta(days=3)).isoformat() if watermark else date.today().isoformat()
     print(f"Loading up to date {date_to}", file=sys.stderr)
 
 
     # Clients
-    bq_client = bigquery.Client(project=args.project, location=args.location) if args.location else bigquery.Client(project=args.project)
-
     pool = ConnectionPool[PgConn](
         conninfo=args.dsn, 
         max_size=10, 
