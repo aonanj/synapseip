@@ -15,7 +15,7 @@ type SearchHit = {
 
 type TrendPoint = { label: string; count: number; top_assignee?: string | null };
 
-type SortOption = "pub_date_desc" | "assignee_asc";
+type SortOption = "pub_date_desc" | "pub_date_asc" | "assignee_asc" | "assignee_desc";
 
 function Label({ htmlFor, children }: { htmlFor: string; children: React.ReactNode }) {
   return (
@@ -671,10 +671,12 @@ export default function HomePageClient() {
                     setSortBy(next);
                     setPage(1);
                   }}
-                  style={{ height: 28, border: "1px solid #e5e7eb", borderRadius: 6, padding: "0 8px" }}
+                  style={{ height: 28, border: "1px solid #e5e7eb", borderRadius: 6, padding: "0 8px", fontSize: 12 }}
                 >
                   <option value="pub_date_desc">Most Recent</option>
+                  <option value="pub_date_asc">Earliest</option>
                   <option value="assignee_asc">Assignee (A→Z)</option>
+                  <option value="assignee_desc">Assignee (Z→A)</option>
                 </select>
               </div>
               {!isFetchingData && total !== null && total > 0 && (

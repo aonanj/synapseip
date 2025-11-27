@@ -95,12 +95,15 @@ def _filters_sql(f: SearchFilters, args: list[object]) -> str:
     return " AND ".join(where)
 
 
-def _assignee_sort_key(row: dict[str, Any]) -> tuple[Any, ...]:
-    """Sort key mirroring the SQL ORDER BY for canonical assignee ascending."""
+def _assignee_sort_key(row: dict[str, Any], *, descending: bool = False) -> tuple[Any, ...]:
+    """Sort key mirroring the SQL ORDER BY for canonical assignee."""
     name_raw = row.get("assignee_name") or ""
     name = name_raw.strip()
     name_priority = 0 if name else 1  # push empties to the end
     comp_name = name.casefold()
+    if descending:
+        # Use negative code points so ascending sort yields Z->A while keeping empties last.
+        comp_name = tuple([-ord(ch) for ch in comp_name])  # type: ignore[assignment]
     pub_date_val = row.get("pub_date")
     if isinstance(pub_date_val, int):
         date_sort = -pub_date_val
@@ -112,14 +115,25 @@ def _assignee_sort_key(row: dict[str, Any]) -> tuple[Any, ...]:
     return (name_priority, comp_name, date_sort, pub_id)
 
 
-def _pub_date_desc_sort_key(row: dict[str, Any]) -> tuple[int, Any, str]:
-    """Sort key for publication date descending with stable fallback."""
+def _pub_date_sort_key(row: dict[str, Any], *, ascending: bool) -> tuple[int, Any, str]:
+    """Sort key for publication date with stable fallback and direction toggle."""
     raw = row.get("pub_date")
+    pub_id = row.get("pub_id") or ""
     if isinstance(raw, int):
-        return (0, -raw, row.get("pub_id") or "")
-    if isinstance(raw, str) and raw.isdigit():
-        return (0, -int(raw), row.get("pub_id") or "")
-    return (1, None, row.get("pub_id") or "")
+        val = raw
+    elif isinstance(raw, str) and raw.isdigit():
+        val = int(raw)
+    else:
+        return (1, None, pub_id)
+    return (0, val if ascending else -val, pub_id)
+
+
+def _pub_date_desc_sort_key(row: dict[str, Any]) -> tuple[int, Any, str]:
+    return _pub_date_sort_key(row, ascending=False)
+
+
+def _pub_date_asc_sort_key(row: dict[str, Any]) -> tuple[int, Any, str]:
+    return _pub_date_sort_key(row, ascending=True)
 
 def _adaptive_filters(rows: list[dict[str, Any]], *,
                       dist_cap: float | None = None,
@@ -194,12 +208,16 @@ async def export_rows(
         base_query = f"{from_clause} WHERE {' AND '.join(where)}"
         if sort_by == "assignee_asc":
             order_by = f"ORDER BY {ASSIGNEE_SORT_EXPR} ASC NULLS LAST, p.pub_date DESC, p.pub_id ASC"
+        elif sort_by == "assignee_desc":
+            order_by = f"ORDER BY {ASSIGNEE_SORT_EXPR} DESC NULLS LAST, p.pub_date DESC, p.pub_id ASC"
+        elif sort_by == "pub_date_asc":
+            order_by = "ORDER BY p.pub_date ASC NULLS LAST, p.pub_id ASC"
         elif sort_by == "relevance_desc" and keywords:
             # order by text search rank when keywords present
             order_by = f"ORDER BY ts_rank_cd(({SEARCH_EXPR}), {tsq}) DESC, p.pub_date DESC"
             args.append(keywords)
         else:
-            order_by = "ORDER BY p.pub_date DESC"
+            order_by = "ORDER BY p.pub_date DESC NULLS LAST, p.pub_id ASC"
 
         sql = f"{select_core} {base_query} {order_by} LIMIT %s"
         args.append(limit)
@@ -253,11 +271,15 @@ async def export_rows(
 
     kept = _adaptive_filters(rows, jump=SEMANTIC_JUMP, limit=topk)
     # Preserve distance ordering by default so exports stay relevance-sorted;
-    # only re-sort when callers explicitly ask for an assignee grouping.
-    # Keep rows ordered by distance for semantic relevance unless callers
-    # explicitly request the canonical-assignee sort.
+    # only re-sort when callers explicitly request a different ordering.
     if sort_by == "assignee_asc":
         kept = sorted(kept, key=_assignee_sort_key)
+    elif sort_by == "assignee_desc":
+        kept = sorted(kept, key=lambda row: _assignee_sort_key(row, descending=True))
+    elif sort_by == "pub_date_asc":
+        kept = sorted(kept, key=_pub_date_asc_sort_key)
+    elif sort_by == "pub_date_desc":
+        kept = sorted(kept, key=_pub_date_desc_sort_key)
     kept = kept[:limit]
     out: list[dict[str, Any]] = []
     for r in kept:
@@ -322,12 +344,16 @@ async def search_hybrid(
 
         if sort_by == "assignee_asc":
             order_by = f"ORDER BY {ASSIGNEE_SORT_EXPR} ASC NULLS LAST, p.pub_date DESC, p.pub_id ASC"
+        elif sort_by == "assignee_desc":
+            order_by = f"ORDER BY {ASSIGNEE_SORT_EXPR} DESC NULLS LAST, p.pub_date DESC, p.pub_id ASC"
+        elif sort_by == "pub_date_asc":
+            order_by = "ORDER BY p.pub_date ASC NULLS LAST, p.pub_id ASC"
         elif sort_by == "relevance_desc" and keywords:
             # add keyword again for ordering
             args.append(keywords)
             order_by = f"ORDER BY ts_rank_cd(({SEARCH_EXPR}), {tsq}) DESC, p.pub_date DESC"
         else:
-            order_by = "ORDER BY p.pub_date DESC"
+            order_by = "ORDER BY p.pub_date DESC NULLS LAST, p.pub_id ASC"
 
         paged_query = f"{select_core} {base_query} {order_by} LIMIT %s OFFSET %s"
         args.extend([limit, offset])
@@ -372,6 +398,12 @@ async def search_hybrid(
     kept = _adaptive_filters(rows, jump=SEMANTIC_JUMP, limit=topk)
     if sort_by == "assignee_asc":
         kept = sorted(kept, key=_assignee_sort_key)
+    elif sort_by == "assignee_desc":
+        kept = sorted(kept, key=lambda row: _assignee_sort_key(row, descending=True))
+    elif sort_by == "pub_date_asc":
+        kept = sorted(kept, key=_pub_date_asc_sort_key)
+    elif sort_by == "pub_date_desc":
+        kept = sorted(kept, key=_pub_date_desc_sort_key)
 
     # Calculate total based on filtered results
     total = len(kept)

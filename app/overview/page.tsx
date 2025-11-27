@@ -1205,7 +1205,7 @@ export default function OverviewPage() {
 
   const handleSort = (key: ResultSortKey) => {
     setSortState((prev) =>
-      prev.key === key ? { key, direction: prev.direction === "desc" ? "asc" : "desc" } : { key, direction: "desc" }
+      prev.key === key ? { key, direction: prev.direction === "asc" ? "desc" : "asc" } : { key, direction: "asc" }
     );
     setResultPage(1);
   };
@@ -1614,7 +1614,6 @@ export default function OverviewPage() {
                   <option value="semantic" disabled={!semanticResultsEnabled}>Semantic neighbors</option>
                 </select>
               </div>
-              <span style={{ fontSize: 12, color: "#475569" }}>Click column headers to sort (desc first, then asc).</span>
               <span style={{ fontSize: 12, color: "#94a3b8" }}>(Max export: {PDF_EXPORT_LIMIT.toLocaleString()} rows)</span>
               <GhostButton onClick={exportResultsPdf} disabled={sortedResults.length === 0 || exporting} style={{ height: 36 }}>
                 {exporting ? "Exporting…" : "Export PDF"}

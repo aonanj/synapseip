@@ -368,7 +368,7 @@ export default function ScopeAnalysisPage() {
 
   const handleSort = (key: SortKey) => {
     setSortState((prev) =>
-      prev.key === key ? { key, direction: prev.direction === "desc" ? "asc" : "desc" } : { key, direction: "desc" }
+      prev.key === key ? { key, direction: prev.direction === "asc" ? "desc" : "asc" } : { key, direction: "asc" }
     );
   };
 
@@ -518,7 +518,7 @@ export default function ScopeAnalysisPage() {
               <div className="glass-card p-6" style={{ ...cardBaseStyle }}>
                 <p className="text-xs tracking-wide uppercase text-[#47617e]">Impact summary</p>
                 <h2 className="text-lg font-semibold" style={{ color: TEXT_COLOR }}>Claim proximity breakdown</h2>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-4 mt-6">
                   <div className="rounded-xl border border-slate-100 bg-slate-50/60 p-4">
                     <p className="text-sm text-[#47617e]">Top match similarity</p>
                     <p className="text-2xl font-bold text-[#102a43]">
@@ -545,7 +545,7 @@ export default function ScopeAnalysisPage() {
                   </div>
                 </div>
                 {lastQuery && (
-                  <div className="rounded-lg border border-slate-200 bg-white/80 px-3 py-2 text-xs text-[#47617e]">
+                  <div className="rounded-lg border border-slate-200 bg-white/80 px-3 py-2 mt-4 text-xs text-[#47617e]">
                     Last analyzed snippet: {lastQuery.slice(0, 160)}
                     {lastQuery.length > 160 ? "…" : ""}
                   </div>
@@ -563,7 +563,7 @@ export default function ScopeAnalysisPage() {
               <div className="flex items-center gap-3">
                 {results.length > 0 && (
                   <span className="text-xs font-semibold text-[#39506B]">
-                    Click column headers to sort. Click a row to highlight the graph node.
+                    Click a row to highlight the graph node.
                   </span>
                 )}
                 <button

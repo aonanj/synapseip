@@ -383,7 +383,7 @@ function ForwardImpactCard({ scope, scopeVersion, tokenGetter }: ForwardImpactCa
 
   const handleImpactSort = useCallback((key: ForwardSortKey) => {
     setImpactSort((prev) =>
-      prev.key === key ? { key, direction: prev.direction === "desc" ? "asc" : "desc" } : { key, direction: "desc" }
+      prev.key === key ? { key, direction: prev.direction === "asc" ? "desc" : "asc" } : { key, direction: "asc" }
     );
   }, []);
 
@@ -935,7 +935,6 @@ function RiskRadarCard({ scope, scopeVersion, tokenGetter, competitorNames }: Ri
               className={inlineInputClass}
             />
           </label>
-          <div className="text-[11px] text-[#3A506B] whitespace-nowrap">Click column headers to sort</div>
           <button
             className="btn-outline h-9 px-4 text-xs font-semibold"
             onClick={exportPdf}
@@ -1539,18 +1538,16 @@ export default function CitationPage() {
                     <textarea
                       value={scopeState.focusAssigneeInput}
                       onChange={(e) =>
-                        setScopeState((s) => ({
-                          ...s,
-                          focusAssigneeInput: e.target.value,
-                          focusAssigneeNames: parseListInput(e.target.value),
-                        }))
-                      }
-                      rows={3}
-                      placeholder="NVIDIA\n
-IBM
-Samsung"
-                      className={inputClass}
-                    />
+                    setScopeState((s) => ({
+                      ...s,
+                      focusAssigneeInput: e.target.value,
+                      focusAssigneeNames: parseListInput(e.target.value),
+                    }))
+                  }
+                  rows={3}
+                  placeholder={"NVIDIA\nIBM\nSamsung"}
+                  className={inputClass}
+                />
                     <p className="text-[11px] text-[#3A506B] mt-1">
                       Enter one name per line; similarity matching will include aliases automatically.
                     </p>
@@ -1582,7 +1579,7 @@ Samsung"
                         type="text"
                         value={scopeState.keyword}
                         onChange={(e) => setScopeState((s) => ({ ...s, keyword: e.target.value }))}
-                        placeholder="Generative AI safety…"
+                        placeholder="Autonomous vehicles, 5G, …"
                         className={inputClass}
                       />
                     </div>
@@ -1602,7 +1599,7 @@ Samsung"
                         type="text"
                         value={scopeState.assigneeFilter}
                         onChange={(e) => setScopeState((s) => ({ ...s, assigneeFilter: e.target.value }))}
-                        placeholder="Nvidia"
+                        placeholder="Qualcomm, Intel, …"
                         className={inputClass}
                       />
                     </div>
@@ -1623,7 +1620,7 @@ Samsung"
                       competitors: parseListInput(e.target.value),
                     }))
                   }
-                  placeholder="Competitor names, one per line"
+                  placeholder={"One assignee per line\nAssignee A\nAssignee B\n..."}
                   className={inputClass}
                 />
                 <label className="mt-1 inline-flex items-center gap-2 text-xs text-[#3A506B]">
