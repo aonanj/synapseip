@@ -124,11 +124,44 @@ type SearchRequestPayload = {
   sort_by: ResultSort;
 };
 
+type ResultSortKey = "relevance" | "title" | "abstract" | "pub_id" | "assignee" | "pub_date" | "cpc";
+type SortDirection = "asc" | "desc";
+
 function Label({ htmlFor, children }: { htmlFor: string; children: React.ReactNode }) {
   return (
     <label htmlFor={htmlFor} style={{ fontSize: 12, fontWeight: 600, color: "#334155" }}>
       {children}
     </label>
+  );
+}
+
+function SortableHeader({
+  label,
+  active,
+  direction,
+  onClick,
+  minWidth,
+}: {
+  label: string;
+  active: boolean;
+  direction: SortDirection;
+  onClick: () => void;
+  minWidth?: number;
+}) {
+  return (
+    <th
+      onClick={onClick}
+      style={{ ...thStyle, cursor: "pointer", userSelect: "none", minWidth }}
+      aria-sort={active ? (direction === "asc" ? "ascending" : "descending") : "none"}
+      scope="col"
+    >
+      <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+        <span>{label}</span>
+        <span style={{ fontSize: 14, color: "#64748b" }}>
+          {active ? (direction === "asc" ? "↑" : "↓") : "⇅"}
+        </span>
+      </span>
+    </th>
   );
 }
 
@@ -315,17 +348,22 @@ const SEARCH_BATCH_SIZE = 250;
 const PDF_EXPORT_LIMIT = 1000;
 const ABSTRACT_PREVIEW_LIMIT = 200;
 
-const RESULT_SORT_LABELS: Record<ResultSort, string> = {
-  relevance_desc: "Most Relevant",
-  pub_date_desc: "Newest First",
-  assignee_asc: "Assignee (A→Z)",
+const SORT_LABELS: Record<ResultSortKey, string> = {
+  relevance: "Relevance",
+  title: "Title",
+  abstract: "Abstract",
+  pub_id: "Patent/Pub No.",
+  assignee: "Assignee",
+  pub_date: "Grant/Pub Date",
+  cpc: "CPC",
 };
 
-const RESULT_SORT_OPTIONS: Array<{ value: ResultSort; label: string }> = [
-  { value: "relevance_desc", label: RESULT_SORT_LABELS.relevance_desc },
-  { value: "pub_date_desc", label: RESULT_SORT_LABELS.pub_date_desc },
-  { value: "assignee_asc", label: RESULT_SORT_LABELS.assignee_asc },
-];
+function formatSortLabel(state: { key: ResultSortKey; direction: SortDirection }): string {
+  const base = SORT_LABELS[state.key] || "Relevance";
+  if (state.key === "relevance") return base;
+  const dirLabel = state.direction === "asc" ? "Asc" : "Desc";
+  return `${base} (${dirLabel})`;
+}
 
 const SIGNAL_LABELS: Record<SignalKind, string> = {
   focus_shift: "Focus Convergence",
@@ -424,6 +462,19 @@ function CPCList(cpc: PatentHit["cpc"]): string {
   });
   if (codes.size === 0) return "--";
   return Array.from(codes).slice(0, 4).join(", ");
+}
+
+function firstCpcCode(hit: PatentHit): string {
+  if (!hit.cpc || hit.cpc.length === 0) return "";
+  const entry = hit.cpc.find((c) => c.section || c.class || c.subclass || c.group || c.subgroup) ?? hit.cpc[0];
+  const section = (entry.section || "").trim();
+  const klass = (entry.class || "").trim();
+  const subclass = (entry.subclass || "").trim();
+  const group = (entry.group || "").trim();
+  const subgroup = (entry.subgroup || "").trim();
+  const head = `${section}${klass}${subclass}`.trim();
+  const tail = group ? `${group}${subgroup ? `/${subgroup}` : ""}` : "";
+  return `${head}${tail ? ` ${tail}` : ""}`.trim();
 }
 
 function pad2(value: number): string {
@@ -789,7 +840,10 @@ export default function OverviewPage() {
   const [totalSemanticResults, setTotalSemanticResults] = useState(0);
   const [resultMode, setResultMode] = useState<ResultMode>("exact");
   const [resultPage, setResultPage] = useState(1);
-  const [sortBy, setSortBy] = useState<ResultSort>("relevance_desc");
+  const [sortState, setSortState] = useState<{ key: ResultSortKey; direction: SortDirection }>({
+    key: "relevance",
+    direction: "desc",
+  });
   const [assigneeData, setAssigneeData] = useState<OverviewGraphResponse | null>(null);
   const [highlightedNodeIds, setHighlightedNodeIds] = useState<string[]>([]);
   const [activeSignalKey, setActiveSignalKey] = useState<string | null>(null);
@@ -1090,42 +1144,55 @@ export default function OverviewPage() {
   const semanticResultsAvailable = semanticResultsEnabled && totalSemanticResults > 0;
 
   const sortedResults = useMemo(() => {
-    const source = resultMode === "semantic" ? semanticResults : exactResults;
+    const source = activeResults;
     if (!source.length) return source;
-    if (sortBy === "relevance_desc") {
+    if (sortState.key === "relevance") {
       return source;
     }
     const copy = [...source];
-    if (sortBy === "pub_date_desc") {
-      copy.sort((a, b) => {
-        const aDate = pubDateValue(a.pub_date);
-        const bDate = pubDateValue(b.pub_date);
-        if (aDate === null && bDate === null) {
-          return (a.pub_id || "").localeCompare(b.pub_id || "");
-        }
-        if (aDate === null) return 1;
-        if (bDate === null) return -1;
-        if (aDate === bDate) {
-          return (a.pub_id || "").localeCompare(b.pub_id || "");
-        }
-        return bDate - aDate;
-      });
-      return copy;
-    }
-    copy.sort((a, b) => {
-      const aName = (a.assignee_name || "").trim();
-      const bName = (b.assignee_name || "").trim();
-      const aEmpty = aName === "";
-      const bEmpty = bName === "";
-      if (aEmpty && bEmpty) {
-        return (a.pub_id || "").localeCompare(b.pub_id || "");
+    const dir = sortState.direction === "asc" ? 1 : -1;
+    const normalizeString = (value: string | null | undefined) => (value || "").toLowerCase().trim();
+    const getValue = (hit: PatentHit): string | number | null => {
+      switch (sortState.key) {
+        case "title":
+          return normalizeString(hit.title || hit.pub_id);
+        case "abstract":
+          return normalizeString(hit.abstract);
+        case "pub_id":
+          return normalizeString(hit.pub_id);
+        case "assignee":
+          return normalizeString(hit.assignee_name);
+        case "pub_date":
+          return pubDateValue(hit.pub_date);
+        case "cpc":
+          return normalizeString(firstCpcCode(hit));
+        default:
+          return hit.score ?? null;
       }
-      if (aEmpty) return 1;
-      if (bEmpty) return -1;
-      const cmp = aName.localeCompare(bName, undefined, { sensitivity: "base" });
-      if (cmp !== 0) return cmp;
-      const bDate = pubDateValue(b.pub_date);
+    };
+
+    copy.sort((a, b) => {
+      const aVal = getValue(a);
+      const bVal = getValue(b);
+
+      if (typeof aVal === "number" || typeof bVal === "number") {
+        const aNum = typeof aVal === "number" ? aVal : null;
+        const bNum = typeof bVal === "number" ? bVal : null;
+        if (aNum !== bNum) {
+          if (aNum === null) return 1;
+          if (bNum === null) return -1;
+          return (aNum - bNum) * dir;
+        }
+      } else {
+        const aStr = normalizeString(aVal as string);
+        const bStr = normalizeString(bVal as string);
+        if (aStr !== bStr) {
+          return aStr.localeCompare(bStr) * dir;
+        }
+      }
+
       const aDate = pubDateValue(a.pub_date);
+      const bDate = pubDateValue(b.pub_date);
       if (aDate !== bDate) {
         if (aDate === null) return 1;
         if (bDate === null) return -1;
@@ -1134,7 +1201,14 @@ export default function OverviewPage() {
       return (a.pub_id || "").localeCompare(b.pub_id || "");
     });
     return copy;
-  }, [exactResults, semanticResults, resultMode, sortBy]);
+  }, [activeResults, sortState]);
+
+  const handleSort = (key: ResultSortKey) => {
+    setSortState((prev) =>
+      prev.key === key ? { key, direction: prev.direction === "desc" ? "asc" : "desc" } : { key, direction: "desc" }
+    );
+    setResultPage(1);
+  };
 
   const paginatedResults = useMemo(() => {
     const start = (resultPage - 1) * RESULTS_PER_PAGE;
@@ -1173,7 +1247,7 @@ export default function OverviewPage() {
     setTotalSemanticResults(0);
     setResultMode("exact");
     setResultPage(1);
-    setSortBy("relevance_desc");
+    setSortState({ key: "relevance", direction: "desc" });
     setAssigneeData(null);
     setHighlightedNodeIds([]);
     setActiveSignalKey(null);
@@ -1288,7 +1362,7 @@ export default function OverviewPage() {
       ensureSpace();
       doc.setFont("helvetica", "italic");
       doc.setFontSize(11);
-      doc.text(`Sort: ${RESULT_SORT_LABELS[sortBy]}`, marginX, y);
+      doc.text(`Sort: ${formatSortLabel(sortState)}`, marginX, y);
       y += 18;
       doc.setFont("helvetica", "normal");
       doc.setFontSize(11);
@@ -1322,7 +1396,7 @@ export default function OverviewPage() {
     } finally {
       setExporting(false);
     }
-  }, [overview, sortedResults, keywords, cpcFilter, dateFrom, dateTo, showSemantic, groupByAssignee, sortBy, resultModeLabel]);
+  }, [overview, sortedResults, keywords, cpcFilter, dateFrom, dateTo, showSemantic, groupByAssignee, sortState, resultModeLabel]);
 
   return (
     <div style={pageWrapperStyle}>
@@ -1540,32 +1614,7 @@ export default function OverviewPage() {
                   <option value="semantic" disabled={!semanticResultsEnabled}>Semantic neighbors</option>
                 </select>
               </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                <Label htmlFor="result-sort">Sort</Label>
-                <select
-                  id="result-sort"
-                  value={sortBy}
-                  onChange={(event) => {
-                    setSortBy(event.target.value as ResultSort);
-                    setResultPage(1);
-                  }}
-                  style={{
-                    height: 32,
-                    borderRadius: 10,
-                    border: "1px solid rgba(148,163,184,0.6)",
-                    background: "rgba(248,250,252,0.9)",
-                    padding: "0 10px",
-                    fontSize: 12,
-                    color: "#102a43",
-                  }}
-                >
-                  {RESULT_SORT_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <span style={{ fontSize: 12, color: "#475569" }}>Click column headers to sort (desc first, then asc).</span>
               <span style={{ fontSize: 12, color: "#94a3b8" }}>(Max export: {PDF_EXPORT_LIMIT.toLocaleString()} rows)</span>
               <GhostButton onClick={exportResultsPdf} disabled={sortedResults.length === 0 || exporting} style={{ height: 36 }}>
                 {exporting ? "Exporting…" : "Export PDF"}
@@ -1584,12 +1633,44 @@ export default function OverviewPage() {
               <table style={tableStyle}>
                 <thead>
                   <tr>
-                    <th style={thStyle}>Title</th>
-                    <th style={thStyle}>Abstract</th>
-                    <th style={thStyle}>Patent/Pub No.</th>
-                    <th style={thStyle}>Assignee</th>
-                    <th style={thStyle}>Grant/Pub Date</th>
-                    <th style={thStyle}>CPC</th>
+                    <SortableHeader
+                      label="Title"
+                      active={sortState.key === "title"}
+                      direction={sortState.direction}
+                      onClick={() => handleSort("title")}
+                      minWidth={220}
+                    />
+                    <SortableHeader
+                      label="Abstract"
+                      active={sortState.key === "abstract"}
+                      direction={sortState.direction}
+                      onClick={() => handleSort("abstract")}
+                      minWidth={220}
+                    />
+                    <SortableHeader
+                      label="Patent/Pub No."
+                      active={sortState.key === "pub_id"}
+                      direction={sortState.direction}
+                      onClick={() => handleSort("pub_id")}
+                    />
+                    <SortableHeader
+                      label="Assignee"
+                      active={sortState.key === "assignee"}
+                      direction={sortState.direction}
+                      onClick={() => handleSort("assignee")}
+                    />
+                    <SortableHeader
+                      label="Grant/Pub Date"
+                      active={sortState.key === "pub_date"}
+                      direction={sortState.direction}
+                      onClick={() => handleSort("pub_date")}
+                    />
+                    <SortableHeader
+                      label="CPC"
+                      active={sortState.key === "cpc"}
+                      direction={sortState.direction}
+                      onClick={() => handleSort("cpc")}
+                    />
                   </tr>
                 </thead>
                 <tbody>

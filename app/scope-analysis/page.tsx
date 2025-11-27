@@ -71,7 +71,7 @@ function SortableHeader({
     >
       <span className="inline-flex items-center gap-1 text-[#39506B]">
         <span>{label}</span>
-        <span className="text-[11px]">{active ? (direction === "asc" ? "↑" : "↓") : "⇅"}</span>
+        <span className="text-[14px]">{active ? (direction === "asc" ? "↑" : "↓") : "⇅"}</span>
       </span>
     </th>
   );

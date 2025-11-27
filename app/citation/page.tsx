@@ -226,7 +226,7 @@ function SortableHeader({
     >
       <span className="inline-flex items-center gap-1 text-xs uppercase tracking-wide text-[#3A506B]">
         <span>{label}</span>
-        <span className="text-[11px] text-[#3A506B]">{active ? (direction === "asc" ? "↑" : "↓") : "⇅"}</span>
+        <span className="text-[14px] text-[#3A506B]">{active ? (direction === "asc" ? "↑" : "↓") : "⇅"}</span>
       </span>
     </th>
   );
@@ -1538,7 +1538,9 @@ export default function CitationPage() {
                         }))
                       }
                       rows={3}
-                      placeholder="NVIDIA, IBM, Samsung"
+                      placeholder="NVIDIA\n
+IBM
+Samsung"
                       className={inputClass}
                     />
                     <p className="text-[11px] text-[#3A506B] mt-1">
