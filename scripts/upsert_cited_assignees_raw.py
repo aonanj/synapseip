@@ -35,9 +35,6 @@ type PgConn = Connection[TupleRow]
 UPSERT_SQL = """
 INSERT INTO cited_patent_assignee_raw (pub_id, application_number, assignee_name_raw)
 VALUES (%s, %s, %s)
-ON CONFLICT (pub_id, application_number) 
-DO UPDATE SET 
-    assignee_name_raw = EXCLUDED.assignee_name_raw;
 """
 
 @retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(6))

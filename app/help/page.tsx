@@ -186,7 +186,7 @@ export default function HelpIndexPage() {
             </p>
 
             <div style={{ display: "grid", gap: 12 }}>
-              <DetailItem icon="⬩" title="Saturation & Activity Rate Tiles" text="Exact vs. semantic counts, patent grants and publications per month, and percentile labels indicate how busy a target search set is." />
+              <DetailItem icon="⬩" title="Saturation & Activity Rate Tiles" text="Exact vs. semantic counts, patent grants and publications per month, and percentile labels indicate how much activity a focus search set is experiencing." />
               <DetailItem icon="⬩" title="Momentum Labeling" text="Monthly trendline, slope, and CAGR classify patent grant and publication activity as rising, declining, or flat." />
               <DetailItem icon="⬩" title="CPC Distribution" text="Top CPC codes plus a ranked bar chart highlight relevant technology areas." />
               <DetailItem icon="⬩" title="Result Set Table" text="Patent and publication rows (with CPC codes and external links) illustrate the data supporting the IP overview analysis and insights." />
@@ -246,7 +246,7 @@ export default function HelpIndexPage() {
               <DetailItem icon="⬩" title="Forward-Citation Impact" text="Tiles for total citations and distinct citing patents, a bucketed influence timeline, and a ranked table of top cited assets with velocity." />
               <DetailItem icon="⬩" title="Dependency Matrix" text="Citing→cited assignee pairs with min-citation threshold and optional normalization to expose reliance patterns." />
               <DetailItem icon="⬩" title="Risk Radar" text="Per-patent/publication exposure and fragility scores combining forward competitor activity and backward-citation concentration with CSV export." />
-              <DetailItem icon="⬩" title="Encroachment" text="Timeline and table showing competitor citing patterns into target assignees, with velocity and encroachment scores." />
+              <DetailItem icon="⬩" title="Encroachment" text="Timeline and table showing source assignee citing patterns as they related to target assignees, with velocity and encroachment scores." />
             </div>
 
             <div

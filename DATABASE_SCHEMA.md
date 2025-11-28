@@ -30,6 +30,7 @@ This document outlines the database schema for the project. The database is a **
 * [public.patent\_claim\_staging](#publicpatent_claim_staging)
 * [public.issued\_patent\_staging](#publicissued_patent_staging)
 * [public.cited\_patent\_assignee\_raw](#publiccited_patent_assignee_raw)
+* [public.cited\_patent\_assignee\_raw\_dedup](#publiccited_patent_assignee_raw_dedup)
 * [public.ingest\_log](#publicingest_log)
 
 ### Views
@@ -69,22 +70,26 @@ Stores the core patent data. Entries in this table have at least one AI/ML-relat
 ### Indexes
 
 * `patent pkey` (Primary Key, btree) on `(pub id)`
-* `patent abstract trgm idx` (gin)
+* `patent abstract trgm idx` gin `(abstract gin_trgm_ops)`
 * `patent application number key` (Unique Constraint, btree) on `(application_number)`
 * `patent assignee idx` (btree) on `(assignee name)`
-* `patent claims idx` (gin)
-* `patent cpe_jaonh idx` (gin) on `(cpe)`
-* `patent search_expr_gin` (gin)
-* `patent title_tron_idx` (gin)
-* `patent tav idx` (gin)
+* `patent claims idx` gin `(to_tsvector('english'::regconfig, claims_text))`
+* `patent cpc jsonb idx` gin on `(cpc jsonb_path_ops)`
+* `patent search_expr_gin` gin `(((setweight(to_tsvector('english'::regconfig, COALESCE(title, ''::text)), 'A'::"char") || setweight(to_tsvector('english'::regconfig, COALESCE(abstract, ''::text)), 'B'::"char")) || setweight(to_tsvector('english'::regconfig, COALESCE(claims_text, ''::text)), 'C'::"char")))`
+* `patent title_tron_idx` gin `(title gin_trgm_ops)`
+* `patent tsv idx` gin `(to_tsvector('english'::regconfig, (COALESCE(title, ''::text) || ' '::text) || COALESCE(abstract, ''::text)))`
 
 ### Referenced By
 
-* TABLE `patent assignee` via `patent assignes pub id fkey`
-* TABLE `patent embeddings` via `patent ambeddinga pub id fkey`
-* TABLE `patent citation` via `patent_citation_cited_application_number_fkey`
-* TABLE `patent citation` via `patent_citation_citing_pub_id_fkey`
-* TABLE `user overview analysis` via `user overview analysis patent fkey`
+* TABLE `patent_claim` CONSTRAINT `fk_patent` FOREIGN KEY `(pub_id)` REFERENCES `patent(pub_id)` ON DELETE CASCADE
+* TABLE `patent_assignee` CONSTRAINT `patent_assignee_pub_id_fkey` FOREIGN KEY `(pub_id)` REFERENCES `patent(pub_id)` ON UPDATE CASCADE ON DELETE CASCADE
+* TABLE `patent_citation` CONSTRAINT `patent_citation_pub_id_patent_pub_id_fkey` FOREIGN KEY `(citing_pub_id)` REFERENCES `patent(pub_id)`
+* TABLE `patent_embeddings` CONSTRAINT `patent_embeddings_pub_id_fkey` FOREIGN KEY `(pub_id)` REFERENCES `patent(pub_id)` ON UPDATE CASCADE ON DELETE CASCADE
+* TABLE `user_overview_analysis` CONSTRAINT `user_overview_analysis_patent_fkey` FOREIGN KEY `(pub_id)` REFERENCES `patent(pub_id)` ON DELETE CASCADE
+
+### Triggers
+
+* `trg_patent_updated_at` BEFORE UPDATE ON `patent` FOR EACH ROW EXECUTE FUNCTION `set_updated_at()`
 
 ---
 
@@ -113,13 +118,13 @@ Stores vector embeddings for patent data. `model` indicates which field(s) in th
 
 ### Foreign Key Constraints
 
-* `patent anbeddinga_pub_id_fkey` FOREIGN KEY (`pub id`) REFERENCES `patent(pub id)` ON DELETE CASCADE
+* `patent anbeddinga_pub_id_fkey` FOREIGN KEY `(pub id)` REFERENCES `patent(pub id)` ON DELETE CASCADE
 
 ---
 
 ## public.patent\_citation
 
-Links patents in the `patent` table to the patents and publications it cites via `application_number`.
+Links patents in the `patent` table to the patents and publications they cite via `application_number`.
 
 ### Columns
 
@@ -173,11 +178,11 @@ Stores independent claims of patents in the `patent` table for generating claim-
 
 ### Foreign Key Constraints
 
-* `patent fkey` FOREIGN KEY (`pub id`) REFERENCES `patent(pub id)` ON DELETE CASCADE
+* `patent fkey` FOREIGN KEY `(pub id)` REFERENCES `patent(pub id)` ON DELETE CASCADE
 
 ### Referenced By
 
-* TABLE `patent_claim_embeddings` via `embeddings_pub_id_claim_no_patent_claim_fkey`
+* TABLE `patent_claim_embeddings` CONSTRAINT `embeddings_pub_id_claim_no_patent_claim_fkey` FOREIGN KEY `(pub_id, claim_number)` REFERENCES `patent_claim(pub_id, claim_number)` ON UPDATE CASCADE ON DELETE CASCADE
 
 ---
 
@@ -212,7 +217,7 @@ Stores embeddings generated for individual independent claims of patents in the 
 
 ## public.user\_overview\_analysis
 
-Stores analysis results, like clustering and scoring, for patents specific to a user.
+Stores analysis results, like clustering and scoring, for user-specific query runs on the frontend Overview Analysis page.
 
 ### Columns
 
@@ -239,13 +244,13 @@ Stores analysis results, like clustering and scoring, for patents specific to a 
 
 ### Foreign Key Constraints
 
-* `user overview analysis patent fkey` FOREIGN KEY (`pub id`) REFERENCES `patent(pub id)` ON DELETE CASCADE
+* `user overview analysis patent fkey` FOREIGN KEY `(pub id)` REFERENCES `patent(pub id)` ON DELETE CASCADE
 
 ---
 
 ## public.knn\_edge
 
-Represents edges in a K-Nearest Neighbors graph, likely for similarity analysis, specific to a user.
+Represents edges in a user-specific K-Nearest Neighbors graph for similarity analysis.
 
 ### Columns
 
@@ -286,7 +291,7 @@ Stores events generated by alerts, which are tied to saved queries.
 
 ### Foreign Key Constraints
 
-* `alert event saved query id fkey` FOREIGN KEY (`saved query id`) REFERENCES `saved_query(id)` ON DELETE CASCADE
+* `alert event saved query id fkey` FOREIGN KEY `(saved query id)` REFERENCES `saved_query(id)` ON DELETE CASCADE
 
 ---
 
@@ -311,13 +316,13 @@ Stores user account information.
 
 ### Referenced By
 
-* TABLE `saved query` via `saved_query_app_user_fkey`
+* TABLE `saved query` CONSTRAINT `saved_query_app_user_fkey` FOREIGN KEY `(owner_id)` REFERENCES `app_user(id)` ON DELETE CASCADE
 
 ---
 
 ## public.assignee\_alias
 
-Links different assignee name aliases (e.g., "IBM") to a single canonical ID.
+Links different assignee name aliases to a single canonical ID and canonical assignee name.
 
 ### Columns
 
@@ -339,17 +344,18 @@ Links different assignee name aliases (e.g., "IBM") to a single canonical ID.
 
 ### Foreign Key Constraints
 
-* `assignee alias canonicalid_fkey` FOREIGN KEY (`canonical id`) REFERENCES `canonical_assignee_name(id)` ON UPDATE CASCADE ON DELETE CASCADE
+* `assignee alias canonicalid_fkey` FOREIGN KEY `(canonical id)` REFERENCES `canonical_assignee_name(id)` ON UPDATE CASCADE ON DELETE CASCADE
 
 ### Referenced By
 
-* TABLE `patent assignee` via `patent assignee alias id fkey`
+* TABLE `cited_patent_assignee` CONSTRAINT `cited_patent_assignee_assignee_alias_id_fkey` FOREIGN KEY `(assignee_alias_id)` REFERENCES `assignee_alias(id)`
+* TABLE `patent assignee` CONSTRAINT `patent assignee alias id fkey` FOREIGN KEY `(alias_id)` REFERENCES `assignee_alias(id)` ON UPDATE CASCADE
 
 ---
 
 ## public.canonical\_assignee\_name
 
-Stores the single, canonical name for an assignee (e.g., "International Business Machines Corporation"). Pages 8 and 9 of the source appear to describe the same table.
+Stores the single, canonical name for an assignee.
 
 ### Columns
 
@@ -367,8 +373,9 @@ Stores the single, canonical name for an assignee (e.g., "International Business
 
 ### Referenced By
 
-* TABLE `assignee alias` via `assignee alias canonical id fkey`
-* TABLE `patent assignee` via `patent_assignee canonical id fkey`
+* TABLE `assignee_alias` CONSTRAINT `assignee_alias_canonical_id_fkey` FOREIGN KEY `(canonical_id)` REFERENCES `canonical_assignee_name(id)` ON UPDATE CASCADE ON DELETE CASCADE
+* TABLE `cited_patent_assignee` CONSTRAINT `cited_patent_assignee_canonical_assignee_name_id_fkey` FOREIGN KEY `(canonical_assignee_name_id)` REFERENCES `canonical_assignee_name(id)`
+* TABLE `patent_assignee` CONSTRAINT `patent_assignee_canonical_id_fkey` FOREIGN KEY `(canonical_id)` REFERENCES `canonical_assignee_name(id)` ON UPDATE CASCADE
 
 ---
 
@@ -429,11 +436,15 @@ Stores user-defined queries, which can be run on a schedule to generate alerts.
 
 ### Foreign Key Constraints
 
-* `saved query app user fkey` FOREIGN KEY (`owner id`) REFERENCES `app_user(id)` ON DELETE CASCADE
+* `saved query app user fkey` FOREIGN KEY `(owner id)` REFERENCES `app_user(id)` ON DELETE CASCADE
 
 ### Referenced By
 
-* TABLE `alert event` via `alert_event_saved query_id_fkey`
+* TABLE `alert_event` CONSTRAINT `alert_event_saved_query_id_fkey` FOREIGN KEY `(saved_query_id)` REFERENCES `saved_query(id)` ON DELETE CASCADE
+
+### Triggers
+
+* `trg_saved_query_updated_at` BEFORE UPDATE ON `saved_query` FOR EACH ROW EXECUTE FUNCTION `set_updated_at()`
 
 ---
 
@@ -461,8 +472,8 @@ Maps a user ID to a Stripe Customer ID for billing and subscription verification
 
 ### Referenced By
 
-* TABLE `subscription` via `subscription_stripe customer_id fkey`
-* TABLE `subscription` via `subscription_user_id fkey`
+* TABLE `subscription` CONSTRAINT `subscription_stripe_customer_id_fkey` FOREIGN KEY `(stripe_customer_id)` REFERENCES `stripe_customer(stripe_customer_id)` ON DELETE CASCADE
+* TABLE `subscription` CONSTRAINT `subscription_user_id_fkey` FOREIGN KEY `(user_id)` REFERENCES `stripe_customer(user_id)` ON DELETE CASCADE
 
 ---
 
@@ -503,13 +514,13 @@ Stores subscription details for users, linking them to Stripe plans and customer
 
 ### Foreign Key Constraints
 
-* `subscription_stripe_customer_id fkey` FOREIGN KEY (`stripe_customer_id`) REFERENCES `stripe_customer(stripe_customer id)` ON DELETE CASCADE
-* `subscription stripe price id fkey` FOREIGN KEY (`stripe_price_id`) REFERENCES `price_plan(stripe_price_id)`
-* `subscription_user_id_fkey` FOREIGN KEY (`user id`) REFERENCES `stripe_customer(user id)` ON DELETE CASCADE
+* `subscription_stripe_customer_id fkey` FOREIGN KEY `(stripe_customer_id)` REFERENCES `stripe_customer(stripe_customer id)` ON DELETE CASCADE
+* `subscription stripe price id fkey` FOREIGN KEY `(stripe_price_id)` REFERENCES `price_plan(stripe_price_id)`
+* `subscription_user_id_fkey` FOREIGN KEY `(user id)` REFERENCES `stripe_customer(user id)` ON DELETE CASCADE
 
 ### Referenced By
 
-* TABLE `subscription event` via `subscription event subscription id fkey`
+* TABLE `subscription event` CONSTRAINT `subscription_event_subscription_id_fkey` FOREIGN KEY `(subscription_id)` REFERENCES `subscription(id)` ON DELETE SET NULL
 
 ---
 
@@ -540,7 +551,7 @@ Logs incoming webhook events from Stripe related to subscriptions.
 
 ### Foreign Key Constraints
 
-* `subscription event subscription id_fkey` FOREIGN KEY (`subscription id`) REFERENCES `subscription(id)` ON DELETE SET NULL
+* `subscription event subscription id_fkey` FOREIGN KEY `(subscription id)` REFERENCES `subscription(id)` ON DELETE SET NULL
 
 ---
 
@@ -574,7 +585,7 @@ Stores subscription price plan details.
 
 ### Referenced by
 
-* TABLE `subscription` via `subscription_stripe_price_id_fkey` 
+* TABLE `subscription` CONSTRAINT `subscription_stripe_price_id_fkey` FOREIGN KEY `(stripe_price_id)` REFERENCES `price_plan(stripe_price_id)`
 
 ---
 
@@ -614,7 +625,7 @@ A staging table for ingesting patent data before it's processed and moved to the
 
 ## public.patent\_claim\_staging
 
-Temporary storage for independent claims of patents in the `patent_staging` before merging into `patent_claim` table.
+Temporary storage for independent claims of patents in `patent_staging` before merging into `patent_claim`.
 
 ### Columns
 
@@ -668,6 +679,24 @@ A staging table for ingesting patents corresponding to granted applications in t
 ## public.cited\_patent\_assignee\_raw 
 
 A staging table for ingesting assignee names corresponding to `patent_citation.cited_pub_id`/`patent_citation.cited_application_number` entries that do not match any `patent.application_number` entries. 
+
+### Columns
+
+| Column | Type | Nullable | Default |
+| :--- | :--- | :--- | :--- |
+| `pub id` | `text` | true | |
+| `application number` | `text` | true | |
+| `assignee name raw` | `text` | true | |
+
+### Indexes
+
+* `cited_patent_assignee_raw_pkey` PRIMARY KEY, btree `(pub_id, application_number)`
+
+---
+
+## public.cited\_patent\_assignee\_raw\_dedup 
+
+Deduplication copy of `cited_patent_assignee_raw`. 
 
 ### Columns
 

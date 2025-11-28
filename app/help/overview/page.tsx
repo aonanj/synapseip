@@ -87,8 +87,8 @@ export default function OverviewHelpPage() {
             For any combination of focus keywords, CPC filters, and date range the IP Overview workflow performs the following steps:
           </p>
           <ol style={{ marginLeft: 20, marginTop: 12, fontSize: 14, lineHeight: 1.5, listStyleType: "decimal", listStylePosition: "outside", color: TEXT_COLOR }}>
-            <li>Builds a target search set using full-text search over SynapseIP's relational database, including exact matches and, when enabled, semantic nearest neighbors.</li>
-            <li>Counts distinct patents and publications in the target search set (exact, semantic, and combined) and normalizes volume per month.</li>
+            <li>Builds a focus search set using full-text search over SynapseIP's relational database, including exact matches and, when enabled, semantic nearest neighbors.</li>
+            <li>Counts distinct patents and publications in the focus search set (exact, semantic, and combined) and normalizes volume per month.</li>
             <li>Tracks monthly patent grants and publications to measure growth trends, such as slope and compound annual growth rate (CAGR), and classifies momentum as rising, stable, or declining.</li>
             <li>Aggregates CPC classifications to show the top slices and a broader breakdown for adjacent technology clusters.</li>
             <li>Summarizes recency (6/12/18/24 month totals) and, when available, tags saturation with a percentile vs. historical queries.</li>
@@ -114,7 +114,7 @@ export default function OverviewHelpPage() {
             />
             <InputDescription
               label="CPC Filter"
-              description="Concentrate the target search set in a specific technology area with CPC classification codes. Supports partial codes such as G06N and full designations like G06F17/30."
+              description="Concentrate the focus search set in a specific technology area with CPC classification codes. Supports partial codes such as G06N and full designations like G06F17/30."
               example="Example: G06N20/00, A61B5, G06V, G06K9/00"
               tips={[
                 "Multiple CPC filters are OR’ed together; combine with keywords for precise intersections.",
@@ -214,7 +214,7 @@ export default function OverviewHelpPage() {
         <div className="glass-card" style={{ ...cardBaseStyle }}>
           <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: TEXT_COLOR, marginBottom: 16 }}>Patent & Publication Table</h2>
           <p style={{ fontSize: 14, lineHeight: 1.5, color: TEXT_COLOR, marginBottom: 8 }}>
-            Result set table lists up to 1000 patents and publications per target search set, sortable on recency, relevance, or assignee name. Click any patent/publication number to open the document in a new tab. 
+            Result set table lists up to 1000 patents and publications per focus search set, sortable on recency, relevance, or assignee name. Click any patent/publication number to open the document in a new tab. 
           </p>
           <p style={{ fontSize: 14, lineHeight: 1.5, color: TEXT_COLOR, marginBottom: 16 }}>
             Result set table can be exported as a PDF (up to 1000 patents and publications) for later reference and review. The exported PDF includes the overview and analysis displayed above on the page. 
@@ -238,8 +238,8 @@ export default function OverviewHelpPage() {
           <ul style={{ marginLeft: 20, fontSize: 14, lineHeight: 1.5, listStyleType: "disc", listStylePosition: "outside", color: TEXT_COLOR }}>
             <li><strong>Potential Gap</strong>: Opportunity where an assignee may have some IP protection, but neighboring clusters are underexplored.</li>
             <li><strong>Bridging Opportunity</strong>: Cross-cluster connectors with lower momentum on both sides.</li>
-            <li><strong>Focus Convergence</strong>: Risk indicator showing an assignee with IP protection trending very close to the target search set.</li>
-            <li><strong>Crowd-out</strong>: Risk indicator where local density and momentum around the target search set is sharply rising.</li>
+            <li><strong>Focus Convergence</strong>: Risk indicator showing an assignee with IP protection trending very close to the focus search set.</li>
+            <li><strong>Crowd-out</strong>: Risk indicator where local density and momentum around the focus search set is sharply rising.</li>
           </ul>
           <p style={{ fontSize: 14, lineHeight: 1.5, color: TEXT_COLOR, marginTop: 12 }}>
             Toggle on "Group by Assignee" to generate specific analysis and insights scoped to specific entities (e.g., competitors, investors in the AI/ML space, etc.).
@@ -251,9 +251,9 @@ export default function OverviewHelpPage() {
           <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: TEXT_COLOR, marginBottom: 16 }}>Example Workflow</h2>
           <ol style={{ marginLeft: 20, fontSize: 14, lineHeight: 1.5, listStyleType: "decimal", listStylePosition: "outside", color: TEXT_COLOR }}>
             <li>Start with focus keywords and phrases over a 24-month window to gauge baseline saturation and momentum.</li>
-            <li>Narrow the target search set with CPC filters to concentrate on specific technology areas of interest.</li>
+            <li>Narrow the focus search set with CPC filters to concentrate on specific technology areas of interest.</li>
             <li>Timeline graph can be used to confirm that momentum is accurately labeled (e.g., rising, declining, etc.).</li>
-            <li>Result set table provides a quick and comprehensive reference list of patents and publications germane to the target search set.</li>
+            <li>Result set table provides a quick and comprehensive reference list of patents and publications germane to the focus search set.</li>
             <li>(Optional) Enabling "Group by Assignee" can provide a more granular view of R&D activity and investment for specific entities (e.g., competitors, investors in the AI/ML space, etc.).</li>
           </ol>
         </div>
@@ -268,7 +268,7 @@ export default function OverviewHelpPage() {
             />
             <BestPractice
               title="Compare exact vs. semantic saturation"
-              tip="A smaller gap between exact-match results and semantic-search results indicates the target search set is well-aligned with conventional terminology used across the domain. Large gaps between exact-match results and semantic-search results indicate that the relevant concepts are often expressed in different wording than the target search set. That is, the domain uses diverse terminology or synonyms not captured by the literal query. Expanding upon keywords and phrases (e.g., using synonyms, abbreviations, etc.) and/or adding CPC filters can help refine the target search set."
+              tip="A smaller gap between exact-match results and semantic-search results indicates the focus search set is well-aligned with conventional terminology used across the domain. Large gaps between exact-match results and semantic-search results indicate that the relevant concepts are often expressed in different wording than the focus search set. That is, the domain uses diverse terminology or synonyms not captured by the literal query. Expanding upon keywords and phrases (e.g., using synonyms, abbreviations, etc.) and/or adding CPC filters can help refine the focus search set."
             />
             <BestPractice
               title="Monitor CPC drift"

@@ -152,6 +152,7 @@ const selectClass = `w-full rounded-xl px-2 py-2 text-xs ${controlBaseClass}`;
 const inlineInputClass = `h-8 rounded-lg px-2 text-xs ${controlBaseClass}`;
 
 const ROWS_PER_PAGE = 5;
+const SMALL_ROWS_PER_PAGE = 12;
 
 type SortDirection = "asc" | "desc";
 
@@ -694,11 +695,11 @@ function DependencyMatrixCard({ scope, scopeVersion, tokenGetter, competitorName
   }, [topEdges]);
   const maxVal = topEdges.reduce((m, e) => Math.max(m, e.citation_count), 0) || 1;
   const hasEdges = topEdges.length > 0;
-  const dependencyTotalPages = Math.max(1, Math.ceil(topEdges.length / ROWS_PER_PAGE));
+  const dependencyTotalPages = Math.max(1, Math.ceil(topEdges.length / SMALL_ROWS_PER_PAGE));
   const currentDependencyPage = Math.min(dependencyPage, dependencyTotalPages);
   const pagedEdges = topEdges.slice(
-    (currentDependencyPage - 1) * ROWS_PER_PAGE,
-    currentDependencyPage * ROWS_PER_PAGE
+    (currentDependencyPage - 1) * SMALL_ROWS_PER_PAGE,
+    currentDependencyPage * SMALL_ROWS_PER_PAGE
   );
 
   return (
@@ -730,7 +731,7 @@ function DependencyMatrixCard({ scope, scopeVersion, tokenGetter, competitorName
         <div className="text-xs text-slate-400">Apply a scope to view dependency insights.</div>
       ) : !hasPortfolio ? (
         <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
-          Set a target portfolio (assignee or pub IDs) for meaningful dependency analysis.
+          Set a source portfolio (assignee or pub IDs) for meaningful dependency analysis.
         </div>
       ) : error ? (
         <div className="text-xs text-rose-600">Error: {error}</div>
@@ -779,15 +780,15 @@ function DependencyMatrixCard({ scope, scopeVersion, tokenGetter, competitorName
             <table className="min-w-full border-collapse">
               <thead>
                 <tr className="text-xs uppercase tracking-wide text-[#3A506B]">
-                  <th className="px-3 py-2 border-b text-left">From (citing)</th>
-                  <th className="px-3 py-2 border-b text-left">To (cited)</th>
+                  <th className="px-3 py-2 border-b text-left">Citing Assignee</th>
+                  <th className="px-3 py-2 border-b text-left">Cited Assignee</th>
                   <th className="px-3 py-2 border-b text-left">Citations</th>
-                  <th className="px-3 py-2 border-b text-left">% of from&apos;s outgoing</th>
+                  <th className="px-3 py-2 border-b text-left">Cited Asgn% of from&apos;s outgoing</th>
                 </tr>
               </thead>
               <tbody>
                 {pagedEdges.map((e, idx) => {
-                  const rowKey = `${e.citing_assignee_id || e.citing_assignee_name || "unknown"}-${e.cited_assignee_id || e.cited_assignee_name || "unknown"}-${(currentDependencyPage - 1) * ROWS_PER_PAGE + idx}`;
+                  const rowKey = `${e.citing_assignee_id || e.citing_assignee_name || "unknown"}-${e.cited_assignee_id || e.cited_assignee_name || "unknown"}-${(currentDependencyPage - 1) * SMALL_ROWS_PER_PAGE + idx}`;
                   return (
                     <tr key={rowKey} className="odd:bg-white even:bg-slate-50/60">
                       <td className="px-3 py-2 text-xs text-[#102A43]">{e.citing_assignee_name || "Unknown"}</td>
@@ -1296,7 +1297,7 @@ function EncroachmentCard({ scope, scopeVersion, tokenGetter, competitorNames }:
       </div>
       {!hasTargets ? (
         <div className="text-xs text-slate-400">
-          Apply a target assignee in the Scope panel to view.
+          Apply a source assignee in the Scope panel to view.
         </div>
       ) : error ? (
         <div className="text-xs text-rose-600">Error: {error}</div>
@@ -1596,7 +1597,7 @@ export default function CitationPage() {
               <div className="flex-1 space-y-3">
                 {scopeState.mode === "assignee" && (
                   <div>
-                    <div className={fieldLabel}>Target assignee(s)</div>
+                    <div className={fieldLabel}>Source assignee(s)</div>
                     <textarea
                       value={scopeState.focusAssigneeInput}
                       onChange={(e) =>
@@ -1671,7 +1672,7 @@ export default function CitationPage() {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div>
-                <div className={fieldLabel}>Competitor assignee(s)</div>
+                <div className={fieldLabel}>Target assignee(s)</div>
                 <textarea
                   rows={3}
                   value={scopeState.competitorsInput}
