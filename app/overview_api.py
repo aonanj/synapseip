@@ -332,7 +332,14 @@ CLUSTER_LABEL_STEM_STOPWORDS: tuple[str, ...] = (
     "aspect",
     "illustrat",
     "embodiment",
-    "aspect"
+    "aspect",
+    "consequen",
+    "benefi",
+    "train",
+    "permit",
+    "allow",
+    "enabl",
+    "caus",
 )
 
 

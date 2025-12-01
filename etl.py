@@ -279,6 +279,10 @@ def _clean_claims(claims: str | None) -> str | None:
         claims_clean = re.sub(r"^\s*we claim:?\s*", "", claims, flags=re.IGNORECASE)
     elif "i claim" in claims.lower():
         claims_clean = re.sub(r"^\s*i claim:?\s*", "", claims, flags=re.IGNORECASE)
+    elif "i (we) claim" in claims.lower():
+        claims_clean = re.sub(r"^\s*i (we) claim:?\s*", "", claims, flags=re.IGNORECASE)
+    elif "we (i) claim" in claims.lower():
+        claims_clean = re.sub(r"^\s*we (i) claim:?\s*", "", claims, flags=re.IGNORECASE)
     elif "that which is claimed is" in claims.lower():
         claims_clean = re.sub(r"^\s*that which is claimed is:?\s*", "", claims, flags=re.IGNORECASE)
     elif "having thus described the invention what is claimed as new and desired to be secured by letters patent is as follows" in claims.lower():

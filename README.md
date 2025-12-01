@@ -310,7 +310,7 @@ python scripts/load_patent_citations.py \
 
 The React UI ([app/overview/page.tsx](app/overview/page.tsx)) defaults to the overview primitives: four tiles (Crowding, Density, Momentum, Top CPCs), a timeline sparkline, CPC bar chart, and a patent results table with semantic toggle. Enabling "Group by Assignee" pulls in a Sigma.js visualization and signal cards for assignee clustering context.
 
-## Citation Analytics
+## Citation Tracker
 [app/citation_api.py](app/citation_api.py) provides patent and publication citation intelligence through four analysis endpoints:
 
 - `/citation/impact` – **Forward Impact Analysis**: Tracks forward citations over time for a patent portfolio. Returns total citations, distinct citing patents, monthly/quarterly timelines, and top-cited patents ranked by citation count and velocity.
@@ -324,8 +324,11 @@ The React UI ([app/citation/page.tsx](app/citation/page.tsx)) provides an intera
 - Search & Trends UI – ![docs/screenshots/search-ui.png](docs/screenshots/search-ui.png)
 - IP Overview UI – ![docs/screenshots/overview-ui.png](docs/screenshots/overview-ui.png)
 - IP Overview UI (con't) - ![docs/screenshots/overview-ui-2.png](docs/screenshots/overview-ui-2.png)
+- Citation Tracker UI – ![docs/screenshots/citation-ui.png](docs/screenshots/citation-ui.png)
+- Citation Tracker UI (con't) - ![docs/screenshots/citation-ui-2.png](docs/screenshots/citation-ui-2.png)
 - Scope Analysis UI - ![docs/screenshots/scope-ui.png](docs/screenshots/scope-ui.png)
 - SynapseIP API Docs – ![docs/screenshots/api-docs.png](docs/screenshots/api-docs.png)
+- SynapseIP API Docs (con't) – ![docs/screenshots/api-docs-2.png](docs/screenshots/api-docs-2.png)
 
 ## Documentation & Legal Pages
 - **Help Documentation**: Interactive help pages available at `/help`, including detailed guides for [Search & Trends](app/help/search_trends/page.tsx), [IP Overview](app/help/overview/page.tsx), [Scope Analysis](app/help/scope-analysis/page.tsx), and [Citation Analytics](app/help/citation/page.tsx).
