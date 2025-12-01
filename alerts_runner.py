@@ -343,8 +343,6 @@ WITH last_run AS (
         order_by = "dist ASC, to_date(p.pub_date::text, 'YYYYMMDD') DESC"
 
     where_clauses = _build_where_clauses(params, filters)
-    if query_vec is not None:
-        where_clauses.insert(0, "e.model LIKE '%%|ta'")
     where_clauses.append("to_date(p.pub_date::text, 'YYYYMMDD') > (lr.ts AT TIME ZONE 'UTC')::date")
     where_sql = " AND ".join(where_clauses) if where_clauses else "TRUE"
 
