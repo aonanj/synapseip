@@ -783,7 +783,7 @@ function DependencyMatrixCard({ scope, scopeVersion, tokenGetter, competitorName
                   <th className="px-3 py-2 border-b text-left">Citing Assignee</th>
                   <th className="px-3 py-2 border-b text-left">Cited Assignee</th>
                   <th className="px-3 py-2 border-b text-left">Citations</th>
-                  <th className="px-3 py-2 border-b text-left">Cited Asgn% of from&apos;s outgoing</th>
+                  <th className="px-3 py-2 border-b text-left">Cited / Citing Assignee (%)</th>
                 </tr>
               </thead>
               <tbody>
