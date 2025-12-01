@@ -51,13 +51,16 @@ DB schema (current):
     );
 """
 import asyncio
+import html
 import json
 import os
-from typing import Any
+from typing import Any, Sequence
 
 import asyncpg
 import httpx
 from dotenv import load_dotenv
+
+from app.embed import embed as embed_text
 
 
 
@@ -78,6 +81,9 @@ def _add_hyphens_to_date(date_str: str) -> str:
     if len(date_str) == 8 and date_str.isdigit():
         return f"{date_str[:4]}-{date_str[4:6]}-{date_str[6:]}"
     return date_str
+
+_VEC_CAST = "::halfvec" if os.environ.get("VECTOR_TYPE", "vector").lower().startswith("half") else "::vector"
+TSVECTOR_EXPR = "to_tsvector('english', coalesce(p.title,'') || ' ' || coalesce(p.abstract,''))"
      
 
 
@@ -118,93 +124,169 @@ async def send_mailgun_email(
             print(f"[error] Mailgun send failed: {resp.status_code} {resp.text}")
 
 
-def _where_clause() -> str:
-    # CPC filter expects saved_query.cpc = JSON array of codes, e.g. ["G06F/16","G06N/20"]
-    # We treat it as "match any" of the provided codes using the `?` jsonb key-existence operator.
-    return """
-      WHERE ($1::text IS NULL OR
-             to_tsvector('english', coalesce(p.title,'') || ' ' || coalesce(p.abstract,'')) @@ plainto_tsquery('english', $1))
-        AND ($2::text IS NULL OR p.assignee_name = $2)
-        AND (
-              $3::jsonb IS NULL
-              OR EXISTS (
-                    SELECT 1
-                    FROM jsonb_array_elements_text($3) AS q(code)
-                    WHERE p.cpc ? q.code
-                 )
-            )
-                AND (
-                            $4::date IS NULL
-                            OR to_date(p.pub_date::text, 'YYYYMMDD') >= $4
-                        )
-                AND (
-                            $5::date IS NULL
-                            OR to_date(p.pub_date::text, 'YYYYMMDD') <= $5
-                        )
-    """
+def _normalize_filters(filters: dict[str, Any] | None) -> dict[str, Any]:
+    """Normalize saved_query.filters JSON into consistent strings/lists."""
+    def _clean_str(val: Any) -> str | None:
+        if val is None:
+            return None
+        s = str(val).strip()
+        return s or None
+
+    def _normalize_cpc(raw: Any) -> list[str] | None:
+        if not raw:
+            return None
+        if isinstance(raw, str):
+            parts = [p.strip() for p in raw.replace(";", ",").split(",") if p.strip()]
+        elif isinstance(raw, (list, tuple, set)):
+            parts = [str(item).strip() for item in raw if str(item).strip()]
+        else:
+            parts = []
+        return parts or None
+
+    def _normalize_date(raw: Any) -> str | None:
+        if raw is None:
+            return None
+        s = str(raw).strip()
+        if not s:
+            return None
+        if len(s) == 10 and s[4] == "-" and s[7] == "-":
+            s = s.replace("-", "")
+        return s
+
+    if not isinstance(filters, dict):
+        return {
+            "keywords": None,
+            "assignee": None,
+            "cpc_list": None,
+            "date_from": None,
+            "date_to": None,
+        }
+
+    return {
+        "keywords": _clean_str(filters.get("keywords")),
+        "assignee": _clean_str(filters.get("assignee")),
+        "cpc_list": _normalize_cpc(filters.get("cpc")),
+        "date_from": _normalize_date(filters.get("date_from")),
+        "date_to": _normalize_date(filters.get("date_to")),
+    }
 
 
-SEARCH_SQL_NEW = f"""
+def _format_filters_for_email(filters: dict[str, Any], semantic_query: str | None) -> tuple[str, str]:
+    """Return (text_block, html_block) describing applied filters."""
+    entries: list[tuple[str, str]] = []
+
+    if filters.get("keywords"):
+        entries.append(("Keywords", str(filters["keywords"])))
+    if semantic_query:
+        entries.append(("Semantic query", semantic_query))
+    if filters.get("assignee"):
+        entries.append(("Assignee", str(filters["assignee"])))
+    if filters.get("cpc_list"):
+        entries.append(("CPC", ", ".join(filters["cpc_list"])))
+    if filters.get("date_from") or filters.get("date_to"):
+        start = _add_hyphens_to_date(str(filters.get("date_from") or ""))
+        end = _add_hyphens_to_date(str(filters.get("date_to") or ""))
+        entries.append(("Date range", f"{start or 'Any'} to {end or 'Any'}"))
+
+    if not entries:
+        return "Filters: none\n", "<p><b>Filters:</b> none</p>"
+
+    text = "Filters:\n" + "\n".join(f"- {label}: {value}" for label, value in entries) + "\n"
+    html_list = "".join(
+        f"<li><b>{html.escape(label)}:</b> {html.escape(value)}</li>" for label, value in entries
+    )
+    html_block = f"<div style=\"text-align:left; max-width:760px; margin:0 auto;\"><p><b>Filters applied</b></p><ul>{html_list}</ul></div>"
+    return text, html_block
+
+
+def _build_where_clauses(params: list[Any], filters: dict[str, Any]) -> list[str]:
+    """Build WHERE fragments with sequential placeholders."""
+    clauses: list[str] = []
+
+    if filters.get("keywords"):
+        params.append(filters["keywords"])
+        clauses.append(f"{TSVECTOR_EXPR} @@ plainto_tsquery('english', ${len(params)})")
+    if filters.get("assignee"):
+        params.append(filters["assignee"])
+        clauses.append(f"p.assignee_name = ${len(params)}")
+    if filters.get("cpc_list"):
+        params.append(json.dumps(filters["cpc_list"]))
+        idx = len(params)
+        clauses.append(
+            f"EXISTS (SELECT 1 FROM jsonb_array_elements_text(${idx}::jsonb) AS q(code) WHERE p.cpc ? q.code)"
+        )
+    if filters.get("date_from"):
+        params.append(filters["date_from"])
+        clauses.append(
+            f"to_date(p.pub_date::text, 'YYYYMMDD') >= to_date(${len(params)}::text, 'YYYYMMDD')"
+        )
+    if filters.get("date_to"):
+        params.append(filters["date_to"])
+        clauses.append(
+            f"to_date(p.pub_date::text, 'YYYYMMDD') <= to_date(${len(params)}::text, 'YYYYMMDD')"
+        )
+
+    return clauses
+
+
+def _build_search_sql(
+    filters: dict[str, Any],
+    saved_query_id: Any,
+    *,
+    query_vec: Sequence[float] | None,
+) -> tuple[str, list[Any]]:
+    """Construct SQL and params for alert search, optionally semantic."""
+    params: list[Any] = []
+    params.append(saved_query_id)
+    last_run_cte = f"""
 WITH last_run AS (
-  SELECT sq.id AS saved_query_id,
-         COALESCE(MAX(ae.created_at), TIMESTAMPTZ '1970-01-01') AS ts
-  FROM saved_query sq
-  LEFT JOIN alert_event ae ON ae.saved_query_id = sq.id
-  GROUP BY sq.id
+  SELECT COALESCE(MAX(ae.created_at), TIMESTAMPTZ '1970-01-01') AS ts
+  FROM alert_event ae
+  WHERE ae.saved_query_id = ${len(params)}
 )
-SELECT p.pub_id, p.title, p.pub_date
-FROM patent p
-JOIN last_run lr ON lr.saved_query_id = $6
-{_where_clause()}
-    AND to_date(p.pub_date::text, 'YYYYMMDD') > (lr.ts AT TIME ZONE 'UTC')::date
-ORDER BY to_date(p.pub_date::text, 'YYYYMMDD') DESC
-LIMIT 500;
 """
 
+    where_clauses = _build_where_clauses(params, filters)
+    base_select = "SELECT p.pub_id, p.title, p.pub_date"
+    from_clause = "FROM patent p CROSS JOIN last_run lr"
+    order_by = "to_date(p.pub_date::text, 'YYYYMMDD') DESC"
 
-def _extract_filters(filters: dict[str, Any] | None) -> tuple[str | None, str | None, str | None, str | None, str | None]:
-        """Extract normalized filter tuple from saved_query.filters JSON.
+    if query_vec is not None:
+        params.append(list(query_vec))
+        base_select += f", (e.embedding <=> ${len(params)}{_VEC_CAST}) AS dist"
+        from_clause = "FROM patent p JOIN patent_embeddings e ON p.pub_id = e.pub_id CROSS JOIN last_run lr"
+        where_clauses.insert(0, "e.model LIKE '%|ta'")
+        order_by = "dist ASC, to_date(p.pub_date::text, 'YYYYMMDD') DESC"
 
-        Expected keys inside filters JSONB:
-            - keywords: str | null
-            - assignee: str | null
-            - cpc: list[str] | null
-            - date_from: str(YYYY-MM-DD) | null
-            - date_to: str(YYYY-MM-DD) | null
-        Returns a 5-tuple matching SQL parameter order for _where_clause.
-        """
-        if not isinstance(filters, dict):
-                return None, None, None, None, None
+    where_clauses.append("to_date(p.pub_date::text, 'YYYYMMDD') > (lr.ts AT TIME ZONE 'UTC')::date")
+    where_sql = " AND ".join(where_clauses) if where_clauses else "TRUE"
 
-        keywords = filters.get("keywords") or None
-        assignee = filters.get("assignee") or None
-
-        cpc = None
-        try:
-                raw = filters.get("cpc")
-                if raw:
-                        # store as JSON-encoded array of strings for the SQL ? operator logic
-                        cpc = json.dumps(list(map(str, raw)))
-        except Exception:
-                cpc = None
-
-        date_from = filters.get("date_from") or None
-        date_to = filters.get("date_to") or None
-        return keywords, assignee, cpc, date_from, date_to
+    sql = f"""
+{last_run_cte}
+{base_select}
+{from_clause}
+WHERE {where_sql}
+ORDER BY {order_by}
+LIMIT 500;
+"""
+    return sql, params
 
 
 async def run_one(conn: asyncpg.Connection, sq: asyncpg.Record) -> int:
-    # filters are in jsonb column 'filters'
-    k, a, cpc_json, dfrom, dto = _extract_filters(sq.get("filters"))
-    params = (
-        k,            # $1 keywords
-        a,            # $2 assignee
-        cpc_json,     # $3 cpc array as json
-        dfrom,        # $4 date_from
-        dto,          # $5 date_to
-        sq["id"],     # $6 saved_query uuid
-    )
-    rows = await conn.fetch(SEARCH_SQL_NEW, *params)
+    filters = _normalize_filters(sq.get("filters"))
+    semantic_query = (sq.get("semantic_query") or "").strip() or None
+
+    query_vec: list[float] | None = None
+    if semantic_query:
+        try:
+            maybe = await embed_text(semantic_query)
+            query_vec = list(maybe) if maybe else None
+        except Exception as e:  # pragma: no cover - downstream network/API errors
+            print(f"[error] embedding semantic_query for saved_query id={sq['id']}: {e}")
+
+    sql, params = _build_search_sql(filters, sq["id"], query_vec=query_vec)
+
+    rows = await conn.fetch(sql, *params)
     count = len(rows)
     if count == 0:
         return 0
@@ -224,10 +306,12 @@ async def run_one(conn: asyncpg.Connection, sq: asyncpg.Record) -> int:
     )
 
     name = sq["name"] or "Saved Query"
-    lines = [f"・ {r['pub_date']}  {r['pub_id']}  {r['title']}" for r in sample]
+    filters_text, filters_html = _format_filters_for_email(filters, semantic_query)
+    lines = [f"・ {_add_hyphens_to_date(str(r['pub_date']))}  {r['pub_id']}  {r['title']}" for r in sample]
     text = (
         f"SynapseIP Alert: {name}\n"
-        f"Total new results: {count}\n\n"
+        f"Total new results: {count}\n"
+        f"{filters_text}\n"
         + "\n".join(lines)
         + "\n\n(Showing up to 50. See app for full list.)"
     )
@@ -251,6 +335,7 @@ async def run_one(conn: asyncpg.Connection, sq: asyncpg.Record) -> int:
         "   <body>"
         f"  <h3>SynapseIP Alert: {name}</h3>"
         f"  <p>Total new results: <b>{count}</b></p>"
+        f"  {filters_html}"
         "   <table><tr><th>Grant/Pub Date</th><th>Patent/Pub #</th><th>Title</th></tr>"
         + "".join(f"<tr><td>{_add_hyphens_to_date(str(r['pub_date']))}</td><td><b>{r['pub_id']}</b></td><td>{str(r['title']).title()}</td></tr>" for r in sample)
         + "</table><p>Showing up to 50. Visit <a href=\"https://www.synapse-ip.com\">Synapse-IP.com</a> for full list.</p>"
