@@ -102,18 +102,16 @@ def send_mailgun_email(
 
     load_dotenv()
 
-    MAILGUN_DOMAIN = os.getenv("MAILGUN_DOMAIN", "mg.phaethonorder.com")
     MAILGUN_API_KEY = os.getenv("MAILGUN_API_KEY", "")
-    MAILGUN_BASE_URL = os.getenv("MAILGUN_BASE_URL", "https://api.mailgun.net/v3")
     # If Mailgun is not configured, no-op with console output.
-    if not MAILGUN_DOMAIN or not MAILGUN_API_KEY:
+    if not MAILGUN_API_KEY:
         print("Mailgun not fully configured; printing email instead")
         print("To:", to_email)
         print("Subject:", subject)
         print(text_body)
         return
 
-    url = f"{MAILGUN_BASE_URL.rstrip('/')}/{MAILGUN_DOMAIN}/messages"
+    url = "https://api.mailgun.net/v3/mg.phaethonorder.com/messages"
     data = {
         "from": "SynapseIP Alerts <noreply@mg.phaethonorder.com>",
         "to": [to_email],
@@ -344,7 +342,7 @@ WITH last_run AS (
 
     where_clauses = _build_where_clauses(params, filters)
     if query_vec is not None:
-        where_clauses.insert(0, "e.model LIKE '%|ta'")
+        where_clauses.insert(0, "e.model LIKE '%%|ta'")
     where_clauses.append("to_date(p.pub_date::text, 'YYYYMMDD') > (lr.ts AT TIME ZONE 'UTC')::date")
     where_sql = " AND ".join(where_clauses) if where_clauses else "TRUE"
 
