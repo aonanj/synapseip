@@ -305,9 +305,12 @@ function BillingContent() {
 
         {/* Header */}
         <div className="glass-card" style={{ ...cardBaseStyle }}>
-          <h1 style={{ margin: 0, fontSize: 32, fontWeight: 700, color: TEXT_COLOR }}>Billing & Subscription</h1>
-          <p style={{ marginTop: 16, fontSize: 15, lineHeight: 1.6, color: "#627D98", marginBottom: 0 }}>
-            Manage your SynapseIP subscription, review billing status, and update payment preferences.
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-sky-600 mb-2">
+            Account Management
+          </p>
+          <h1 style={{ color: TEXT_COLOR, fontSize: 22, fontWeight: 700 }}>Billing & Subscription</h1>
+          <p style={{ margin: 0, fontSize: 14, color: "#475569" }}>
+            Manage your SynapseIP subscription, review billing status, and update payment preferences. Payment information is securely handled via Stripe.
           </p>
         </div>
 
