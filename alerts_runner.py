@@ -232,11 +232,29 @@ async def run_one(conn: asyncpg.Connection, sq: asyncpg.Record) -> int:
         + "\n\n(Showing up to 50. See app for full list.)"
     )
     html = (
-        f"<h3>SynapseIP Alert: {name}</h3>"
-        f"<p>Total new results: <b>{count}</b></p>"
-        "<table><tr><th>Grant/Pub Date</th><th>Patent/Pub #</th><th>Title</th></tr>"
+        "<html><head>"
+        "        <style>"
+        "           body {"
+        "                text-align: center;"
+        "           }"
+        "           table {"
+        "               margin: 0 auto;"
+        "               border: 1px solid black;"
+        "           }"
+        "           table,"
+        "           th,"
+        "           td {"
+        "               border-collapse: collapse;"
+        "           }"
+        "        </style>"       
+        "   </head>"
+        "   <body>"
+        f"  <h3>SynapseIP Alert: {name}</h3>"
+        f"  <p>Total new results: <b>{count}</b></p>"
+        "   <table><tr><th>Grant/Pub Date</th><th>Patent/Pub #</th><th>Title</th></tr>"
         + "".join(f"<tr><td>{_add_hyphens_to_date(str(r['pub_date']))}</td><td><b>{r['pub_id']}</b></td><td>{str(r['title']).title()}</td></tr>" for r in sample)
         + "</table><p>Showing up to 50. Visit <a href=\"https://www.synapse-ip.com\">Synapse-IP.com</a> for full list.</p>"
+        "   </body></html>"
     )
     to_email = sq.get("owner_email") or sq.get("email")
     if not to_email:
