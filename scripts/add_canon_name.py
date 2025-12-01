@@ -28,6 +28,7 @@ Note:
     assignee_alias(id uuid pk, assignee_alias text unique, canonical_id uuid fk)
     patent(..., assignee_name text, canonical_assignee_name_id uuid, assignee_alias_id uuid)
     patent_assignee(pub_id text fk, alias_id uuid fk, canonical_id uuid fk, position smallint)
+- Run this after backfilling missing assignee_name values (e.g., via scripts/backfill_assignee_names_bigquery.py).
 """
 
 from __future__ import annotations

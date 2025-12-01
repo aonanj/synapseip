@@ -9,6 +9,14 @@ Differences from the BigQuery loader:
 - Filters locally using CPC regex and AI keyword heuristics.
 - Upserts into patent_staging (same schema as patent) and logs ingestion source.
 - No claims fetching or embedding generation logic.
+
+After running this script:
+1. Add XML files from USPTO bulk data to resources/current_ipa/
+2. Run scripts/etl_xml_fulltext.py to populate abstract and claims_text in patent_staging.
+3. Delete records from patent_staging that do not include "language model", "artificial intelligence", "neural network", or "machine learning" in title or abstract.
+4. Merge patent_staging into patent table. 
+5. Run scripts/etl_add_embeddings.py to generate embeddings for new records.
+6. Run scripts/add_canon_name.py to populate canon names.
 """
 
 from __future__ import annotations
@@ -455,7 +463,7 @@ def build_filters(cpc_codes: list[str] | None) -> list[dict[str, Any]]:
     publication_category = {
         "name": "applicationMetaData.publicationCategoryBag",
         "value": [
-            "Pre-Grant Publications - PGPub", 
+            ##"Pre-Grant Publications - PGPub", 
             "Granted/Issued"
             ]
     }

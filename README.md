@@ -331,8 +331,8 @@ The React UI ([app/citation/page.tsx](app/citation/page.tsx)) provides an intera
 - SynapseIP API Docs (con't) – ![docs/screenshots/api-docs-2.png](docs/screenshots/api-docs-2.png)
 
 ## Documentation & Legal Pages
-- **Help Documentation**: Interactive help pages available at `/help`, including detailed guides for [Search & Trends](app/help/search_trends/page.tsx), [IP Overview](app/help/overview/page.tsx), [Scope Analysis](app/help/scope-analysis/page.tsx), and [Citation Analytics](app/help/citation/page.tsx).
-- **Legal Pages**: Privacy policy ([app/docs/privacy/page.tsx](app/docs/privacy/page.tsx)), Terms of Service ([app/docs/tos/page.tsx](app/docs/tos/page.tsx)), and Data Processing Agreement ([app/docs/dpa/page.tsx](app/docs/dpa/page.tsx)).
+- **Help Documentation**: Interactive help pages available at [`/help`](app/help/page.tsx), including detailed guides for [Search & Trends](app/help/search_trends/page.tsx), [IP Overview](app/help/overview/page.tsx), [Scope Analysis](app/help/scope-analysis/page.tsx), and [Citation Analytics](app/help/citation/page.tsx).
+- **Legal Pages**: Privacy Policy ([app/docs/privacy/page.tsx](app/docs/privacy/page.tsx)), Terms of Service ([app/docs/tos/page.tsx](app/docs/tos/page.tsx)), and Data Processing Agreement ([app/docs/dpa/page.tsx](app/docs/dpa/page.tsx)).
 
 ## License
 This repository is publicly viewable for portfolio purposes only. The code is proprietary.

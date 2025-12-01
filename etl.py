@@ -103,11 +103,11 @@ WITH base AS (
     )
     AND (
       REGEXP_CONTAINS(LOWER(COALESCE(p.title_localized[SAFE_OFFSET(0)].text, '')),
-                      r'(artificial intelligence|machine learning|machine-learning|neural network|neural-network)')
+                      r'(language model|artificial intelligence|machine learning|machine-learning|neural network|neural-network)')
       OR REGEXP_CONTAINS(LOWER(COALESCE(p.abstract_localized[SAFE_OFFSET(0)].text, '')),
-                         r'(artificial intelligence|machine learning|machine-learning|neural network|neural-network)')
+                         r'(language model|artificial intelligence|machine learning|machine-learning|neural network|neural-network)')
       OR REGEXP_CONTAINS(LOWER(COALESCE(p.claims_localized[SAFE_OFFSET(0)].text, '')),
-                         r'(artificial intelligence|machine learning|machine-learning|neural network|neural-network)')
+                         r'(language model|artificial intelligence|machine learning|machine-learning|neural network|neural-network)')
     )
 )
 SELECT

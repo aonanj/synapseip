@@ -11,6 +11,9 @@ The script:
 
 Usage:
     python backfill_assignee_names.py --limit 200 --sleep 0.2
+
+Notes:
+- Run scripts/add_canon_name.py after this to populate canon names.
 """
 
 from __future__ import annotations
