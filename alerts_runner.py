@@ -7,7 +7,7 @@ alerts_runner.py
 - Only reports NEW results since the last run per saved_query
 
 Install:
-    pip install asyncpg httpx python-dotenv
+    pip install psycopg[binary] httpx python-dotenv openai
 
 Env:
     DATABASE_URL="postgresql://USER:PASS@HOST/DB?sslmode=require"
@@ -50,23 +50,26 @@ DB schema (current):
         count          integer NOT NULL CHECK (count >= 0)
     );
 """
-import asyncio
 import html
 import json
 import os
 from collections.abc import Mapping, Sequence
 from typing import Any
 
-import asyncpg
 import httpx
+import psycopg
+from psycopg import sql as _sql
+from openai import OpenAI
+from psycopg.rows import dict_row
 from dotenv import load_dotenv
 
 load_dotenv()
 
-from app.embed import embed as embed_text
 from infrastructure.logger import get_logger
 
 logger = get_logger(__name__)
+_OPENAI_MODEL = os.environ.get("EMBEDDING_MODEL", "text-embedding-3-small")
+_OPENAI_CLIENT = OpenAI()
 
 def _from_header() -> str:
 
@@ -88,31 +91,29 @@ def _add_hyphens_to_date(date_str: str) -> str:
 
 _VEC_CAST = "::halfvec" if os.environ.get("VECTOR_TYPE", "vector").lower().startswith("half") else "::vector"
 TSVECTOR_EXPR = "to_tsvector('english', coalesce(p.title,'') || ' ' || coalesce(p.abstract,''))"
-     
 
-
-async def send_mailgun_email(
+def send_mailgun_email(
     to_email: str,
     subject: str,
     text_body: str,
     html_body: str | None = None,
 ) -> None:
-    
+    """Send alert email via Mailgun synchronously."""
+
     load_dotenv()
 
     MAILGUN_DOMAIN = os.getenv("MAILGUN_DOMAIN", "mg.phaethonorder.com")
     MAILGUN_API_KEY = os.getenv("MAILGUN_API_KEY", "")
     MAILGUN_BASE_URL = os.getenv("MAILGUN_BASE_URL", "https://api.mailgun.net/v3")
     # If Mailgun is not configured, no-op with console output.
-    if not MAILGUN_DOMAIN:
-        print("Mailgun Domain: ", MAILGUN_DOMAIN)
-    if not MAILGUN_API_KEY:
-        print("MAILGUN API KEY: ", MAILGUN_API_KEY)
+    if not MAILGUN_DOMAIN or not MAILGUN_API_KEY:
+        print("Mailgun not fully configured; printing email instead")
         print("To:", to_email)
         print("Subject:", subject)
         print(text_body)
+        return
 
-    url = "https://api.mailgun.net/v3/mg.phaethonorder.com/messages"
+    url = f"{MAILGUN_BASE_URL.rstrip('/')}/{MAILGUN_DOMAIN}/messages"
     data = {
         "from": "SynapseIP Alerts <noreply@mg.phaethonorder.com>",
         "to": [to_email],
@@ -122,8 +123,8 @@ async def send_mailgun_email(
     if html_body:
         data["html"] = html_body
 
-    async with httpx.AsyncClient(timeout=20.0) as client:
-        resp = await client.post(url, auth=("api", MAILGUN_API_KEY), data=data)
+    with httpx.Client(timeout=20.0) as client:
+        resp = client.post(url, auth=("api", MAILGUN_API_KEY), data=data)
         if resp.status_code >= 300:
             print(f"[error] Mailgun send failed: {resp.status_code} {resp.text}")
 
@@ -238,9 +239,19 @@ def _format_filters_for_email(
         entries.append(("Date range", f"{start or 'Any'} to {end or 'Any'}"))
         used_keys.update({"date_from", "date_to"})
 
-    # Show any additional raw filter keys that were provided
+    parsed_raw: Mapping[str, Any] | None = None
     if isinstance(raw_filters, Mapping):
-        for key, val in raw_filters.items():
+        parsed_raw = raw_filters
+    elif isinstance(raw_filters, str):
+        try:
+            maybe = json.loads(raw_filters)
+            if isinstance(maybe, Mapping):
+                parsed_raw = maybe
+        except Exception:
+            logger.error(f"Failed to parse filters JSON: {raw_filters!r}")
+
+    if parsed_raw:
+        for key, val in parsed_raw.items():
             if key in used_keys:
                 continue
             val_str = _as_str(val).strip()
@@ -248,12 +259,6 @@ def _format_filters_for_email(
                 continue
             label = key.replace("_", " ").title()
             entries.append((label, val_str))
-    
-    if isinstance(raw_filters, str):
-        try:
-            entries = json.loads(raw_filters)
-        except Exception:
-            logger.error(f"Failed to parse filters JSON: {raw_filters!r}")
 
     if not entries:
         return "Filters: none\n", "<p><b>Filters:</b> none</p>"
@@ -271,31 +276,41 @@ def _vector_literal(vec: Sequence[float]) -> str:
     return "[" + ",".join(map(str, vec)) + "]"
 
 
+def _embed_semantic_query(text: str | None) -> list[float] | None:
+    if not text:
+        return None
+    try:
+        res = _OPENAI_CLIENT.embeddings.create(model=_OPENAI_MODEL, input=text)
+        return list(res.data[0].embedding)
+    except Exception as e:  # pragma: no cover - network/API errors
+        logger.error(f"Embedding failed for semantic_query: {e}")
+        return None
+
+
 def _build_where_clauses(params: list[Any], filters: dict[str, Any]) -> list[str]:
     """Build WHERE fragments with sequential placeholders."""
     clauses: list[str] = []
 
     if filters.get("keywords"):
         params.append(filters["keywords"])
-        clauses.append(f"{TSVECTOR_EXPR} @@ plainto_tsquery('english', ${len(params)})")
+        clauses.append(f"{TSVECTOR_EXPR} @@ plainto_tsquery('english', %s)")
     if filters.get("assignee"):
         params.append(filters["assignee"])
-        clauses.append(f"p.assignee_name = ${len(params)}")
+        clauses.append("p.assignee_name = %s")
     if filters.get("cpc_list"):
         params.append(json.dumps(filters["cpc_list"]))
-        idx = len(params)
         clauses.append(
-            f"EXISTS (SELECT 1 FROM jsonb_array_elements_text(${idx}::jsonb) AS q(code) WHERE p.cpc ? q.code)"
+            "EXISTS (SELECT 1 FROM jsonb_array_elements_text(%s::jsonb) AS q(code) WHERE p.cpc ? q.code)"
         )
     if filters.get("date_from"):
         params.append(filters["date_from"])
         clauses.append(
-            f"to_date(p.pub_date::text, 'YYYYMMDD') >= to_date(${len(params)}::text, 'YYYYMMDD')"
+            "to_date(p.pub_date::text, 'YYYYMMDD') >= to_date(%s::text, 'YYYYMMDD')"
         )
     if filters.get("date_to"):
         params.append(filters["date_to"])
         clauses.append(
-            f"to_date(p.pub_date::text, 'YYYYMMDD') <= to_date(${len(params)}::text, 'YYYYMMDD')"
+            "to_date(p.pub_date::text, 'YYYYMMDD') <= to_date(%s::text, 'YYYYMMDD')"
         )
 
     return clauses
@@ -308,28 +323,28 @@ def _build_search_sql(
     query_vec: Sequence[float] | None,
 ) -> tuple[str, list[Any]]:
     """Construct SQL and params for alert search, optionally semantic."""
-    params: list[Any] = []
-    params.append(saved_query_id)
-    last_run_cte = f"""
+    params: list[Any] = [saved_query_id]
+    last_run_cte = """
 WITH last_run AS (
   SELECT COALESCE(MAX(ae.created_at), TIMESTAMPTZ '1970-01-01') AS ts
   FROM alert_event ae
-  WHERE ae.saved_query_id = ${len(params)}
+  WHERE ae.saved_query_id = %s
 )
 """
 
-    where_clauses = _build_where_clauses(params, filters)
     base_select = "SELECT p.pub_id, p.title, p.pub_date"
     from_clause = "FROM patent p CROSS JOIN last_run lr"
     order_by = "to_date(p.pub_date::text, 'YYYYMMDD') DESC"
 
     if query_vec is not None:
         params.append(_vector_literal(query_vec))
-        base_select += f", (e.embedding <=> ${len(params)}{_VEC_CAST}) AS dist"
+        base_select += f", (e.embedding <=> %s{_VEC_CAST}) AS dist"
         from_clause = "FROM patent p JOIN patent_embeddings e ON p.pub_id = e.pub_id CROSS JOIN last_run lr"
-        where_clauses.insert(0, "e.model LIKE '%|ta'")
         order_by = "dist ASC, to_date(p.pub_date::text, 'YYYYMMDD') DESC"
 
+    where_clauses = _build_where_clauses(params, filters)
+    if query_vec is not None:
+        where_clauses.insert(0, "e.model LIKE '%|ta'")
     where_clauses.append("to_date(p.pub_date::text, 'YYYYMMDD') > (lr.ts AT TIME ZONE 'UTC')::date")
     where_sql = " AND ".join(where_clauses) if where_clauses else "TRUE"
 
@@ -344,22 +359,18 @@ LIMIT 500;
     return sql, params
 
 
-async def run_one(conn: asyncpg.Connection, sq: asyncpg.Record) -> int:
+def run_one(conn: psycopg.Connection, sq: Mapping[str, Any]) -> int:
     raw_filters = sq.get("filters")
     filters = _normalize_filters(raw_filters)
     semantic_query = (sq.get("semantic_query") or "").strip() or None
 
-    query_vec: list[float] | None = None
-    if semantic_query:
-        try:
-            maybe = await embed_text(semantic_query)
-            query_vec = list(maybe) if maybe else None
-        except Exception as e:  # pragma: no cover - downstream network/API errors
-            print(f"[error] embedding semantic_query for saved_query id={sq['id']}: {e}")
-
+    query_vec = _embed_semantic_query(semantic_query)
     sql, params = _build_search_sql(filters, sq["id"], query_vec=query_vec)
 
-    rows = await conn.fetch(sql, *params)
+    with conn.cursor(row_factory=dict_row) as cur:
+        cur.execute(_sql.SQL(sql), params) # type: ignore
+        rows = cur.fetchall()
+
     count = len(rows)
     if count == 0:
         return 0
@@ -373,10 +384,11 @@ async def run_one(conn: asyncpg.Connection, sq: asyncpg.Record) -> int:
         for r in rows[:50]
     ]
 
-    await conn.execute(
-        "INSERT INTO alert_event(saved_query_id, results_sample, count) VALUES ($1,$2,$3)",
-        sq["id"], json.dumps(sample), count
-    )
+    with conn.cursor() as cur:
+        cur.execute(
+            "INSERT INTO alert_event(saved_query_id, results_sample, count) VALUES (%s,%s,%s)",
+            [sq["id"], json.dumps(sample), count],
+        )
 
     name = sq["name"] or "Saved Query"
     filters_text, filters_html = _format_filters_for_email(filters, semantic_query, raw_filters)
@@ -417,36 +429,39 @@ async def run_one(conn: asyncpg.Connection, sq: asyncpg.Record) -> int:
     if not to_email:
         print(f"[warn] No owner email for saved_query id={sq['id']}; skipping email send")
     else:
-        await send_mailgun_email(to_email, f"SynapseIP Alert: {name}", text, html)
+        send_mailgun_email(to_email, f"SynapseIP Alert: {name}", text, html)
     return count
 
 
-async def main():
+def main() -> None:
     load_dotenv()
-    DB_URL = os.getenv("DATABASE_URL")
+    DB_URL = os.getenv("DATABASE_URL") or os.getenv("PG_DSN") or ""
 
-    conn = await asyncpg.connect(DB_URL)
+    conn = psycopg.connect(DB_URL)
+    conn.autocommit = True
     try:
         # Fetch active queries and join to owner email
-        saved = await conn.fetch(
-            """
-            SELECT sq.*, au.email AS owner_email
-            FROM saved_query sq
-            JOIN app_user au ON au.id = sq.owner_id
-            WHERE sq.is_active = TRUE
-            ORDER BY sq.created_at
-            """
-        )
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute(
+                """
+                SELECT sq.*, au.email AS owner_email
+                FROM saved_query sq
+                JOIN app_user au ON au.id = sq.owner_id
+                WHERE sq.is_active = TRUE
+                ORDER BY sq.created_at
+                """
+            )
+            saved = cur.fetchall()
         total = 0
         for sq in saved:
             try:
-                total += await run_one(conn, sq)
+                total += run_one(conn, sq)
             except Exception as e:
                 print(f"[error] saved_query id={sq['id']}: {e}")
         print(f"[done] total new results across alerts: {total}")
     finally:
-        await conn.close()
+        conn.close()
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()
