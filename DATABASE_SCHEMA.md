@@ -2,7 +2,7 @@
 
 This document outlines the database schema for the project. The database is a **PostgreSQL 17** instance hosted on [**Neon**](https://neon.tech/).
 
-## Table of Contents
+## TABLE OF CONTENTS
 
 ### [MAIN TABLES](#main-tables)
 
