@@ -2,9 +2,9 @@
 """
 Script to process patent citations CSV and query USPTO ODP API for application numbers.
 
-This script reads a CSV file with three fields per row and queries the USPTO ODP API
-to get the application number for each patent/publication in the third column.
-It adds the application number (with "US" prefix) as a fourth column.
+This script reads a CSV file with two fields per row and queries the USPTO ODP API
+to get the application number and assignee name for each patent/publication.
+It adds the application number (with "US" prefix) as a third column, and the assignee name as a fourth column.
 """
 
 import csv
@@ -15,10 +15,46 @@ from typing import Any
 
 import requests
 from dotenv import load_dotenv
+from tenacity import (
+    retry,
+    retry_if_not_exception_type,
+    stop_after_attempt,
+    wait_random_exponential,
+)
 
 # Load environment variables from .env file
 load_dotenv()
 
+class USPTOApiError(RuntimeError):
+    pass
+
+
+class USPTONotFoundError(USPTOApiError):
+    """Raised when the USPTO API returns a 404 Not Found error."""
+    pass
+
+def _safe_str(value: Any) -> str:
+    if isinstance(value, str):
+        value = value.replace('"', '')
+        return value.strip()
+    return ""
+
+def _find_first_string(node: Any, key: str) -> str | None:
+    if isinstance(node, dict):
+        if key in node and isinstance(node[key], str):
+            candidate = node[key].strip()
+            if candidate:
+                return _safe_str(candidate)
+        for value in node.values():
+            result = _find_first_string(value, key)
+            if result:
+                return _safe_str(result)
+    elif isinstance(node, list):
+        for item in node:
+            result = _find_first_string(item, key)
+            if result:
+                return _safe_str(result)
+    return None
 
 def get_api_key() -> str:
     """Get USPTO ODP API key from environment variable."""
@@ -69,8 +105,12 @@ def create_request_body(patent_value: str) -> dict[str, Any]:
             ]
         }
 
-
-def query_uspto_api(patent_value: str, api_key: str) -> str | None:
+@retry(
+    wait=wait_random_exponential(min=1, max=60),
+    stop=stop_after_attempt(6),
+    retry=retry_if_not_exception_type(USPTONotFoundError),
+)
+def query_uspto_api(patent_value: str, api_key: str) -> tuple[str, str] | None:
     """
     Query the USPTO ODP API for the given patent value.
     
@@ -94,6 +134,9 @@ def query_uspto_api(patent_value: str, api_key: str) -> str | None:
         response.raise_for_status()
         
         response_data = response.json()
+
+        first_patent_data = None
+        app_number_plus_assignee_name = []
         
         # Extract applicationNumberText from the response based on the actual USPTO API schema
         # The structure is: response -> patentFileWrapperDataBag -> [0] -> applicationNumberText
@@ -101,10 +144,28 @@ def query_uspto_api(patent_value: str, api_key: str) -> str | None:
             first_patent_data = response_data['patentFileWrapperDataBag'][0]
             if 'applicationNumberText' in first_patent_data:
                 app_number = first_patent_data['applicationNumberText']
-                return f"US{app_number}"
+                app_number_plus_assignee_name.append(f"US{app_number}")
         
-        print(f"Warning: No applicationNumberText found for {patent_value}")
-        return None
+        assignment_bag = first_patent_data.get("assignmentBag") if first_patent_data else None
+        if isinstance(assignment_bag, list):
+            for assignment in assignment_bag:
+                assignee_bag = assignment.get("assigneeBag")
+                if isinstance(assignee_bag, list):
+                    for assignee in assignee_bag:
+                        name = _safe_str(assignee.get("assigneeNameText"))
+                        if name:
+                            app_number_plus_assignee_name.append(name)
+        elif isinstance(assignment_bag, dict):
+            name = _safe_str(assignment_bag.get("assigneeNameText"))
+            if name:
+                app_number_plus_assignee_name.append(name)
+        else:
+            app_number_plus_assignee_name.append(_find_first_string(response_data, "assigneeNameText") or "")
+        
+        if len(app_number_plus_assignee_name) != 2:
+            return None
+        
+        return app_number_plus_assignee_name[0], app_number_plus_assignee_name[1]
         
     except requests.exceptions.RequestException as e:
         print(f"Error querying API for {patent_value}: {e}")
@@ -144,21 +205,28 @@ def process_csv_file(input_file: str, output_file: str) -> None:
             # Get the third column value (index 2)
             patent_value = row[2].strip()
             
-            print(f"Processing row {row_num}: {patent_value}")
+            
             
             # Query the API
-            application_number = query_uspto_api(patent_value, api_key)
-            
-            # Create new row with the application number as fourth column
-            new_row = row + [application_number or ""]
-            writer.writerow(new_row)
-            
-            processed_count += 1
-            if application_number:
+            application_number, assignee_name = query_uspto_api(patent_value, api_key) or (None, None)
+
+
+            if application_number and assignee_name:
+                print(f"+ WRITING ROW {row_num} || Citing: {row[0]}; Cited: {patent_value}, Cited Appn #: {application_number}, Cited Assignee: {assignee_name}.")
+                
+                # Create new row with the application number as fourth column
+                new_row = [row[0]] +[row[1]] + [application_number or ""] + [assignee_name or ""]
+                
+                writer.writerow(new_row)
+                
+                processed_count += 1
                 success_count += 1
+            else:
+                print(f"- SKIPPING ROW {row_num} || Citing: {row[0]}; Cited: {patent_value}.")
+                processed_count += 1
                 
             # Add a small delay to be respectful to the API
-            if processed_count % 10 == 0:
+            if processed_count % 100 == 0:
                 print(f"Processed {processed_count} rows, {success_count} successful API calls")
     
     print(f"Processing complete. Total rows: {processed_count}, Successful API calls: {success_count}")

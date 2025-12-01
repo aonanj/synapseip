@@ -53,6 +53,7 @@ DB schema (current):
 import asyncio
 import json
 import os
+from collections.abc import Mapping
 from typing import Any
 from urllib.parse import urlencode
 
@@ -157,6 +158,20 @@ LIMIT 200;
 """
 
 
+def _coerce_filters(raw: Any) -> dict[str, Any]:
+    """Return filters as a dict; gracefully handle JSON strings."""
+    if isinstance(raw, Mapping):
+        return dict(raw)
+    if isinstance(raw, str):
+        try:
+            parsed = json.loads(raw)
+            if isinstance(parsed, Mapping):
+                return dict(parsed)
+        except Exception:
+            return {}
+    return {}
+
+
 def _extract_filters(filters: dict[str, Any] | None) -> tuple[str | None, str | None, str | None, str | None, str | None]:
         """Extract normalized filter tuple from saved_query.filters JSON.
 
@@ -168,7 +183,8 @@ def _extract_filters(filters: dict[str, Any] | None) -> tuple[str | None, str | 
             - date_to: str(YYYY-MM-DD) | null
         Returns a 5-tuple matching SQL parameter order for _where_clause.
         """
-        if not isinstance(filters, dict):
+        filters = _coerce_filters(filters)
+        if not filters:
                 return None, None, None, None, None
 
         keywords = filters.get("keywords") or None
@@ -208,7 +224,7 @@ def _normalize_date_param(v: Any) -> str:
 
 def build_search_link(sq: asyncpg.Record) -> str:
     """Construct a front-end Search & Trends URL populated with saved alert filters."""
-    filters = sq.get("filters") or {}
+    filters = _coerce_filters(sq.get("filters"))
     base = os.getenv("FRONTEND_URL", "https://www.synapse-ip.com").rstrip("/")
     params: dict[str, Any] = {}
 
