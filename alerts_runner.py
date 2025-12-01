@@ -261,21 +261,7 @@ def _build_search_sql(
     *,
     query_vec: Sequence[float] | None,
 ) -> tuple[str, list[Any]]:
-    """Construct SQL and params for alert search, optionally semantic.
-
-    When `query_vec` is provided, we support two modes controlled by
-    environment configuration:
-
-    - Ordering-only mode (short-term fix): if `_SEMANTIC_DIST_CAP` is
-      None, we include patents with and without embeddings and only use
-      the semantic distance to order results (patents lacking an
-      embedding are pushed to the end).
-
-    - Filtered semantic mode (medium-term fix): if `_SEMANTIC_DIST_CAP`
-      is set, we restrict to patents whose embeddings are within the
-      distance cap, and optionally require the embedding `model` to
-      match `_SEMANTIC_MODEL_TAG`.
-    """
+    """Construct SQL and params for alert search, optionally semantic."""
     params: list[Any] = [saved_query_id]
     last_run_cte = """
 WITH last_run AS (
@@ -289,56 +275,24 @@ WITH last_run AS (
     from_clause = "FROM patent p CROSS JOIN last_run lr"
     order_by = "to_date(p.pub_date::text, 'YYYYMMDD') DESC"
 
-    semantic_order_only = query_vec is not None and _SEMANTIC_DIST_CAP is None
-    semantic_filtered = query_vec is not None and _SEMANTIC_DIST_CAP is not None
-
+    # If we have an embedding vector, add semantic distance and LEFT JOIN embeddings
     if query_vec is not None:
-        # First parameterized copy of the query vector, used in SELECT.
         params.append(_vector_literal(query_vec))
         base_select += f", (e.embedding <=> %s{_VEC_CAST}) AS dist"
-
-        # Join to embeddings, optionally constraining by model tag.
-        # Use LEFT JOIN so patents without embeddings are not lost in
-        # ordering-only mode (short-term fix).
-        join_type = "LEFT JOIN"
-        join_on = "p.pub_id = e.pub_id"
-        if _SEMANTIC_MODEL_TAG:
-            params.append(_SEMANTIC_MODEL_TAG)
-            join_on += " AND e.model = %s"
-
+        # Short-term fix: LEFT JOIN so patents without embeddings still show up
         from_clause = (
-            f"FROM patent p {join_type} patent_embeddings e ON {join_on} "
+            "FROM patent p "
+            "LEFT JOIN patent_embeddings e ON p.pub_id = e.pub_id "
             "CROSS JOIN last_run lr"
         )
+        # Simple, valid ordering: semantic distance first, then newest pub_date
+        order_by = "dist ASC, to_date(p.pub_date::text, 'YYYYMMDD') DESC"
 
-        if semantic_filtered:
-            # Filtered semantic mode: only rows with a finite distance
-            # (enforced via WHERE) will remain.
-            order_by = "dist ASC, to_date(p.pub_date::text, 'YYYYMMDD') DESC"
-        else:
-            # Ordering-only mode: keep patents without embeddings but
-            # push them to the end of the list.
-            order_by = (
-                "dist IS NULL, dist ASC, "
-                "to_date(p.pub_date::text, 'YYYYMMDD') DESC"
-            )
-
-    # Build filter WHERE clauses (keywords, assignee, CPC, date window)
     where_clauses = _build_where_clauses(params, filters)
-    # Only include patents newer than the last alert_event for this query.
+    # Only new results since last run
     where_clauses.append(
         "to_date(p.pub_date::text, 'YYYYMMDD') > (lr.ts AT TIME ZONE 'UTC')::date"
     )
-
-    if semantic_filtered:
-        # Medium-term fix: treat semantic_query as a real criterion by
-        # enforcing a distance ceiling. This uses a second parameterized
-        # copy of the vector, which is fine for psycopg-style "%s"
-        # placeholders.
-        params.append(_vector_literal(query_vec))  # type: ignore[arg-type]
-        params.append(_SEMANTIC_DIST_CAP)  # type: ignore[arg-type]
-        where_clauses.append(f"e.embedding <=> %s{_VEC_CAST} <= %s")
-
     where_sql = " AND ".join(where_clauses) if where_clauses else "TRUE"
 
     sql = f"""
@@ -350,6 +304,7 @@ ORDER BY {order_by}
 LIMIT 500;
 """
     return sql, params
+
 
 
 def send_mailgun_email(
