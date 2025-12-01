@@ -201,6 +201,11 @@ def _format_filters_for_email(filters: dict[str, Any], semantic_query: str | Non
     return text, html_block
 
 
+def _vector_literal(vec: Sequence[float]) -> str:
+    """Format embedding for pgvector as a string literal."""
+    return "[" + ",".join(map(str, vec)) + "]"
+
+
 def _build_where_clauses(params: list[Any], filters: dict[str, Any]) -> list[str]:
     """Build WHERE fragments with sequential placeholders."""
     clauses: list[str] = []
@@ -254,7 +259,7 @@ WITH last_run AS (
     order_by = "to_date(p.pub_date::text, 'YYYYMMDD') DESC"
 
     if query_vec is not None:
-        params.append(list(query_vec))
+        params.append(_vector_literal(query_vec))
         base_select += f", (e.embedding <=> ${len(params)}{_VEC_CAST}) AS dist"
         from_clause = "FROM patent p JOIN patent_embeddings e ON p.pub_id = e.pub_id CROSS JOIN last_run lr"
         where_clauses.insert(0, "e.model LIKE '%|ta'")
@@ -323,13 +328,12 @@ async def run_one(conn: asyncpg.Connection, sq: asyncpg.Record) -> int:
         "           body {"
         "                text-align: center;"
         "           }"
-        "           table {"
-        "               margin: 0 auto;"
-        "               border: 1px solid black;"
-        "           }"
         "           table,"
         "           th,"
         "           td {"
+        "               text-align: center;"
+        "               padding: 2px;"
+        "               border: 1px solid black;"
         "               border-collapse: collapse;"
         "           }"
         "        </style>"       
