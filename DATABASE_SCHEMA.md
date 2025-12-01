@@ -814,54 +814,54 @@ View to retrieve active subscription details for users.
 
 #### View Query
 
-    ```sql
+``` pgsql
 
-        SELECT
-            s.id,
-            s.user_id,
-            s.stripe_subscription_id,
-            s.tier,
-            s.status,
-            s.current_period_start,
-            s.current_period_end,
-            s.tier_started_at,
-            EXTRACT(
+    SELECT
+        s.id,
+        s.user_id,
+        s.stripe_subscription_id,
+        s.tier,
+        s.status,
+        s.current_period_start,
+        s.current_period_end,
+        s.tier_started_at,
+        EXTRACT(
+            day
+            FROM
+            now() - s.tier_started_at
+        )::integer AS days_in_current_tier,
+        CASE
+            WHEN s.tier = 'beta_tester'::subscription_tier
+            AND EXTRACT(
                 day
                 FROM
-                now() - s.tier_started_at
-            )::integer AS days_in_current_tier,
-            CASE
-                WHEN s.tier = 'beta_tester'::subscription_tier
-                AND EXTRACT(
-                    day
-                    FROM
-                        now() - s.tier_started_at
-                ) >= 90::numeric THEN true
-                ELSE false
-            END AS requires_tier_migration,
-            s.cancel_at_period_end,
-            s.canceled_at,
-            pp.name AS plan_name,
-            pp.amount_cents,
-            pp.currency,
-            pp."interval",
-            sc.email
-        FROM
-            subscription s
-            JOIN price_plan pp ON s.stripe_price_id = pp.stripe_price_id
-            JOIN stripe_customer sc ON s.user_id = sc.user_id
-        WHERE
-            (
-                s.status = ANY (
-                    ARRAY[
-                        'active'::subscription_status,
-                        'trialing'::subscription_status,
-                        'past_due'::subscription_status
-                    ]
-                )
+                    now() - s.tier_started_at
+            ) >= 90::numeric THEN true
+            ELSE false
+        END AS requires_tier_migration,
+        s.cancel_at_period_end,
+        s.canceled_at,
+        pp.name AS plan_name,
+        pp.amount_cents,
+        pp.currency,
+        pp."interval",
+        sc.email
+    FROM
+        subscription s
+        JOIN price_plan pp ON s.stripe_price_id = pp.stripe_price_id
+        JOIN stripe_customer sc ON s.user_id = sc.user_id
+    WHERE
+        (
+            s.status = ANY (
+                ARRAY[
+                    'active'::subscription_status,
+                    'trialing'::subscription_status,
+                    'past_due'::subscription_status
+                ]
             )
-            AND s.current_period_end > now()
-    ```
+        )
+        AND s.current_period_end > now()
+```
 
 ---
 
@@ -880,27 +880,27 @@ View on assignees of cited patents/publications in the `patent_citation` table t
 
 #### View Query
 
-    ```sql
+``` pgsql
 
-        SELECT
-            p.pub_id,
-            p.application_number,
-            p.canonical_assignee_name_id,
-            p.assignee_alias_id
+    SELECT
+        p.pub_id,
+        p.application_number,
+        p.canonical_assignee_name_id,
+        p.assignee_alias_id
+    FROM patent p
+
+    UNION ALL
+
+    SELECT
+        cpa.pub_id,
+        cpa.application_number,
+        cpa.canonical_assignee_name_id,
+        cpa.assignee_alias_id
+    FROM cited_patent_assignee cpa
+    WHERE NOT EXISTS (
+        SELECT 1
         FROM patent p
-
-        UNION ALL
-
-        SELECT
-            cpa.pub_id,
-            cpa.application_number,
-            cpa.canonical_assignee_name_id,
-            cpa.assignee_alias_id
-        FROM cited_patent_assignee cpa
-        WHERE NOT EXISTS (
-            SELECT 1
-            FROM patent p
-            WHERE (p.pub_id IS NOT NULL AND p.pub_id = cpa.pub_id)
-            OR (p.application_number IS NOT NULL AND p.application_number = cpa.application_number)
-        );
-    ```
+        WHERE (p.pub_id IS NOT NULL AND p.pub_id = cpa.pub_id)
+        OR (p.application_number IS NOT NULL AND p.application_number = cpa.application_number)
+    );
+```
