@@ -814,7 +814,7 @@ View to retrieve active subscription details for users.
 
 #### View Query
 
-    postgresql
+    ```sql
 
         SELECT
             s.id,
@@ -861,6 +861,7 @@ View to retrieve active subscription details for users.
                 )
             )
             AND s.current_period_end > now()
+    ```
 
 ---
 
@@ -879,7 +880,7 @@ View on assignees of cited patents/publications in the `patent_citation` table t
 
 #### View Query
 
-    postgresql
+    ```sql
 
         SELECT
             p.pub_id,
@@ -902,3 +903,4 @@ View on assignees of cited patents/publications in the `patent_citation` table t
             WHERE (p.pub_id IS NOT NULL AND p.pub_id = cpa.pub_id)
             OR (p.application_number IS NOT NULL AND p.application_number = cpa.application_number)
         );
+    ```
