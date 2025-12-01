@@ -4,7 +4,7 @@ This document outlines the database schema for the project. The database is a **
 
 ## TABLE OF CONTENTS
 
-### [Main Tables](#main-tables)
+### [Main Tables](#main-tables-1)
 
 * [public.patent](#publicpatent)
 * [public.patent\_embeddings](#publicpatent_embeddings)
@@ -25,7 +25,7 @@ This document outlines the database schema for the project. The database is a **
 * [public.subscription\_event](#publicsubscription_event)
 * [public.price\_plan](#publicprice_plan)
 
-### [Staging & Logging Tables](#staging--logging-tables)
+### [Staging & Logging Tables](#staging--logging-tables-1)
 
 * [public.alembic\_version](#publicalembic_version)
 * [public.patent\_staging](#publicpatent_staging)
@@ -35,7 +35,7 @@ This document outlines the database schema for the project. The database is a **
 * [public.cited\_patent\_assignee\_raw\_dedup](#publiccited_patent_assignee_raw_dedup)
 * [public.ingest\_log](#publicingest_log)
 
-### [Views](#views)
+### [Views](#views-1)
 
 * [public.active\_subscriptions](#publicactive_subscriptions)
 * [public.citation\_assignee\_resolved](#publiccitation_assignee_resolved)

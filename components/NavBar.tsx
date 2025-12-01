@@ -35,6 +35,44 @@ function fmtDateCell(v: any): string {
   }
 }
 
+function normalizeDateParam(v: any): string {
+  if (v === null || v === undefined || v === "") return "";
+  const s = String(v);
+  if (/^\d{8}$/.test(s)) return `${s.slice(0, 4)}-${s.slice(4, 6)}-${s.slice(6, 8)}`;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  const d = new Date(s);
+  if (!isNaN(d.getTime())) return d.toISOString().slice(0, 10);
+  return "";
+}
+
+function buildAlertHref(alert: SavedQuery): string {
+  const filters = (alert.filters ?? {}) as Record<string, any>;
+  const params = new URLSearchParams();
+
+  const keywords = filters.keywords ?? filters.q ?? "";
+  if (keywords) params.set("q", String(keywords));
+
+  const assignee = filters.assignee ?? "";
+  if (assignee) params.set("assignee", String(assignee));
+
+  const cpc = filters.cpc;
+  const cpcVal = Array.isArray(cpc) ? cpc.join(",") : cpc;
+  if (cpcVal) params.set("cpc", String(cpcVal));
+
+  const dateFrom = normalizeDateParam(filters.date_from ?? filters.dateFrom);
+  const dateTo = normalizeDateParam(filters.date_to ?? filters.dateTo);
+  if (dateFrom) params.set("date_from", dateFrom);
+  if (dateTo) params.set("date_to", dateTo);
+
+  if (alert.semantic_query) params.set("semantic_query", alert.semantic_query);
+
+  params.set("from_alert", "1");
+  params.set("alert_id", String(alert.id));
+
+  const qs = params.toString();
+  return qs ? `/?${qs}` : "/";
+}
+
 export default function NavBar() {
   const { isAuthenticated, isLoading, user, loginWithRedirect, logout, getAccessTokenSilently } = useAuth0();
 
@@ -233,7 +271,7 @@ export default function NavBar() {
               <div className="w-[min(1200px,95vw)] max-h-[80vh] bg-white rounded-xl shadow-xl overflow-hidden">
                 <div className="flex items-center justify-between p-4 border-b">
                   <div className="flex items-center gap-2">
-                    <h3 className="m-0 font-semibold">Your Alerts</h3>
+                    <h3 className="m-0 font-semibold">Saved Alerts for {user?.name || user?.email}</h3>
                   </div>
                   <button onClick={closeAlerts} className="h-8 px-3 text-sm rounded-md border border-slate-200 bg-white hover:bg-slate-50">Close</button>
                 </div>
@@ -272,7 +310,15 @@ export default function NavBar() {
                             const dr = df || dt ? `${fmtDateCell(df)} – ${fmtDateCell(dt)}` : "";
                             return (
                               <tr key={String(a.id)} className="odd:bg-white even:bg-slate-50/40">
-                                <td className="px-3 py-2 align-top">{a.name}</td>
+                                <td className="px-3 py-2 align-top">
+                                  <Link
+                                    href={buildAlertHref(a)}
+                                    className="text-sky-700 font-semibold hover:underline"
+                                    onClick={closeAlerts}
+                                  >
+                                    {a.name}
+                                  </Link>
+                                </td>
                                 <td className="px-3 py-2 align-top">{String(kw).length > 36 ? String(kw).slice(0, 35) + "…" : String(kw)}</td>
                                 <td className="px-3 py-2 align-top">{String(ass).length > 24 ? String(ass).slice(0, 23) + "…" : String(ass)}</td>
                                 <td className="px-3 py-2 align-top">{Array.isArray(cpcv) ? cpcv.join(', ') : String(cpcv ?? '')}</td>
