@@ -237,10 +237,28 @@ def _build_where_clauses(params: list[Any], filters: dict[str, Any]) -> list[str
         params.append(filters["assignee"])
         clauses.append("p.assignee_name = %s")
     if filters.get("cpc_list"):
-        params.append(json.dumps(filters["cpc_list"]))
-        clauses.append(
-            "EXISTS (SELECT 1 FROM jsonb_array_elements_text(%s::jsonb) AS q(code) WHERE p.cpc ? q.code)"
-        )
+        prefixes = [
+            str(c).replace(" ", "").upper()
+            for c in filters["cpc_list"]
+            if str(c).strip()
+        ]
+        if prefixes:
+            or_parts = []
+            for code in prefixes:
+                params.append(f"{code}%")
+                or_parts.append(
+                    "( (c->>'section')"
+                    " || (c->>'class')"
+                    " || (c->>'subclass')"
+                    " || COALESCE(c->>'group', '')"
+                    " || COALESCE('/' || (c->>'subgroup'), '') ) LIKE %s"
+                )
+            clauses.append(
+                "EXISTS ("
+                " SELECT 1 FROM jsonb_array_elements(COALESCE(p.cpc, '[]'::jsonb)) c"
+                f" WHERE {' OR '.join(or_parts)}"
+                ")"
+            )
     if filters.get("date_from"):
         params.append(filters["date_from"])
         clauses.append(
