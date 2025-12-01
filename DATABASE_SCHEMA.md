@@ -814,7 +814,8 @@ View to retrieve active subscription details for users.
 
 #### View Query
 
-    ```
+    ` sql
+
         SELECT
             s.id,
             s.user_id,
@@ -861,7 +862,7 @@ View to retrieve active subscription details for users.
             )
             AND s.current_period_end > now()
 
-    ```
+    `
 
 ---
 
@@ -880,7 +881,8 @@ View on assignees of cited patents/publications in the `patent_citation` table t
 
 #### View Query
 
-    ```
+    ` sql
+    
         SELECT
             p.pub_id,
             p.application_number,
@@ -903,4 +905,4 @@ View on assignees of cited patents/publications in the `patent_citation` table t
             OR (p.application_number IS NOT NULL AND p.application_number = cpa.application_number)
         );
 
-    ```
+    `

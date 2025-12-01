@@ -2,6 +2,7 @@
 
 "use client";
 import { useAuth0 } from "@auth0/auth0-react";
+import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 type SearchHit = {
@@ -16,6 +17,7 @@ type SearchHit = {
 type TrendPoint = { label: string; count: number; top_assignee?: string | null };
 
 type SortOption = "pub_date_desc" | "pub_date_asc" | "assignee_asc" | "assignee_desc";
+const sortOptions: SortOption[] = ["pub_date_desc", "pub_date_asc", "assignee_asc", "assignee_desc"];
 
 function Label({ htmlFor, children }: { htmlFor: string; children: React.ReactNode }) {
   return (
@@ -157,9 +159,20 @@ const overlayContentStyle: React.CSSProperties = {
   width: "90%",
 };
 
+function normalizeDateInputFromQuery(value: string | null): string {
+  if (!value) return "";
+  const s = value.trim();
+  if (!s) return "";
+  if (/^\d{8}$/.test(s)) return `${s.slice(0, 4)}-${s.slice(4, 6)}-${s.slice(6, 8)}`;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  const d = new Date(s);
+  return isNaN(d.getTime()) ? "" : d.toISOString().slice(0, 10);
+}
+
 export default function HomePageClient() {
   // auth
   const { loginWithRedirect, logout, user, isAuthenticated, isLoading, getAccessTokenSilently } = useAuth0();
+  const searchParams = useSearchParams();
   
   // filters
   const [q, setQ] = useState("");
@@ -194,6 +207,7 @@ export default function HomePageClient() {
 
   const [dateBounds, setDateBounds] = useState<{ min: string; max: string} | null>(null);
   const [downloading, setDownloading] = useState<null | "csv" | "pdf">(null);
+  const [lastHydratedQuery, setLastHydratedQuery] = useState<string | null>(null);
 
   // Save current query as an alert in saved_query table via API route
   const saveAsAlert = useCallback(async () => {
@@ -494,6 +508,51 @@ export default function HomePageClient() {
     setSortBy("pub_date_desc");
     setPage(1);
   }, []);
+
+  useEffect(() => {
+    const qs = searchParams?.toString() ?? "";
+    if (qs === lastHydratedQuery) return;
+
+    const nextQ = searchParams?.get("q") ?? "";
+    const nextSemantic = searchParams?.get("semantic_query") ?? "";
+    const nextAssignee = searchParams?.get("assignee") ?? "";
+    const nextCpc = searchParams?.get("cpc") ?? "";
+    const nextDateFrom = normalizeDateInputFromQuery(searchParams?.get("date_from"));
+    const nextDateTo = normalizeDateInputFromQuery(searchParams?.get("date_to"));
+    const pageParam = searchParams?.get("page");
+    const parsedPage = pageParam ? Math.max(1, parseInt(pageParam, 10) || 1) : 1;
+    const sortParam = searchParams?.get("sort") ?? "";
+    const nextSort = sortOptions.includes(sortParam as SortOption) ? (sortParam as SortOption) : sortBy;
+
+    setLastHydratedQuery(qs);
+    const hasQueryParams =
+      nextQ ||
+      nextSemantic ||
+      nextAssignee ||
+      nextCpc ||
+      nextDateFrom ||
+      nextDateTo ||
+      pageParam ||
+      sortParam ||
+      searchParams?.get("from_alert") ||
+      searchParams?.get("alert_id");
+    if (!hasQueryParams) return;
+
+    setQ(nextQ);
+    setSemantic(nextSemantic);
+    setAssignee(nextAssignee);
+    setCpc(nextCpc);
+    setDateFrom(nextDateFrom);
+    setDateTo(nextDateTo);
+    setAppliedQ(nextQ);
+    setAppliedSemantic(nextSemantic);
+    setAppliedAssignee(nextAssignee);
+    setAppliedCpc(nextCpc);
+    setAppliedDateFrom(nextDateFrom);
+    setAppliedDateTo(nextDateTo);
+    setSortBy(nextSort);
+    setPage(parsedPage);
+  }, [lastHydratedQuery, searchParams, sortBy]);
 
   return (
     <div style={pageWrapperStyle}>
