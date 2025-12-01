@@ -60,7 +60,7 @@ _OPENAI_CLIENT = OpenAI(api_key=os.environ.get("OPENAI_API_KEY", ""))
 #   (e.g., "text-embedding-3-small|claims").
 # - ALERT_SEMANTIC_DIST_CAP: if set, enable filtered semantic mode and
 #   discard results with distance above this cap.
-_SEMANTIC_MODEL_TAG = os.environ.get("ALERT_SEMANTIC_MODEL_TAG")
+_SEMANTIC_MODEL_TAG = os.environ.get("ALERT_SEMANTIC_MODEL_TAG", "|claims")
 
 _SEMANTIC_DIST_CAP_ENV = os.environ.get("ALERT_SEMANTIC_DIST_CAP")
 try:
@@ -254,7 +254,6 @@ def _build_where_clauses(params: list[Any], filters: dict[str, Any]) -> list[str
 
     return clauses
 
-
 def _build_search_sql(
     filters: dict[str, Any],
     saved_query_id: Any,
@@ -277,16 +276,22 @@ WITH last_run AS (
 
     # If we have an embedding vector, add semantic distance and LEFT JOIN embeddings
     if query_vec is not None:
-        params.append(_vector_literal(query_vec))
+        vec_literal = _vector_literal(query_vec)
+        # Determine the model tag to filter embeddings
+        # Use the same model as the embedding was generated with
+        embedding_model = f"{_OPENAI_MODEL}|claims"
+        
+        params.append(vec_literal)
+        params.append(embedding_model)
         base_select += f", (e.embedding <=> %s{_VEC_CAST}) AS dist"
-        # Short-term fix: LEFT JOIN so patents without embeddings still show up
+        # Filter by model to ensure we join the correct embedding
         from_clause = (
             "FROM patent p "
-            "LEFT JOIN patent_embeddings e ON p.pub_id = e.pub_id "
+            "LEFT JOIN patent_embeddings e ON p.pub_id = e.pub_id AND e.model = %s "
             "CROSS JOIN last_run lr"
         )
-        # Simple, valid ordering: semantic distance first, then newest pub_date
-        order_by = "dist ASC, to_date(p.pub_date::text, 'YYYYMMDD') DESC"
+        # Handle NULL distances - use NULLS LAST to put patents without embeddings at the end
+        order_by = "dist ASC NULLS LAST, to_date(p.pub_date::text, 'YYYYMMDD') DESC"
 
     where_clauses = _build_where_clauses(params, filters)
     # Only new results since last run
@@ -304,8 +309,6 @@ ORDER BY {order_by}
 LIMIT 500;
 """
     return sql, params
-
-
 
 def send_mailgun_email(
     to_email: str,
