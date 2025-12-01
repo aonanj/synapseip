@@ -69,7 +69,7 @@ from infrastructure.logger import get_logger
 
 logger = get_logger(__name__)
 _OPENAI_MODEL = os.environ.get("EMBEDDING_MODEL", "text-embedding-3-small")
-_OPENAI_CLIENT = OpenAI()
+_OPENAI_CLIENT = OpenAI(api_key=os.environ.get("OPENAI_API_KEY", ""))
 
 def _from_header() -> str:
 
@@ -276,8 +276,10 @@ def _vector_literal(vec: Sequence[float]) -> str:
 
 def _embed_semantic_query(text: str | None) -> list[float] | None:
     if not text:
+        logger.info("No semantic_query provided; skipping embedding")
         return None
     try:
+        logger.info(f"Generating embedding for semantic_query: {text}")
         res = _OPENAI_CLIENT.embeddings.create(model=_OPENAI_MODEL, input=text)
         return list(res.data[0].embedding)
     except Exception as e:  # pragma: no cover - network/API errors
@@ -450,6 +452,7 @@ def main() -> None:
                 """
             )
             saved = cur.fetchall()
+            logger.info(f"Fetched: {saved!r}")
         total = 0
         for sq in saved:
             try:
