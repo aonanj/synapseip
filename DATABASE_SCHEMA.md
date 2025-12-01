@@ -814,7 +814,7 @@ View to retrieve active subscription details for users.
 
 #### View Query
 
-``` pgsql
+```pgsql
 
     SELECT
         s.id,
@@ -860,7 +860,7 @@ View to retrieve active subscription details for users.
                 ]
             )
         )
-        AND s.current_period_end > now()
+        AND s.current_period_end > now();
 ```
 
 ---
@@ -880,7 +880,7 @@ View on assignees of cited patents/publications in the `patent_citation` table t
 
 #### View Query
 
-``` pgsql
+```pgsql
 
     SELECT
         p.pub_id,
