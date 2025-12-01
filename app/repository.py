@@ -258,7 +258,7 @@ async def export_rows(
         f"FROM patent p JOIN patent_embeddings e ON p.pub_id = e.pub_id {CANONICAL_ASSIGNEE_LATERAL}"
     )
     where = [_filters_sql(filters, args)]
-    where.append("e.model LIKE '%%|claims'")
+    where.append("e.model LIKE '%%|ta'")
     if keywords:
         where.append(f"({SEARCH_EXPR}) @@ {tsq}")
         args.append(keywords)
@@ -379,7 +379,7 @@ async def search_hybrid(
 
     filter_args: list[object] = []
     where_clauses = [_filters_sql(filters, filter_args)]
-    where_clauses.append("e.model LIKE '%%|claims'")
+    where_clauses.append("e.model LIKE '%%|ta'")
     if keywords:
         where_clauses.append(f"({SEARCH_EXPR}) @@ {tsq}")
         filter_args.append(keywords)
@@ -473,7 +473,7 @@ async def trend_volume(
             f"FROM patent p JOIN patent_embeddings e ON p.pub_id = e.pub_id {CANONICAL_ASSIGNEE_LATERAL}"
         )
         where_parts = [_filters_sql(filters, args)]
-        where_parts.append("e.model LIKE '%%|claims'")
+        where_parts.append("e.model LIKE '%%|ta'")
         if keywords:
             where_parts.append(f"({SEARCH_EXPR}) @@ {tsq}")
             args.append(keywords)

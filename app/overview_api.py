@@ -667,7 +667,7 @@ def pick_model(conn: psycopg.Connection, preferred: str | None = None) -> str:
 
     Preference order:
     1) If `preferred` provided and exists, use it.
-    2) Any model matching '%|claims' with the highest row count.
+    2) Any model matching '%|ta' with the highest row count.
     3) Fallback: the model with the highest row count overall.
     """
     with conn.cursor() as cur:
@@ -680,7 +680,7 @@ def pick_model(conn: psycopg.Connection, preferred: str | None = None) -> str:
             """
             SELECT model
             FROM patent_embeddings
-            WHERE model LIKE '%%|claims'
+            WHERE model LIKE '%%|ta'
             GROUP BY model
             ORDER BY COUNT(*) DESC
             LIMIT 1
@@ -1946,7 +1946,7 @@ async def get_ip_overview(
     semantic_params: list[Any] = []
     semantic_pub_ids: list[str] = []
     if semantic_enabled and query_vec:
-        model_like = "%|claims"
+        model_like = "%|ta"
         lim = max(1, min(int(semantic_limit), 5000))
         semantic_neighbor_sql = _sql.SQL(
             f"""
@@ -2225,7 +2225,7 @@ def get_overview_graph(
             with current_pool.connection() as conn:
                 _ensure_active_subscription(conn, user_id)
                 preferred_model = os.getenv("OVERVIEW_EMBEDDING_MODEL") or os.getenv(
-                    "WS_EMBEDDING_MODEL", "text-embedding-3-small|claims"
+                    "WS_EMBEDDING_MODEL", "text-embedding-3-small|ta"
                 )
                 model = pick_model(conn, preferred=preferred_model)
                 if req.search_mode == "assignee":
