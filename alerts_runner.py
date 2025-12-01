@@ -54,7 +54,8 @@ import asyncio
 import html
 import json
 import os
-from typing import Any, Sequence
+from collections.abc import Mapping, Sequence
+from typing import Any
 
 import asyncpg
 import httpx
@@ -128,6 +129,8 @@ async def send_mailgun_email(
 
 def _normalize_filters(filters: dict[str, Any] | None) -> dict[str, Any]:
     """Normalize saved_query.filters JSON into consistent strings/lists."""
+    if isinstance(filters, Mapping) and not isinstance(filters, dict):
+        filters = dict(filters)
     def _clean_str(val: Any) -> str | None:
         if val is None:
             return None
@@ -173,22 +176,55 @@ def _normalize_filters(filters: dict[str, Any] | None) -> dict[str, Any]:
     }
 
 
-def _format_filters_for_email(filters: dict[str, Any], semantic_query: str | None) -> tuple[str, str]:
-    """Return (text_block, html_block) describing applied filters."""
+def _format_filters_for_email(
+    filters: dict[str, Any],
+    semantic_query: str | None,
+    raw_filters: dict[str, Any] | None = None,
+) -> tuple[str, str]:
+    """Return (text_block, html_block) describing applied filters.
+
+    Falls back to showing any raw filter keys we don't explicitly normalize.
+    """
     entries: list[tuple[str, str]] = []
+    used_keys: set[str] = set()
+
+    def _as_str(val: Any) -> str:
+        if val is None:
+            return ""
+        if isinstance(val, (str, int, float)):
+            return str(val)
+        try:
+            return json.dumps(val)
+        except Exception:
+            return str(val)
 
     if filters.get("keywords"):
         entries.append(("Keywords", str(filters["keywords"])))
+        used_keys.add("keywords")
     if semantic_query:
         entries.append(("Semantic query", semantic_query))
     if filters.get("assignee"):
         entries.append(("Assignee", str(filters["assignee"])))
+        used_keys.add("assignee")
     if filters.get("cpc_list"):
         entries.append(("CPC", ", ".join(filters["cpc_list"])))
+        used_keys.update({"cpc", "cpc_list"})
     if filters.get("date_from") or filters.get("date_to"):
         start = _add_hyphens_to_date(str(filters.get("date_from") or ""))
         end = _add_hyphens_to_date(str(filters.get("date_to") or ""))
         entries.append(("Date range", f"{start or 'Any'} to {end or 'Any'}"))
+        used_keys.update({"date_from", "date_to"})
+
+    # Show any additional raw filter keys that were provided
+    if isinstance(raw_filters, Mapping):
+        for key, val in raw_filters.items():
+            if key in used_keys:
+                continue
+            val_str = _as_str(val).strip()
+            if not val_str:
+                continue
+            label = key.replace("_", " ").title()
+            entries.append((label, val_str))
 
     if not entries:
         return "Filters: none\n", "<p><b>Filters:</b> none</p>"
@@ -280,7 +316,8 @@ LIMIT 500;
 
 
 async def run_one(conn: asyncpg.Connection, sq: asyncpg.Record) -> int:
-    filters = _normalize_filters(sq.get("filters"))
+    raw_filters = sq.get("filters")
+    filters = _normalize_filters(raw_filters)
     semantic_query = (sq.get("semantic_query") or "").strip() or None
 
     query_vec: list[float] | None = None
@@ -313,7 +350,7 @@ async def run_one(conn: asyncpg.Connection, sq: asyncpg.Record) -> int:
     )
 
     name = sq["name"] or "Saved Query"
-    filters_text, filters_html = _format_filters_for_email(filters, semantic_query)
+    filters_text, filters_html = _format_filters_for_email(filters, semantic_query, raw_filters)
     lines = [f"・ {_add_hyphens_to_date(str(r['pub_date']))}  {r['pub_id']}  {r['title']}" for r in sample]
     text = (
         f"SynapseIP Alert: {name}\n"
