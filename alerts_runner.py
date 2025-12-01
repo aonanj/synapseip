@@ -483,11 +483,10 @@ SELECT
   sq.name,
   sq.filters,
   sq.semantic_query,
-  u.email AS user_email,
-  sq.email_override AS email
+  u.email AS user_email
 FROM saved_query sq
-JOIN app_user u ON u.id = sq.user_id
-WHERE sq.enabled = TRUE
+JOIN app_user u ON u.id = sq.owner_id
+WHERE sq.is_active = TRUE
 """
     with conn.cursor(row_factory=dict_row) as cur:
         cur.execute(sql)
