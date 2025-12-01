@@ -60,6 +60,8 @@ import asyncpg
 import httpx
 from dotenv import load_dotenv
 
+load_dotenv()
+
 from app.embed import embed as embed_text
 
 
