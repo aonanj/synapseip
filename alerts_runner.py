@@ -64,8 +64,9 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from app.embed import embed as embed_text
+from infrastructure.logger import get_logger
 
-
+logger = get_logger(__name__)
 
 def _from_header() -> str:
 
@@ -159,6 +160,7 @@ def _normalize_filters(filters: dict[str, Any] | None) -> dict[str, Any]:
         return s
 
     if not isinstance(filters, dict):
+        logger.error(f"Invalid filters format: {filters!r}")
         return {
             "keywords": None,
             "assignee": None,
@@ -166,6 +168,13 @@ def _normalize_filters(filters: dict[str, Any] | None) -> dict[str, Any]:
             "date_from": None,
             "date_to": None,
         }
+    
+    logger.info(f"Normalizing filters: {filters!r}")
+    logger.info(f" - keywords: {_clean_str(filters.get('keywords'))!r}")
+    logger.info(f" - assignee: {_clean_str(filters.get('assignee'))!r}")
+    logger.info(f" - cpc: {_normalize_cpc(filters.get('cpc'))!r}")
+    logger.info(f" - date_from: {_normalize_date(filters.get('date_from'))!r}")
+    logger.info(f" - date_to: {_normalize_date(filters.get('date_to'))!r}")
 
     return {
         "keywords": _clean_str(filters.get("keywords")),
@@ -196,6 +205,7 @@ def _format_filters_for_email(
         try:
             return json.dumps(val)
         except Exception:
+            logger.error(f"Failed to json.dumps filter val: {val!r}")
             return str(val)
 
     if filters.get("keywords"):
