@@ -365,11 +365,15 @@ def run_one(conn: psycopg.Connection, sq: Mapping[str, Any]) -> int:
     semantic_query = (sq.get("semantic_query") or "").strip() or None
 
     query_vec = _embed_semantic_query(semantic_query)
+    logger.info(f"Running alert for saved_query id={sq['id']} name={sq.get('name')!r} with filters={filters!r} semantic_query={semantic_query!r}")
     sql, params = _build_search_sql(filters, sq["id"], query_vec=query_vec)
+    logger.info(f"SQL: {sql}")
+    logger.info(f"Params: {params}")
 
     with conn.cursor(row_factory=dict_row) as cur:
         cur.execute(_sql.SQL(sql), params) # type: ignore
         rows = cur.fetchall()
+        logger.info(f"Fetched {len(rows)} rows")
 
     count = len(rows)
     if count == 0:
