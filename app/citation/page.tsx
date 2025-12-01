@@ -481,7 +481,7 @@ function ForwardImpactCard({ scope, scopeVersion, tokenGetter }: ForwardImpactCa
               onChange={(e) => setBucketOverride(e.target.value as any)}
               className={inlineInputClass}
             >
-              <option value="">Use scope</option>
+              <option value="">Scope</option>
               <option value="month">Month</option>
               <option value="quarter">Quarter</option>
             </select>

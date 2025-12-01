@@ -232,33 +232,55 @@ async def get_cross_assignee_dependency_matrix(
     WITH resolved AS (
         SELECT
             pc.citing_pub_id,
-            COALESCE(pc.cited_pub_id, cited_app.pub_id) AS cited_pub_id
+            COALESCE(pc.cited_pub_id, cited_app.pub_id) AS cited_pub_id,
+            cited_resolved.canonical_assignee_name_id AS cited_canonical_assignee_id
         FROM patent_citation pc
-        LEFT JOIN patent cited_app ON cited_app.application_number = pc.cited_application_number AND pc.cited_pub_id IS NULL
-        WHERE pc.citing_pub_id = ANY(%s) OR COALESCE(pc.cited_pub_id, cited_app.pub_id) = ANY(%s)
+        LEFT JOIN patent cited_app
+          ON cited_app.application_number = pc.cited_application_number
+         AND pc.cited_pub_id IS NULL
+        LEFT JOIN citation_assignee_resolved cited_resolved
+          ON cited_resolved.pub_id = pc.cited_pub_id
+          OR cited_resolved.application_number = pc.cited_application_number
+        WHERE pc.citing_pub_id = ANY(%s)
+           OR COALESCE(pc.cited_pub_id, cited_app.pub_id) = ANY(%s)
     ),
     edges_base AS (
         SELECT
-            COALESCE(citing.canonical_assignee_name_id::text, LOWER(TRIM(citing.assignee_name))) AS citing_key,
-            COALESCE(cited.canonical_assignee_name_id::text, LOWER(TRIM(cited.assignee_name))) AS cited_key,
+            COALESCE(
+                citing.canonical_assignee_name_id::text,
+                LOWER(TRIM(citing.assignee_name))
+            ) AS citing_key,
+            COALESCE(
+                r.cited_canonical_assignee_id::text,
+                'unknown'
+            ) AS cited_key,
             citing.canonical_assignee_name_id AS citing_assignee_id,
-            COALESCE(citing_can.canonical_assignee_name, citing.assignee_name, 'Unknown') AS citing_assignee_name,
-            cited.canonical_assignee_name_id AS cited_assignee_id,
-            COALESCE(cited_can.canonical_assignee_name, cited.assignee_name, 'Unknown') AS cited_assignee_name
+            COALESCE(
+                citing_can.canonical_assignee_name,
+                citing.assignee_name,
+                'Unknown'
+            ) AS citing_assignee_name,
+            r.cited_canonical_assignee_id AS cited_assignee_id,
+            COALESCE(
+                cited_can.canonical_assignee_name,
+                'Unknown'
+            ) AS cited_assignee_name
         FROM resolved r
-        JOIN patent citing ON citing.pub_id = r.citing_pub_id
-        JOIN patent cited ON cited.pub_id = r.cited_pub_id
-        LEFT JOIN canonical_assignee_name citing_can ON citing_can.id = citing.canonical_assignee_name_id
-        LEFT JOIN canonical_assignee_name cited_can ON cited_can.id = cited.canonical_assignee_name_id
+        JOIN patent citing
+          ON citing.pub_id = r.citing_pub_id
+        LEFT JOIN canonical_assignee_name citing_can
+          ON citing_can.id = citing.canonical_assignee_name_id
+        LEFT JOIN canonical_assignee_name cited_can
+          ON cited_can.id = r.cited_canonical_assignee_id
     ),
     edges AS (
         SELECT
             citing_key,
             cited_key,
             MIN(citing_assignee_id::text) FILTER (WHERE citing_assignee_id IS NOT NULL)::uuid AS citing_assignee_id,
-            MIN(cited_assignee_id::text) FILTER (WHERE cited_assignee_id IS NOT NULL)::uuid AS cited_assignee_id,
+            MIN(cited_assignee_id::text)  FILTER (WHERE cited_assignee_id  IS NOT NULL)::uuid AS cited_assignee_id,
             MAX(citing_assignee_name) AS citing_assignee_name,
-            MAX(cited_assignee_name) AS cited_assignee_name,
+            MAX(cited_assignee_name)  AS cited_assignee_name,
             COUNT(*) AS citation_count
         FROM edges_base
         GROUP BY citing_key, cited_key
@@ -269,11 +291,16 @@ async def get_cross_assignee_dependency_matrix(
         cited_assignee_id,
         cited_assignee_name,
         citation_count,
-        CASE WHEN %s THEN citation_count::float / NULLIF(SUM(citation_count) OVER (PARTITION BY citing_key), 0) END AS citing_to_cited_pct
+        CASE
+            WHEN %s THEN citation_count::float
+                  / NULLIF(SUM(citation_count) OVER (PARTITION BY citing_key), 0)
+            ELSE 0
+        END AS citing_to_cited_pct
     FROM edges
     WHERE citation_count >= %s
     ORDER BY citation_count DESC;
     """
+
     async with conn.cursor(row_factory=dict_row) as cur:
         await cur.execute(query, args)
         return await cur.fetchall()
@@ -313,9 +340,15 @@ async def get_risk_raw_metrics(
     resolved_bwd AS (
         SELECT
             pc.citing_pub_id AS pub_id,
-            COALESCE(pc.cited_pub_id, cited_app.pub_id) AS cited_pub_id
+            COALESCE(pc.cited_pub_id, cited_app.pub_id) AS cited_pub_id,
+            cited_resolved.canonical_assignee_name_id AS cited_canonical_assignee_id
         FROM patent_citation pc
-        LEFT JOIN patent cited_app ON cited_app.application_number = pc.cited_application_number AND pc.cited_pub_id IS NULL
+        LEFT JOIN patent cited_app
+          ON cited_app.application_number = pc.cited_application_number
+         AND pc.cited_pub_id IS NULL
+        LEFT JOIN citation_assignee_resolved cited_resolved
+          ON cited_resolved.pub_id = pc.cited_pub_id
+          OR cited_resolved.application_number = pc.cited_application_number
         WHERE pc.citing_pub_id = ANY(%s)
     ),
     bwd_totals AS (
@@ -344,10 +377,9 @@ async def get_risk_raw_metrics(
     assignee_counts AS (
         SELECT
             r.pub_id,
-            COALESCE(cited.canonical_assignee_name_id::text, cited.assignee_name, 'Unknown') AS assignee_key,
+            COALESCE(r.cited_canonical_assignee_id::text, 'Unknown') AS assignee_key,
             COUNT(*) AS cnt
         FROM resolved_bwd r
-        JOIN patent cited ON cited.pub_id = r.cited_pub_id
         WHERE r.cited_pub_id IS NOT NULL
         GROUP BY r.pub_id, assignee_key
     ),
@@ -405,7 +437,7 @@ async def get_encroachment_timeline(
     competitor_ids = competitor_assignee_ids or []
 
     where: list[str] = [
-        "cited.canonical_assignee_name_id = ANY(%s)",
+        "r.cited_canonical_assignee_id = ANY(%s)",
         "citing.pub_date IS NOT NULL",
     ]
     if competitor_ids:
@@ -425,9 +457,15 @@ async def get_encroachment_timeline(
     WITH resolved AS (
         SELECT
             COALESCE(pc.cited_pub_id, cited_app.pub_id) AS cited_pub_id,
-            pc.citing_pub_id
+            pc.citing_pub_id,
+            cited_resolved.canonical_assignee_name_id AS cited_canonical_assignee_id
         FROM patent_citation pc
-        LEFT JOIN patent cited_app ON cited_app.application_number = pc.cited_application_number AND pc.cited_pub_id IS NULL
+        LEFT JOIN patent cited_app
+          ON cited_app.application_number = pc.cited_application_number
+         AND pc.cited_pub_id IS NULL
+        LEFT JOIN citation_assignee_resolved cited_resolved
+          ON cited_resolved.pub_id = pc.cited_pub_id
+          OR cited_resolved.application_number = pc.cited_application_number
     )
     SELECT
         {bucket_expr} AS bucket_start,
@@ -435,9 +473,10 @@ async def get_encroachment_timeline(
         COALESCE(citing_can.canonical_assignee_name, citing.assignee_name) AS competitor_assignee_name,
         COUNT(DISTINCT r.citing_pub_id) AS citing_patent_count
     FROM resolved r
-    JOIN patent cited ON cited.pub_id = r.cited_pub_id
-    JOIN patent citing ON citing.pub_id = r.citing_pub_id
-    LEFT JOIN canonical_assignee_name citing_can ON citing_can.id = citing.canonical_assignee_name_id
+    JOIN patent citing
+      ON citing.pub_id = r.citing_pub_id
+    LEFT JOIN canonical_assignee_name citing_can
+      ON citing_can.id = citing.canonical_assignee_name_id
     WHERE {' AND '.join(where)}
     GROUP BY bucket_start, competitor_assignee_id, competitor_assignee_name
     ORDER BY bucket_start, citing_patent_count DESC;
