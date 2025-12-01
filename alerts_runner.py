@@ -159,6 +159,19 @@ def _normalize_filters(filters: dict[str, Any] | None) -> dict[str, Any]:
             s = s.replace("-", "")
         return s
 
+    if isinstance(filters, str):
+        try:
+            filters = json.loads(filters)
+        except Exception:
+            logger.error(f"Failed to parse filters JSON: {filters!r}")
+            return {
+                "keywords": None,
+                "assignee": None,
+                "cpc_list": None,
+                "date_from": None,
+                "date_to": None,
+            }
+        
     if not isinstance(filters, dict):
         logger.error(f"Invalid filters format: {filters!r}")
         return {
@@ -235,6 +248,12 @@ def _format_filters_for_email(
                 continue
             label = key.replace("_", " ").title()
             entries.append((label, val_str))
+    
+    if isinstance(raw_filters, str):
+        try:
+            entries = json.loads(raw_filters)
+        except Exception:
+            logger.error(f"Failed to parse filters JSON: {raw_filters!r}")
 
     if not entries:
         return "Filters: none\n", "<p><b>Filters:</b> none</p>"
