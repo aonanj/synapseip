@@ -73,6 +73,13 @@ def _from_header() -> str:
     )
     return f"{MAILGUN_FROM_NAME} <{MAILGUN_FROM_EMAIL}>"
 
+def _add_hyphens_to_date(date_str: str) -> str:
+    """Convert YYYYMMDD to YYYY-MM-DD."""
+    if len(date_str) == 8 and date_str.isdigit():
+        return f"{date_str[:4]}-{date_str[4:6]}-{date_str[6:]}"
+    return date_str
+     
+
 
 async def send_mailgun_email(
     to_email: str,
@@ -151,7 +158,7 @@ JOIN last_run lr ON lr.saved_query_id = $6
 {_where_clause()}
     AND to_date(p.pub_date::text, 'YYYYMMDD') > (lr.ts AT TIME ZONE 'UTC')::date
 ORDER BY to_date(p.pub_date::text, 'YYYYMMDD') DESC
-LIMIT 200;
+LIMIT 500;
 """
 
 
@@ -208,7 +215,7 @@ async def run_one(conn: asyncpg.Connection, sq: asyncpg.Record) -> int:
             "title": r["title"],
             "pub_date": str(r["pub_date"]),
         }
-        for r in rows[:10]
+        for r in rows[:50]
     ]
 
     await conn.execute(
@@ -217,19 +224,19 @@ async def run_one(conn: asyncpg.Connection, sq: asyncpg.Record) -> int:
     )
 
     name = sq["name"] or "Saved Query"
-    lines = [f"{r['pub_date']}  {r['pub_id']}  {r['title']}" for r in sample]
+    lines = [f"・ {r['pub_date']}  {r['pub_id']}  {r['title']}" for r in sample]
     text = (
-        f"Alert: {name}\n"
+        f"SynapseIP Alert: {name}\n"
         f"Total new results: {count}\n\n"
         + "\n".join(lines)
-        + "\n\n(Showing up to 10. See app for full list.)"
+        + "\n\n(Showing up to 50. See app for full list.)"
     )
     html = (
-        f"<h3>Alert: {name}</h3>"
+        f"<h3>SynapseIP Alert: {name}</h3>"
         f"<p>Total new results: <b>{count}</b></p>"
-        "<ol>"
-        + "".join(f"<li>{r['pub_date']} &nbsp; <b>{r['pub_id']}</b> — {r['title']}</li>" for r in sample)
-        + "</ol><p>(Showing up to 10. See app for full list.)</p>"
+        "<table><tr><th>Grant/Pub Date</th><th>Patent/Pub #</th><th>Title</th></tr>"
+        + "".join(f"<tr><td>{_add_hyphens_to_date(str(r['pub_date']))}</td><td><b>{r['pub_id']}</b></td><td>{str(r['title']).title()}</td></tr>" for r in sample)
+        + "</table><p>Showing up to 50. Visit <a href=\"https://www.synapse-ip.com\">Synapse-IP.com</a> for full list.</p>"
     )
     to_email = sq.get("owner_email") or sq.get("email")
     if not to_email:
