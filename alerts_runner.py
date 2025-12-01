@@ -54,6 +54,7 @@ import asyncio
 import json
 import os
 from typing import Any
+from urllib.parse import urlencode
 
 import asyncpg
 import httpx
@@ -98,7 +99,7 @@ async def send_mailgun_email(
 
     url = "https://api.mailgun.net/v3/mg.phaethonorder.com/messages"
     data = {
-        "from": "no-reply <noreply@mg.phaethonorder.com>",
+        "from": "SynapseIP Alerts <noreply@mg.phaethonorder.com>",
         "to": [to_email],
         "subject": subject,
         "text": text_body,
@@ -187,6 +188,59 @@ def _extract_filters(filters: dict[str, Any] | None) -> tuple[str | None, str | 
         return keywords, assignee, cpc, date_from, date_to
 
 
+def _normalize_date_param(v: Any) -> str:
+    """Return YYYY-MM-DD string if recognizable, else empty string."""
+    if v in (None, "", 0):
+        return ""
+    s = str(v)
+    if len(s) == 8 and s.isdigit():
+        return f"{s[:4]}-{s[4:6]}-{s[6:]}"
+    if len(s) == 10 and s[4] == "-" and s[7] == "-":
+        return s
+    try:
+        import datetime
+
+        dt = datetime.datetime.fromisoformat(s.replace("Z", "+00:00"))
+        return dt.date().isoformat()
+    except Exception:
+        return ""
+
+
+def build_search_link(sq: asyncpg.Record) -> str:
+    """Construct a front-end Search & Trends URL populated with saved alert filters."""
+    filters = sq.get("filters") or {}
+    base = os.getenv("FRONTEND_URL", "https://www.synapse-ip.com").rstrip("/")
+    params: dict[str, Any] = {}
+
+    keywords = filters.get("keywords") or filters.get("q") or ""
+    if keywords:
+        params["q"] = keywords
+
+    if sq.get("semantic_query"):
+        params["semantic_query"] = sq["semantic_query"]
+
+    assignee = filters.get("assignee") or ""
+    if assignee:
+        params["assignee"] = assignee
+
+    cpc = filters.get("cpc")
+    if cpc:
+        params["cpc"] = ",".join(map(str, cpc)) if isinstance(cpc, (list, tuple, set)) else str(cpc)
+
+    df = _normalize_date_param(filters.get("date_from"))
+    dt = _normalize_date_param(filters.get("date_to"))
+    if df:
+        params["date_from"] = df
+    if dt:
+        params["date_to"] = dt
+
+    params["from_alert"] = "1"
+    params["alert_id"] = str(sq.get("id"))
+
+    qs = urlencode(params, doseq=True)
+    return f"{base}/?{qs}" if qs else f"{base}/"
+
+
 async def run_one(conn: asyncpg.Connection, sq: asyncpg.Record) -> int:
     # filters are in jsonb column 'filters'
     k, a, cpc_json, dfrom, dto = _extract_filters(sq.get("filters"))
@@ -218,19 +272,25 @@ async def run_one(conn: asyncpg.Connection, sq: asyncpg.Record) -> int:
     )
 
     name = sq["name"] or "Saved Query"
+    search_link = build_search_link(sq)
     lines = [f"{r['pub_date']}  {r['pub_id']}  {r['title']}" for r in sample]
     text = (
-        f"Alert: {name}\n"
+        f"SynapseIP Alert: {name}\n"
         f"Total new results: {count}\n\n"
         + "\n".join(lines)
+        + "\n\nRun this search with your saved filters: "
+        + search_link
         + "\n\n(Showing up to 10. See app for full list.)"
+
     )
     html = (
-        f"<h3>Alert: {name}</h3>"
+        f"<h3>SynapseIP Alert: {name}</h3>"
         f"<p>Total new results: <b>{count}</b></p>"
         "<ol>"
         + "".join(f"<li>{r['pub_date']} &nbsp; <b>{r['pub_id']}</b> — {r['title']}</li>" for r in sample)
-        + "</ol><p>(Showing up to 10. See app for full list.)</p>"
+        + "</ol>"
+        f'<p><a href="{search_link}">Run this search with your saved filters</a></p>'
+        "<p>(Showing up to 10. See app for full list.)</p>"
     )
     to_email = sq.get("owner_email") or sq.get("email")
     if not to_email:
