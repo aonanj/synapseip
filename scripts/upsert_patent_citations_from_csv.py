@@ -11,8 +11,9 @@ CSV rows must contain four comma-separated values in this order:
     4. assignee_name_raw
 
 The first three columns are upserted into patent_citation using
-ON CONFLICT (citing_pub_id, cited_application_number).
-Rows are skipped if citing_pub_id does not exist in patent (to avoid FK errors).
+an UPDATE followed by an INSERT ... WHERE NOT EXISTS (no unique
+constraint on the table). Rows are skipped if citing_pub_id does
+not exist in patent (to avoid FK errors).
 
 The last three columns (cited_pub_id, cited_application_number, assignee_name_raw)
 are upserted into cited_patent_assignee_raw using
@@ -55,14 +56,24 @@ type PgConn = Connection[TupleRow]
 
 DEFAULT_DSN = os.getenv("PG_DSN") or os.getenv("DATABASE_URL") or ""
 
-UPSERT_CITATION_SQL = """
+UPDATE_CITATION_SQL = """
+UPDATE patent_citation
+SET cited_pub_id = %(cited_pub_id)s,
+    cited_application_number = %(cited_application_number)s
+WHERE citing_pub_id = %(citing_pub_id)s
+  AND cited_application_number = %(cited_application_number)s
+"""
+
+INSERT_CITATION_IF_MISSING_SQL = """
 INSERT INTO patent_citation (citing_pub_id, cited_pub_id, cited_application_number)
 SELECT %(citing_pub_id)s, %(cited_pub_id)s, %(cited_application_number)s
 WHERE EXISTS (SELECT 1 FROM patent WHERE pub_id = %(citing_pub_id)s)
-ON CONFLICT (citing_pub_id, cited_application_number)
-DO UPDATE SET
-    cited_pub_id = EXCLUDED.cited_pub_id,
-    cited_application_number = EXCLUDED.cited_application_number
+  AND NOT EXISTS (
+        SELECT 1
+        FROM patent_citation pc
+        WHERE pc.citing_pub_id = %(citing_pub_id)s
+          AND pc.cited_application_number = %(cited_application_number)s
+    )
 """
 
 UPSERT_CITED_ASSIGNEE_SQL = """
@@ -101,6 +112,8 @@ class ImportStats:
     valid: int = 0
     invalid: int = 0
     citation_upserts: int = 0
+    citation_updates: int = 0
+    citation_inserts: int = 0
     citation_skipped_missing_citing: int = 0
     assignee_upserts: int = 0
 
@@ -216,10 +229,18 @@ def upsert_batch(
 
     with pool.connection() as conn, conn.cursor() as cur:
         for record in batch:
-            cur.execute(UPSERT_CITATION_SQL, record.citation_params())
-            affected = cur.rowcount or 0
-            stats.citation_upserts += affected
-            if affected == 0:
+            # Update existing row if present
+            cur.execute(UPDATE_CITATION_SQL, record.citation_params())
+            updated = cur.rowcount or 0
+            stats.citation_updates += updated
+
+            # Insert if missing and citing patent exists
+            cur.execute(INSERT_CITATION_IF_MISSING_SQL, record.citation_params())
+            inserted = cur.rowcount or 0
+            stats.citation_inserts += inserted
+
+            stats.citation_upserts += updated + inserted
+            if updated == 0 and inserted == 0:
                 stats.citation_skipped_missing_citing += 1
 
             cur.execute(UPSERT_CITED_ASSIGNEE_SQL, record.assignee_params())
@@ -238,9 +259,11 @@ def load_from_csv(
         stats.valid += len(batch)
         upsert_batch(pool, batch, stats)
         logger.info(
-            "Processed %d valid rows (citation upserts: %d, assignee upserts: %d, citation skips missing citing: %d)",
+            "Processed %d valid rows (citation upserts: %d [updates: %d, inserts: %d], assignee upserts: %d, citation skips missing citing: %d)",
             stats.valid,
             stats.citation_upserts,
+            stats.citation_updates,
+            stats.citation_inserts,
             stats.assignee_upserts,
             stats.citation_skipped_missing_citing,
         )
@@ -279,11 +302,13 @@ def main() -> int:
         pool.close()
 
     logger.info(
-        "Finished: %d lines read (%d valid, %d invalid). Citation upserts: %d (skipped for missing citing patent: %d). Assignee upserts: %d.",
+        "Finished: %d lines read (%d valid, %d invalid). Citation upserts: %d (updates: %d, inserts: %d, skipped for missing citing patent: %d). Assignee upserts: %d.",
         stats.read,
         stats.valid,
         stats.invalid,
         stats.citation_upserts,
+        stats.citation_updates,
+        stats.citation_inserts,
         stats.citation_skipped_missing_citing,
         stats.assignee_upserts,
     )

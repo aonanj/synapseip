@@ -53,9 +53,7 @@ DB schema (current):
 import asyncio
 import json
 import os
-from collections.abc import Mapping
 from typing import Any
-from urllib.parse import urlencode
 
 import asyncpg
 import httpx
@@ -90,7 +88,6 @@ async def send_mailgun_email(
     MAILGUN_BASE_URL = os.getenv("MAILGUN_BASE_URL", "https://api.mailgun.net/v3")
     # If Mailgun is not configured, no-op with console output.
     if not MAILGUN_DOMAIN:
-        print("[info] Mailgun not configured; printing email:")
         print("Mailgun Domain: ", MAILGUN_DOMAIN)
     if not MAILGUN_API_KEY:
         print("MAILGUN API KEY: ", MAILGUN_API_KEY)
@@ -158,20 +155,6 @@ LIMIT 200;
 """
 
 
-def _coerce_filters(raw: Any) -> dict[str, Any]:
-    """Return filters as a dict; gracefully handle JSON strings."""
-    if isinstance(raw, Mapping):
-        return dict(raw)
-    if isinstance(raw, str):
-        try:
-            parsed = json.loads(raw)
-            if isinstance(parsed, Mapping):
-                return dict(parsed)
-        except Exception:
-            return {}
-    return {}
-
-
 def _extract_filters(filters: dict[str, Any] | None) -> tuple[str | None, str | None, str | None, str | None, str | None]:
         """Extract normalized filter tuple from saved_query.filters JSON.
 
@@ -183,8 +166,7 @@ def _extract_filters(filters: dict[str, Any] | None) -> tuple[str | None, str | 
             - date_to: str(YYYY-MM-DD) | null
         Returns a 5-tuple matching SQL parameter order for _where_clause.
         """
-        filters = _coerce_filters(filters)
-        if not filters:
+        if not isinstance(filters, dict):
                 return None, None, None, None, None
 
         keywords = filters.get("keywords") or None
@@ -202,59 +184,6 @@ def _extract_filters(filters: dict[str, Any] | None) -> tuple[str | None, str | 
         date_from = filters.get("date_from") or None
         date_to = filters.get("date_to") or None
         return keywords, assignee, cpc, date_from, date_to
-
-
-def _normalize_date_param(v: Any) -> str:
-    """Return YYYY-MM-DD string if recognizable, else empty string."""
-    if v in (None, "", 0):
-        return ""
-    s = str(v)
-    if len(s) == 8 and s.isdigit():
-        return f"{s[:4]}-{s[4:6]}-{s[6:]}"
-    if len(s) == 10 and s[4] == "-" and s[7] == "-":
-        return s
-    try:
-        import datetime
-
-        dt = datetime.datetime.fromisoformat(s.replace("Z", "+00:00"))
-        return dt.date().isoformat()
-    except Exception:
-        return ""
-
-
-def build_search_link(sq: asyncpg.Record) -> str:
-    """Construct a front-end Search & Trends URL populated with saved alert filters."""
-    filters = _coerce_filters(sq.get("filters"))
-    base = os.getenv("FRONTEND_URL", "https://www.synapse-ip.com").rstrip("/")
-    params: dict[str, Any] = {}
-
-    keywords = filters.get("keywords") or filters.get("q") or ""
-    if keywords:
-        params["q"] = keywords
-
-    if sq.get("semantic_query"):
-        params["semantic_query"] = sq["semantic_query"]
-
-    assignee = filters.get("assignee") or ""
-    if assignee:
-        params["assignee"] = assignee
-
-    cpc = filters.get("cpc")
-    if cpc:
-        params["cpc"] = ",".join(map(str, cpc)) if isinstance(cpc, (list, tuple, set)) else str(cpc)
-
-    df = _normalize_date_param(filters.get("date_from"))
-    dt = _normalize_date_param(filters.get("date_to"))
-    if df:
-        params["date_from"] = df
-    if dt:
-        params["date_to"] = dt
-
-    params["from_alert"] = "1"
-    params["alert_id"] = str(sq.get("id"))
-
-    qs = urlencode(params, doseq=True)
-    return f"{base}/?{qs}" if qs else f"{base}/"
 
 
 async def run_one(conn: asyncpg.Connection, sq: asyncpg.Record) -> int:
@@ -288,25 +217,19 @@ async def run_one(conn: asyncpg.Connection, sq: asyncpg.Record) -> int:
     )
 
     name = sq["name"] or "Saved Query"
-    search_link = build_search_link(sq)
     lines = [f"{r['pub_date']}  {r['pub_id']}  {r['title']}" for r in sample]
     text = (
-        f"SynapseIP Alert: {name}\n"
+        f"Alert: {name}\n"
         f"Total new results: {count}\n\n"
         + "\n".join(lines)
-        + "\n\nRun this search with your saved filters: "
-        + search_link
         + "\n\n(Showing up to 10. See app for full list.)"
-
     )
     html = (
-        f"<h3>SynapseIP Alert: {name}</h3>"
+        f"<h3>Alert: {name}</h3>"
         f"<p>Total new results: <b>{count}</b></p>"
         "<ol>"
         + "".join(f"<li>{r['pub_date']} &nbsp; <b>{r['pub_id']}</b> — {r['title']}</li>" for r in sample)
-        + "</ol>"
-        f'<p><a href="{search_link}">Run this search with your saved filters</a></p>'
-        "<p>(Showing up to 10. See app for full list.)</p>"
+        + "</ol><p>(Showing up to 10. See app for full list.)</p>"
     )
     to_email = sq.get("owner_email") or sq.get("email")
     if not to_email:
