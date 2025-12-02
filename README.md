@@ -10,16 +10,12 @@ The repository contains the full SynapseIP stack: FastAPI exposes the search, ex
 - Auth0-protected React UI with saved-alert management, login overlay, and modal workspace for alert toggles ([components/NavBar.tsx](components/NavBar.tsx), [app/layout.tsx](app/layout.tsx)).
 - IP Overview that surfaces saturation, activity rates, momentum, and CPC distribution for focus keyword(s) and/or CPC(s), with optional group by assignee signals ([app/overview_api.py](app/overview_api.py), [app/overview_signals.py](app/overview_signals.py), [components/SigmaOverviewGraph.tsx](components/SigmaOverviewGraph.tsx), [app/overview/page.tsx](app/overview/page.tsx)). 
   - Semantic neighbors are dropped when distances jump or exceed a threshold so the counts and timelines stay focused on relevant patents and publications.
-- Scope Analysis page adds a preliminary freedom-to-operate (FTO) and infringement-risk tool to the platform: input subject matter of interest (e.g., a product description or draft claim set) and run a KNN search against every embedded independent claim to get a similarity node graph and results table with patent information and similarity-scored claims displayed inline. Results table and similarity scoring information is exportable in PDF format. ([app/api.py](app/api.py#L147), [app/repository.py](app/repository.py#L593), [app/scope-analysis/page.tsx](app/scope-analysis/page.tsx)).
-- Citation Analytics for patent portfolio intelligence with four core analysis modes ([app/citation_api.py](app/citation_api.py), [app/citation/page.tsx](app/citation/page.tsx)):
-  - **Forward Impact Analysis**: Track forward citations over time, identify top-cited patents, and measure citation velocity.
-  - **Dependency Matrix**: Visualize cross-assignee citation relationships to understand technology dependencies.
-  - **Risk Radar**: Compute exposure and fragility scores based on competitor citation patterns and backward citation diversity.
-  - **Encroachment Analysis**: Monitor competitor citation activity against your portfolio over time.
+- Scope Analysis page features semantic search functionality for natural language searches that score an input against existing AI/ML patent claims. Preliminary prior art search,freedom-to-operate (FTO), infringement-risk, etc. analyses can be accomplished in minutes. 
+- Citation Analytics for patent portfolio intelligence with four core analysis modes ([app/citation_api.py](app/citation_api.py), [app/citation/page.tsx](app/citation/page.tsx)): (1) Forward Impact Analysis; (2) Cross-Dependency Matrix; (3) Risk Radar; (4) Encroachment Analysis. 
 - Canonical assignee name normalization for improved entity matching and trend analysis ([scripts/add_canon_name.py](scripts/add_canon_name.py)).
 - Multiple data ingestion pipelines: BigQuery loader ([etl.py](etl.py)), USPTO PEDS API loader ([scripts/etl_uspto.py](scripts/etl_uspto.py)), and bulk XML parser ([scripts/etl_xml_fulltext.py](scripts/etl_xml_fulltext.py)) for comprehensive patent and application coverage.
 - Embedding backfill utility for maintaining vector search quality across historical data ([scripts/etl_add_embeddings.py](scripts/etl_add_embeddings.py)).
-- Automated Mailgun/console alert notifications for saved queries packaged as standalone runner ([alerts_runner.py](alerts_runner.py)).
+- Automated Mailgun/console alert notifications for saved queries, configured to run as a weekly automated/crob job ([alerts_runner.py](alerts_runner.py)).
 - Comprehensive pytest suite covering authentication, repository search logic, overview signal math, citation metrics, and API contracts ([tests/](tests/)).
 
 ## Live Deployment
@@ -230,10 +226,10 @@ Unit and integration tests cover search repository queries, API endpoints, Auth0
 - `GLITCHTIP_TRACES_SAMPLE_RATE` / `GLITCHTIP_PROFILES_SAMPLE_RATE` – Optional performance sampling (0–1).
 
 ### GlitchTip Sourcemaps (Next.js)
-- Install when ready: `npm i -E @sentry/nextjs` (GlitchTip speaks the Sentry protocol).
-- Configure CI/CD with the following secrets for sourcemap uploads:
+- UI/UX instrumentation and logging built in with GlitchTip: `npm i -E @sentry/nextjs` (GlitchTip uses Sentry protocol).
+- Configure CI/CD with the following env vars for sourcemap uploads:
   - `GLITCHTIP_URL` (or `SENTRY_URL`) – e.g., `https://app.glitchtip.com`
-  - `GLITCHTIP_AUTH_TOKEN` (same scopes as the Sentry CLI)
+  - `GLITCHTIP_AUTH_TOKEN` (same scopes as Sentry CLI)
   - `GLITCHTIP_ORG` – GlitchTip org slug
   - `GLITCHTIP_PROJECT` – the project slug receiving frontend errors
 - Optionally, create `.sentryclirc` (see `.sentryclirc.example`) instead of env vars.
@@ -259,17 +255,16 @@ python alerts_runner.py
 ## Additional Data Pipeline Scripts
 
 ### USPTO PEDS API Loader (`scripts/etl_uspto.py`)
-Alternative to BigQuery ingestion, loads patent publication data directly from the USPTO Open Data Portal (ODP) API. Filters by CPC codes and AI keywords locally:
+Alternative to BigQuery ingestion, loads patent publication data directly from the USPTO Open Data Portal (ODP) API into `patent_staging` table to allow for review and further processing before committing to `patent` table. Filters by CPC codes. Note abstract and claims text must be separately upserted (e.g., via `scripts/etl_xml_fulltext.py`):
 ```bash
 python scripts/etl_uspto.py \
   --dsn "postgresql://user:pass@host/db?sslmode=require" \
   --date-from 2024-01-01 \
-  --date-to 2024-02-01 \
-  --embed --claims
+  --date-to 2024-02-01
 ```
 
 ### USPTO Bulk XML Parser (`scripts/etl_xml_fulltext.py`)
-Parses USPTO bulk XML files (weekly patent grant and publication feeds) to extract full-text abstracts and claims. Updates `patent_staging` table with parsed content:
+Parses USPTO bulk XML files (weekly patent grant and publication feeds available via USPTO ODP) to extract full-text abstracts and claims. Updates `patent_staging` table with parsed content:
 ```bash
 python scripts/etl_xml_fulltext.py \
   --xml resources/ipa250220.xml \
@@ -302,7 +297,42 @@ python scripts/load_patent_citations.py \
   --csv resources/patent_citations.csv
 ```
 
-## IP Overview
+### Merge patent_staging into patent (`scripts/migrate_staged_patents.py`)
+Migrate patents/publications from `patent_staging` to `patent` table after AI keyword filtering: (1) Deletes non-AI entries from `patent_staging`; (2) Migrates remaining records from `patent_staging` to `patent` with conflict resolution; (3) Clears `patent_staging` after merging records into `patent`; (4) Generates embeddings on both `title` + `abstract` and `claims_text` for newly upserted `patent` records (via `scripts/etl_add_embeddings.py`). 
+```bash
+python scripts/emigrate_staged_patents.py \
+  --dsn "postgresql://user:pass@host/db?sslmode=require"
+```
+
+### Assignee Name Backfill BigQuery Utility (`scripts/backfill_assignee_names_bigquery.py`)
+Backfills `patent.assignee_name` via BigQuery's `patents-public-data.patents.publications` table. Note: `scripts/add_canon_name.py` should be run following backfilling assignee names to ensure all newly upserted assignee names correspond to a canonical assignee name. Process: (1) Find the latest publication_date in `patents-public-data.patents.publications`; (2) Scan `patent` rows where `assignee_name` IS NULL and `pub_date` <= latest `publication_date`; (3) Fetch assignee names from BigQuery (unnesting `assignee_harmonized`) by `pub_id`; (4) Update `patent.assignee_name` for rows with a found value.
+```bash
+gcloud auth login user@example.com
+gcloud config set project PROJECT_ID
+python scripts/backfill_assignee_names_bigquery.py \
+  --dsn "postgresql://user:pass@host/db?sslmode=require"
+```
+
+### Assignee Name Backfill USPTO ODP Utility (`scripts/backfill_assignee_names.py`)
+Backfills `patent.assignee_name` via USPTO ODP API. Requires env var `USPTO_ODP_API_KEY` to avoid rate limiting. Note: `scripts/add_canon_name.py` should be run following backfilling assignee names to ensure all newly upserted assignee names correspond to a canonical assignee name.
+```bash
+python scripts/backfill_assignee_names.py \
+  --dsn "postgresql://user:pass@host/db?sslmode=require"
+```
+
+### Update Applications Issued as Patents  (`scripts/issued_patent_checker.py`)
+Maintain current data in `patent` table by replacing applications that issue as patents. Process: (1) Fetch granted/issued patents from the USPTO ODP API for applications
+stored in the `patent` table (fetched patents are staged in `issued_patent_staging`). Requires env var `USPTO_ODP_API_KEY` to avoid rate limiting.
+```bash
+python scripts/issued_patent_checker.py \
+  --dsn "postgresql://user:pass@host/db?sslmode=require"
+```
+
+---
+
+## UI/UX Interface
+
+### IP Overview
 [app/overview_api.py](app/overview_api.py) serves two complementary functions:
 
 - `/overview/overview` composes analysis and insights for IP Overview. For any keyword/CPC scope it returns exact and semantic saturation counts, activity rate (per month), momentum slope/CAGR with labeled Up/Flat/Down, top CPC slices, recent filing tallies (6/12/18/24 months), and the full monthly timeline used across the UI.
@@ -310,15 +340,20 @@ python scripts/load_patent_citations.py \
 
 The React UI ([app/overview/page.tsx](app/overview/page.tsx)) defaults to the overview primitives: four tiles (Crowding, Density, Momentum, Top CPCs), a timeline sparkline, CPC bar chart, and a patent results table with semantic toggle. Enabling "Group by Assignee" pulls in a Sigma.js visualization and signal cards for assignee clustering context.
 
-## Citation Tracker
+### Citation Tracker
 [app/citation_api.py](app/citation_api.py) provides patent and publication citation intelligence through four analysis endpoints:
 
 - `/citation/impact` – **Forward Impact Analysis**: Tracks forward citations over time for a patent portfolio. Returns total citations, distinct citing patents, monthly/quarterly timelines, and top-cited patents ranked by citation count and velocity.
 - `/citation/dependency-matrix` – **Cross-Assignee Dependencies**: Builds a citation dependency matrix showing how different assignees cite each other's patents. Useful for identifying technology dependencies and licensing opportunities.
-- `/citation/risk-radar` – **Risk Assessment**: Computes exposure and fragility scores for patents based on competitor citation patterns, backward citation CPC entropy, and assignee diversity. Highlights patents with high risk profiles.
-- `/citation/encroachment` – **Competitive Encroachment**: Monitors competitor citation activity against your portfolio over time, surfacing encroachment trends and identifying which competitors are most actively citing your IP.
+- `/citation/risk-radar` – **Risk Assessment**: Computes exposure and fragility scores for patents based on assignee citation patterns, backward citation CPC entropy, and assignee diversity. Highlights patents with high risk profiles.
+- `/citation/encroachment` – **Assignee Encroachment**: Monitors assignee citation activity against a patent (or patent portfolio) over time. Indicates potential encroachment trends as a function of patent citation data.
 
 The React UI ([app/citation/page.tsx](app/citation/page.tsx)) provides an interactive dashboard with four analysis tabs. Users can define portfolio scope by assignee name, publication IDs, or search filters, then explore citation patterns through charts, tables, and exportable summaries.
+
+### Scope Analysis
+[app/scope-analysis/page.tsx](app/scope-analysis/page.tsx) adds a preliminary freedom-to-operate (FTO) and infringement-risk tool to the platform: input subject matter of interest (e.g., a product description or draft claim set) and run a KNN search against every embedded independent claim to get a similarity node graph and results table with patent information and similarity-scored claims displayed inline. Results table and similarity scoring information is exportable in PDF format. ([app/api.py](app/api.py#L147), [app/repository.py](app/repository.py#L593))
+
+---
 
 ## Screenshots
 - Search & Trends UI – ![docs/screenshots/search-ui.png](docs/screenshots/search-ui.png)
