@@ -90,7 +90,7 @@ export default function SubscriptionStatus({ subscription, onManage, accountEmai
           {/* Account */}
           <div>
             <div className="text-sm text-slate-500 mb-1 font-semibold" style={{ textDecoration: "underline" }}>Account</div>
-            <div className="text-lg font-semibold break-words" style={{ color: '#102A43' }}>
+            <div className="text-base font-medium break-words" style={{ color: '#102A43' }}>
               {accountEmail || "Unknown"}
             </div>
           </div>
@@ -122,7 +122,7 @@ export default function SubscriptionStatus({ subscription, onManage, accountEmai
           {/* Plan */}
           <div>
             <div className="text-sm text-slate-500 mb-1 font-semibold" style={{ textDecoration: "underline" }}>Plan</div>
-            <div className="text-lg font-semibold" style={{ color: '#102A43' }}>{tierDisplay}</div>
+            <div className="text-base font-medium" style={{ color: '#102A43' }}>{tierDisplay}</div>
           </div>
 
           {/* Renewal Date */}
@@ -131,15 +131,15 @@ export default function SubscriptionStatus({ subscription, onManage, accountEmai
               <div className="text-sm text-slate-500 mb-1 font-semibold" style={{ textDecoration: "underline" }}>
                 {subscription.status === "canceled" ? "Access Until" : "Renews On"}
               </div>
-              <div className="text-lg font-semibold" style={{ color: '#102A43' }}>{renewalDate}</div>
+              <div className="text-base font-medium" style={{ color: '#102A43' }}>{renewalDate}</div>
             </div>
           )}
 
           {/* Days in Tier (for beta testers) */}
           {subscription.tier === "beta_tester" && subscription.days_in_tier !== null && (
             <div>
-              <div className="text-sm text-slate-500 mb-1">Beta Period</div>
-              <div className="text-lg font-semibold" style={{ color: '#102A43' }}>
+              <div className="text-sm text-slate-500 mb-1 font-semibold" style={{ textDecoration: "underline" }}>Beta Period</div>
+              <div className="text-base font-medium" style={{ color: '#102A43' }}>
                 {subscription.days_in_tier} days elapsed
               </div>
             </div>
@@ -207,26 +207,27 @@ export default function SubscriptionStatus({ subscription, onManage, accountEmai
         <div className={cardClass}>
           <h4 className="text-sm font-medium mb-3" style={{ color: '#102A43' }}>Current Plan Features:</h4>
           <ul className="space-y-2">
-            <li className="flex items-start gap-2 text-sm text-slate-700">
-              <span>☑︎ Unlimited patent searches</span>
+            <li className="flex items-start gap-2">
+              <span className="text-lg font-semibold text-slate-700">☑︎</span><span className="text-sm text-slate-700"> Unlimited patent searches</span>
             </li>
-            <li className="flex items-start gap-2 text-sm text-slate-700">
-              <span>☑︎ Semantic search & AI-powered insights</span>
+            <li className="flex items-start gap-2">
+              <span className="text-lg font-semibold text-slate-700">☑︎</span><span className="text-sm text-slate-700"> Semantic search & AI-powered insights</span>
             </li>
-            <li className="flex items-start gap-2 text-sm text-slate-700">
-              <span>☑︎ CSV & PDF exports</span>
+            <li className="flex items-start gap-2">
+              <span className="text-lg font-semibold text-slate-700">☑︎</span><span className="text-sm text-slate-700"> CSV & PDF exports</span>
             </li>
-            <li className="flex items-start gap-2 text-sm text-slate-700">
-              <span>☑︎ Saved queries & email alerts</span>
+            <li className="flex items-start gap-2">
+              <span className="text-lg font-semibold text-slate-700">☑︎</span><span className="text-sm text-slate-700"> Saved queries & email alerts</span>
             </li>
-            <li className="flex items-start gap-2 text-sm text-slate-700">
-              <span>☑︎ IP overview information & trend visualization</span>
+            <li className="flex items-start gap-2">
+              <span className="text-lg font-semibold text-slate-700">☑︎</span><span className="text-sm text-slate-700"> IP overview information & trend visualization</span>
             </li>
           </ul>
         </div>
 
         {/* Manage Subscription Button */}
-        <div className="flex justify-center">
+        <br /><br />
+        <div className="flex justify-center mt-3">
           <button
             onClick={onManage}
             className="px-6 py-3 text-white rounded-lg hover:bg-sky-600 font-semibold transition-colors hover:underline"
