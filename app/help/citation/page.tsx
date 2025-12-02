@@ -85,7 +85,7 @@ export default function CitationHelpPage() {
         <div className="glass-card" style={{ ...cardBaseStyle }}>
           <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: TEXT_COLOR, marginBottom: 16 }}>What Citation Tracker Provides</h2>
           <p style={{ fontSize: 14, lineHeight: 1.5, color: TEXT_COLOR, marginBottom: 12 }}>
-            Citation analysis reveals relationships between patents that keyword search alone cannot surface. When a patent examiner or applicant cites prior art, that citation establishes a formal link indicating technological relevance, potential blocking relationships, or design-around requirements. Citation Tracker transforms this citation network into actionable intelligence:
+            Citation analysis reveals relationships between patents/publications that keyword search alone may not expose. When a patent examiner or applicant cites prior art, that citation establishes a formal link indicating technological relevance, potential blocking relationships, or design-around requirements. Citation Tracker transforms this citation network into actionable intelligence:
           </p>
           <ul style={{ marginLeft: 20, marginTop: 12, fontSize: 14, lineHeight: 1.5, listStyleType: "disc", listStylePosition: "outside", color: TEXT_COLOR }}>
             <li><strong>Forward citations</strong> (patents that cite a portfolio) signal market influence, potential licensing opportunities, and competitor attention.</li>

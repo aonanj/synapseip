@@ -222,8 +222,8 @@ async def export_risk_radar(req: RiskRadarExportRequest, conn: Conn, user: Activ
             y -= 12
 
     scope_filters = req.scope.filters or {}
-    draw_label_value("Focus assignees", ", ".join(req.scope.focus_assignee_names or []))
-    draw_label_value("Portfolio pub IDs", ", ".join(req.scope.focus_pub_ids or []))
+    draw_label_value("Source assignee(s)", ", ".join(req.scope.focus_assignee_names or []))
+    draw_label_value("Patent/Pub #s", ", ".join(req.scope.focus_pub_ids or []))
     draw_label_value("Keyword filter", str(scope_filters.get("keyword") or "") or None)
     draw_label_value("CPC filter", str(scope_filters.get("cpc") or "") or None)
     draw_label_value("Citing assignee filter", str(scope_filters.get("assignee") or "") or None)
@@ -233,7 +233,7 @@ async def export_risk_radar(req: RiskRadarExportRequest, conn: Conn, user: Activ
             f"{req.scope.citing_pub_date_from or '—'} – {req.scope.citing_pub_date_to or '—'}",
         )
     if req.competitor_assignee_names:
-        draw_label_value("Competitors", ", ".join(req.competitor_assignee_names))
+        draw_label_value("Target assignee(s)", ", ".join(req.competitor_assignee_names))
     draw_label_value("Time bucket", req.scope.bucket)
     draw_label_value("Top N", str(req.top_n))
     draw_label_value("Sort", sort_label)
@@ -246,11 +246,11 @@ async def export_risk_radar(req: RiskRadarExportRequest, conn: Conn, user: Activ
 
     for idx, p in enumerate(patents, start=1):
         draw_label_value("Patent/Pub No", f"{idx}. {p.pub_id}", label_size=10)
-        draw_label_value("Title", p.title)
+        draw_label_value("Title", str(p.title).title())
         draw_label_value("Assignee", p.assignee_name)
         draw_label_value(
             "Forward citations",
-            f"{p.fwd_total} (from competitors: {p.fwd_from_competitors}; share {fmt_pct(p.fwd_competitor_ratio)})",
+            f"{p.fwd_total} (from target assignees: {p.fwd_from_competitors}; share {fmt_pct(p.fwd_competitor_ratio)})",
         )
         draw_label_value("Backward citations", str(p.bwd_total))
         draw_label_value("Exposure score", f"{p.exposure_score:.1f}")

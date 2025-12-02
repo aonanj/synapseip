@@ -73,7 +73,7 @@ def build_patent_impact_summaries(rows: Iterable[dict[str, Any]]) -> list[Patent
         summaries.append(
             PatentImpactSummary(
                 pub_id=str(r.get("pub_id")),
-                title=r.get("title") or "",
+                title=str(r.get("title")).title() if r.get("title") else "(none)",
                 assignee_name=r.get("assignee_name"),
                 canonical_assignee_id=r.get("canonical_assignee_id"),
                 pub_date=_to_date(r.get("pub_date")),
@@ -171,7 +171,7 @@ def compute_risk_scores(row: dict[str, Any]) -> PatentRiskMetrics:
 
     return PatentRiskMetrics(
         pub_id=str(row.get("pub_id")),
-        title=row.get("title") or "",
+        title=str(row.get("title")).title() if row.get("title") else "(none)",
         assignee_name=row.get("assignee_name"),
         canonical_assignee_id=row.get("canonical_assignee_id"),
         pub_date=_to_date(row.get("pub_date")),

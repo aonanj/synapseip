@@ -1521,9 +1521,9 @@ async def _ensure_active_subscription_async(conn: psycopg.AsyncConnection, user_
 def _normalize_assignee(name: str | None) -> str:
     """Coalesce empty assignee labels into a friendly placeholder."""
     if not name:
-        return "Unknown assignee"
+        return "(none)"
     cleaned = name.strip()
-    return cleaned or "Unknown assignee"
+    return cleaned or "(none)"
 
 
 def _parse_date_str(value: str | None) -> date | None:
@@ -1591,7 +1591,7 @@ def _build_node_data(
                 distance=float(distance[idx]),
                 momentum=float(momentum[cid]) if cid < len(momentum) else 0.0,
                 is_focus=bool(m.is_focus),
-                title=m.title,
+                title=m.title.title() if m.title else None,
                 abstract=m.abstract,
             )
         )
@@ -2385,7 +2385,7 @@ def get_overview_graph(
                 y=float(XY[i, 1]),
                 signals=signal_list,
                 relevance=float(np.clip(relevance, 0.05, 1.0)),
-                title=meta_row.title,
+                title=meta_row.title.title() if meta_row.title else "(no title)",
                 tooltip=node_tooltips.get(node_id),
                 pub_date=datum.pub_date,
                 overview_score=datum.score,

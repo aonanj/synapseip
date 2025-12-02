@@ -232,7 +232,7 @@ async def export_rows(
             out.append(
                 {
                     "pub_id": r.get("pub_id"),
-                    "title": r.get("title"),
+                    "title": str(r.get("title")).title() if r.get("title") else "(none)",
                     "abstract": r.get("abstract"),
                     "assignee_name": r.get("assignee_name"),
                     "pub_date": r.get("pub_date"),
@@ -286,7 +286,7 @@ async def export_rows(
         out.append(
             {
                 "pub_id": r.get("pub_id"),
-                "title": r.get("title"),
+                "title": str(r.get("title")).title() if r.get("title") else "(none)",
                 "abstract": r.get("abstract"),
                 "assignee_name": r.get("assignee_name"),
                 "pub_date": r.get("pub_date"),
@@ -414,7 +414,7 @@ async def search_hybrid(
     items = [
         PatentHit(
             pub_id=r["pub_id"],
-            title=r.get("title"),
+            title=str(r.get("title")).title() if r.get("title") else "(none)",
             abstract=r.get("abstract"),
             assignee_name=r.get("assignee_name"),
             pub_date=r.get("pub_date"),
@@ -671,7 +671,7 @@ async def scope_claim_knn(
                 pub_id=row["pub_id"],
                 claim_number=row["claim_number"],
                 claim_text=row.get("claim_text"),
-                title=row.get("title"),
+                title=str(row.get("title")).title() if row.get("title") else "(none)",
                 assignee_name=row.get("assignee_name"),
                 pub_date=row.get("pub_date"),
                 is_independent=row.get("is_independent"),

@@ -245,7 +245,7 @@ async def export_scope_analysis(
     for m in matches:
         _ensure_space()
         # Title + Pub ID
-        title = m.title or "Untitled"
+        title = m.title.title() if m.title else "(none)"
         pub_id = m.pub_id
         header = f"{title} ({pub_id})"
         
@@ -578,7 +578,7 @@ async def export(
             for r in rows:
                 vals = [
                     r.get("pub_id") or "",
-                    (r.get("title") or "").replace("\n", " ").replace("\r", " "),
+                    str((r.get("title") or "").replace("\n", " ").replace("\r", " ")).title(),
                     (r.get("abstract") or "").replace("\n", " ").replace("\r", " "),
                     r.get("assignee_name") or "",
                     _int_date(r.get("pub_date")),
@@ -669,7 +669,7 @@ async def export(
 
         # Title and Assignee
         if r.get("title"):
-            draw_label_value("Title", r.get("title"))
+            draw_label_value("Title", str(r.get("title")).title())
         if r.get("assignee_name"):
             draw_label_value("Assignee", r.get("assignee_name"))
 

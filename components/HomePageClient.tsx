@@ -765,7 +765,7 @@ export default function HomePageClient() {
                 <li key={(h.pub_id ?? "") + i} style={resultItem}>
                   <div style={{ display: "grid", gap: 6 }}>
                     <div style={{ fontWeight: 600 }}>
-                      {h.title?.toUpperCase() || "(no title)"}{" "}
+                      {h.title || "(no title)"}{" "}
                       {h.pub_id && (
                         <span style={{ fontWeight: 400, color: "#64748b" }}>• <a href={`https://patents.google.com/patent/${formatGooglePatentId(h.pub_id)}`} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">{h.pub_id}</a></span>
                       )}
