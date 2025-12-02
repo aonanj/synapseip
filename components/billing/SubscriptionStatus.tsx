@@ -207,20 +207,20 @@ export default function SubscriptionStatus({ subscription, onManage, accountEmai
         <div className={cardClass}>
           <h4 className="text-sm font-medium mb-3" style={{ color: '#102A43' }}>Current Plan Features:</h4>
           <ul className="space-y-2">
-            <li className="flex items-start gap-2">
-              <span className="text-lg font-semibold text-slate-700">☑︎</span><span className="text-sm text-slate-700"> Unlimited patent searches</span>
+            <li className="flex items-center gap-2">
+              <span className="text-xl font-semibold text-slate-700">☑︎</span><span className="text-sm text-slate-700"> Unlimited patent searches</span>
             </li>
-            <li className="flex items-start gap-2">
-              <span className="text-lg font-semibold text-slate-700">☑︎</span><span className="text-sm text-slate-700"> Semantic search & AI-powered insights</span>
+            <li className="flex items-center gap-2">
+              <span className="text-xl font-semibold text-slate-700">☑︎</span><span className="text-sm text-slate-700"> Semantic search & AI-powered insights</span>
             </li>
-            <li className="flex items-start gap-2">
-              <span className="text-lg font-semibold text-slate-700">☑︎</span><span className="text-sm text-slate-700"> CSV & PDF exports</span>
+            <li className="flex items-center gap-2">
+              <span className="text-xl font-semibold text-slate-700">☑︎</span><span className="text-sm text-slate-700"> CSV & PDF exports</span>
             </li>
-            <li className="flex items-start gap-2">
-              <span className="text-lg font-semibold text-slate-700">☑︎</span><span className="text-sm text-slate-700"> Saved queries & email alerts</span>
+            <li className="flex items-center gap-2">
+              <span className="text-xl font-semibold text-slate-700">☑︎</span><span className="text-sm text-slate-700"> Saved queries & email alerts</span>
             </li>
-            <li className="flex items-start gap-2">
-              <span className="text-lg font-semibold text-slate-700">☑︎</span><span className="text-sm text-slate-700"> IP overview information & trend visualization</span>
+            <li className="flex items-center gap-2">
+              <span className="text-xl font-semibold text-slate-700">☑︎</span><span className="text-sm text-slate-700"> IP overview information & trend visualization</span>
             </li>
           </ul>
         </div>
