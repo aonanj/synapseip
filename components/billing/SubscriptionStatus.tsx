@@ -18,6 +18,8 @@ type SubscriptionStatusProps = {
   accountEmail?: string | null;
 };
 
+const cardClass = "glass-card p-5 rounded-xl shadow-xl border border-white/50";
+
 export default function SubscriptionStatus({ subscription, onManage, accountEmail }: SubscriptionStatusProps) {
   const tierDisplay = useMemo(() => {
     if (subscription.tier === "beta_tester") return "Beta Tester";
@@ -78,15 +80,13 @@ export default function SubscriptionStatus({ subscription, onManage, accountEmai
   }, [subscription.tier, subscription.days_in_tier]);
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+    <div>
       {/* Header */}
-      <div className="bg-[#3A506B] px-6 py-4 border-b border-slate-200">
-        <h2 className="text-xl font-bold" style={{ color: '#FFFFFF' }}>Your Subscription</h2>
-      </div>
+      <h2 className="text-base font-semibold uppercase" style={{ color: '#102A43' }}>Subscription Status</h2>
 
       {/* Content */}
       <div className="p-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <div className={cardClass + " grid grid-cols-1 md:grid-cols-2 gap-6 mb-6"}>
           {/* Account */}
           <div>
             <div className="text-sm text-slate-500 mb-1 font-semibold" style={{ textDecoration: "underline" }}>Account</div>
@@ -204,58 +204,23 @@ export default function SubscriptionStatus({ subscription, onManage, accountEmai
         )}
 
         {/* Features List */}
-        <div className="mb-6 p-4 bg-slate-50 rounded-lg">
-          <h4 className="text-sm font-semibold mb-3" style={{ color: '#102A43' }}>Your Plan Includes:</h4>
+        <div className={cardClass}>
+          <h4 className="text-sm font-medium mb-3" style={{ color: '#102A43' }}>Current Plan Features:</h4>
           <ul className="space-y-2">
             <li className="flex items-start gap-2 text-sm text-slate-700">
-              <svg className="w-5 h-5 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                <path
-                  fillRule="evenodd"
-                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                  clipRule="evenodd"
-                />
-              </svg>
-              <span>Unlimited patent searches</span>
+              <span>☑︎ Unlimited patent searches</span>
             </li>
             <li className="flex items-start gap-2 text-sm text-slate-700">
-              <svg className="w-5 h-5 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                <path
-                  fillRule="evenodd"
-                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                  clipRule="evenodd"
-                />
-              </svg>
-              <span>Semantic search & AI-powered insights</span>
+              <span>☑︎ Semantic search & AI-powered insights</span>
             </li>
             <li className="flex items-start gap-2 text-sm text-slate-700">
-              <svg className="w-5 h-5 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                <path
-                  fillRule="evenodd"
-                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                  clipRule="evenodd"
-                />
-              </svg>
-              <span>CSV & PDF exports</span>
+              <span>☑︎ CSV & PDF exports</span>
             </li>
             <li className="flex items-start gap-2 text-sm text-slate-700">
-              <svg className="w-5 h-5 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                <path
-                  fillRule="evenodd"
-                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                  clipRule="evenodd"
-                />
-              </svg>
-              <span>Saved queries & email alerts</span>
+              <span>☑︎ Saved queries & email alerts</span>
             </li>
             <li className="flex items-start gap-2 text-sm text-slate-700">
-              <svg className="w-5 h-5 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                <path
-                  fillRule="evenodd"
-                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                  clipRule="evenodd"
-                />
-              </svg>
-              <span>IP overview information & trend visualization</span>
+              <span>☑︎ IP overview information & trend visualization</span>
             </li>
           </ul>
         </div>

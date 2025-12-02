@@ -180,7 +180,7 @@ def _format_filters_for_email(
             else:
                 val_str = _as_str(val)
             if val_str.strip():
-                label = key.replace("_", " ").title()
+                label = key.replace("_", " ").upper()
                 entries.append((label, val_str))
 
     # Show any unknown filters too, to aid debugging.
@@ -193,7 +193,7 @@ def _format_filters_for_email(
             val_str = _as_str(val).strip()
             if not val_str:
                 continue
-            label = key.replace("_", " ").title()
+            label = key.replace("_", " ").upper()
             entries.append((label, val_str))
 
     if not entries:
