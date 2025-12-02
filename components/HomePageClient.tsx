@@ -765,13 +765,13 @@ export default function HomePageClient() {
                 <li key={(h.pub_id ?? "") + i} style={resultItem}>
                   <div style={{ display: "grid", gap: 6 }}>
                     <div style={{ fontWeight: 600 }}>
-                      {h.title || "(no title)"}{" "}
+                      {h.title?.toUpperCase() || "(no title)"}{" "}
                       {h.pub_id && (
                         <span style={{ fontWeight: 400, color: "#64748b" }}>• <a href={`https://patents.google.com/patent/${formatGooglePatentId(h.pub_id)}`} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">{h.pub_id}</a></span>
                       )}
                     </div>
                     <div style={{ fontSize: 12, color: "#475569" }}>
-                      {h.assignee_name ? `Assignee: ${h.assignee_name}  ` : ""}
+                      {h.assignee_name ? `Assignee: ${h.assignee_name.toUpperCase()}  ` : ""}
                       {h.pub_date ? `  |  Date: ${formatDate(h.pub_date)}` : ""}
                     </div>
                     {h.cpc_codes && (
