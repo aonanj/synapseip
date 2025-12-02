@@ -88,10 +88,10 @@ export default function CitationHelpPage() {
             Citation analysis reveals relationships between patents/publications that keyword search alone may not expose. When a patent examiner or applicant cites prior art, that citation establishes a formal link indicating technological relevance, potential blocking relationships, or design-around requirements. Citation Tracker transforms this citation network into actionable intelligence:
           </p>
           <ul style={{ marginLeft: 20, marginTop: 12, fontSize: 14, lineHeight: 1.5, listStyleType: "disc", listStylePosition: "outside", color: TEXT_COLOR }}>
-            <li><strong>Forward citations</strong> (patents that cite a portfolio) signal market influence, potential licensing opportunities, and competitor attention.</li>
-            <li><strong>Backward citations</strong> (prior art a patent relies upon) reveal the conceptual foundation and potential validity risks.</li>
-            <li><strong>Cross-assignee dependencies</strong> expose technology relationships between companies and potential freedom-to-operate considerations.</li>
-            <li><strong>Competitive encroachment</strong> patterns show which competitors are building on or around patented technologies.</li>
+            <li><strong>Forward citations</strong> (or "citations to"): Other patents that cite to a source patent (or portfolio that includes the source patent). A higher number of forward citations may signal market influence, potential licensing opportunities, or other technological significance.</li>
+            <li><strong>Backward citations</strong> (or "citations from"): Other patents/publications that a source patent cites. Backward citations may indicate foundational prior art and potential validity risks.</li>
+            <li><strong>Cross-assignee dependencies</strong>: Illustrate relationships between assignees and potential freedom-to-operate considerations.</li>
+            <li><strong>Assignee encroachment</strong>: Indicates patterns showing target assignees that are relying on certain technologies or patents/publications of source assignees.</li>
           </ul>
         </div>
 
@@ -182,7 +182,7 @@ export default function CitationHelpPage() {
             <ul style={{ marginLeft: 20, fontSize: 13, lineHeight: 1.6, listStyleType: "disc", listStylePosition: "outside", color: TEXT_COLOR, marginBottom: 0 }}>
               <li><strong>Licensing Intelligence</strong>: Identify target assignees heavily dependent on a source assignee's portfolio, which may indicate licensing candidates.</li>
               <li><strong>FTO Analysis</strong>: Discover which patents an assignee's portfolio depends upon, flagging potential blocking relationships.</li>
-              <li><strong>Competitive Mapping</strong>: Visualize citation networks to understand AI/ML IP relationships between assignees.</li>
+              <li><strong>Competitive Mapping</strong>: Citation networks are presented with a heat map to highlight relationships or dependencies across assignees.</li>
             </ul>
           </div>
         </div>
@@ -351,14 +351,14 @@ export default function CitationHelpPage() {
         <div className="glass-card" style={{ ...cardBaseStyle }}>
           <SectionHeader title="Assignee Encroachment" link="/citation" />
           <p style={{ fontSize: 14, lineHeight: 1.5, color: TEXT_COLOR, marginBottom: 16 }}>
-            Encroachment analysis tracks how competitor assignees are citing patents/publications held by a source assignee over time. When a target assignee's patent cites a source assignee's portfolio, it indicates relevancy in a technology space. Monitoring encroachment trends may assist in early identification of licensing potential, technology areas of increasing value potential, and/or potential infringement scenarios.
+            Encroachment analysis tracks how target assignees are citing patents/publications held by a source assignee over time. When a target assignee's patent cites a source assignee's patent, it indicates relevancy in a technology space. Monitoring encroachment trends may assist in early identification of licensing potential, technology areas of increasing value, and/or potential infringement actions.
           </p>
           <DetailList
             items={[
               { title: "Precondition", text: "Requires at least one source assignee name in scope. Encroachment measures citations into that assignee's portfolio." },
               { title: "Timeline Chart", text: "Multi-series line chart showing citing patent counts per target assignee over time (monthly or quarterly buckets)." },
-              { title: "Competitor Table", text: "Ranked list of target assignees with total citing patents, encroachment score, and velocity." },
-              { title: "Competitor Filter", text: "Toggle to show only explicitly named target assignees or all citing assignees." },
+              { title: "Target Assignee Table", text: "Ranked list of target assignees with total citing patents, encroachment score, and velocity." },
+              { title: "Target Assignee Filter", text: "Toggle to show only explicitly named target assignees or all citing assignees." },
             ]}
           />
           <div style={{ marginTop: 16, padding: 16, background: "rgba(107, 174, 219, 0.12)", borderRadius: 12, border: "1px solid rgba(107, 174, 219, 0.25)" }}>
@@ -376,7 +376,7 @@ export default function CitationHelpPage() {
           <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: TEXT_COLOR, marginBottom: 16 }}>Example Workflows</h2>
           <div style={{ display: "grid", gap: 16 }}>
             <WorkflowCard
-              title="Competitive Intelligence"
+              title="Marketplace Intelligence"
               steps={[
                 "Input Source Assignee(s) to set scope to assignee(s) of interest.",
                 "Add key target assignees to the Target Assignees field.",
@@ -390,7 +390,7 @@ export default function CitationHelpPage() {
               steps={[
                 "Enter a portfolio's patent numbers directly in Scope.",
                 "Sort Risk Radar by Overall Risk to identify highest-priority patents.",
-                "For high-risk patents, check both Exposure (are Competitor Assignees citing it?) and Fragility (is prior art narrow?).",
+                "For high-risk patents, check both Exposure (are Target Assignees citing it?) and Fragility (is prior art narrow?).",
                 "Export PDF report for offline research and review.",
                 "Cross-reference with Forward-Citation Impact to see full citation context."
               ]}

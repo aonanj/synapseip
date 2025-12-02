@@ -1282,7 +1282,7 @@ function EncroachmentCard({ scope, scopeVersion, tokenGetter, competitorNames }:
               <span>Only listed{scopeEnforcedCompetitors ? " (scope)" : ""}</span>
             </label>
             <label className="flex items-center gap-2 text-xs text-[#3A506B]">
-              <span>Top competitors</span>
+              <span>Top target assignees</span>
               <input
                 type="number"
                 min={1}
@@ -1692,7 +1692,7 @@ export default function CitationPage() {
                     checked={scopeState.competitorToggle}
                     onChange={(e) => setScopeState((s) => ({ ...s, competitorToggle: e.target.checked }))}
                   />
-                  Limit to listed competitors
+                  Target assignee(s) only
                 </label>
               </div>
               <div>
