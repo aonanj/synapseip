@@ -3,9 +3,9 @@ import { Suspense } from "react";
 import HomePageClient from "../components/HomePageClient";
 
 export const metadata: Metadata = {
-  title: "AI Patent Search & Analytics Platform",
+  title: "AI/ML IP Data & Analytics Platform",
   description:
-    "SynapseIP combines semantic patent search, IP overview graphing, and automated alerts so IP teams can rapidly track AI and machine learning filings.",
+    "SynapseIP combines semantic search, overview graphing, citation tracking, and automated alerts for agile AI/ML IP management.",
   alternates: {
     canonical: "/",
   },
