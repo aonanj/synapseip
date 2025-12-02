@@ -10,7 +10,7 @@ The repository contains the full SynapseIP stack: FastAPI exposes the search, ex
 - Auth0-protected React UI with saved-alert management, login overlay, and modal workspace for alert toggles ([components/NavBar.tsx](components/NavBar.tsx), [app/layout.tsx](app/layout.tsx)).
 - IP Overview that surfaces saturation, activity rates, momentum, and CPC distribution for focus keyword(s) and/or CPC(s), with optional group by assignee signals ([app/overview_api.py](app/overview_api.py), [app/overview_signals.py](app/overview_signals.py), [components/SigmaOverviewGraph.tsx](components/SigmaOverviewGraph.tsx), [app/overview/page.tsx](app/overview/page.tsx)). 
   - Semantic neighbors are dropped when distances jump or exceed a threshold so the counts and timelines stay focused on relevant patents and publications.
-- Scope Analysis page features semantic search functionality for natural language searches that score an input against existing AI/ML patent claims. Preliminary prior art search,freedom-to-operate (FTO), infringement-risk, etc. analyses can be accomplished in minutes. 
+- Scope Analysis page features semantic search functionality for natural language searches that score an input against existing AI/ML patent claims. Preliminary prior art search, freedom-to-operate (FTO), infringement-risk, etc. analyses can be accomplished in minutes. 
 - Citation Analytics for patent portfolio intelligence with four core analysis modes ([app/citation_api.py](app/citation_api.py), [app/citation/page.tsx](app/citation/page.tsx)): (1) Forward Impact Analysis; (2) Cross-Dependency Matrix; (3) Risk Radar; (4) Encroachment Analysis. 
 - Canonical assignee name normalization for improved entity matching and trend analysis ([scripts/add_canon_name.py](scripts/add_canon_name.py)).
 - Multiple data ingestion pipelines: BigQuery loader ([etl.py](etl.py)), USPTO PEDS API loader ([scripts/etl_uspto.py](scripts/etl_uspto.py)), and bulk XML parser ([scripts/etl_xml_fulltext.py](scripts/etl_xml_fulltext.py)) for comprehensive patent and application coverage.
@@ -351,7 +351,10 @@ The React UI ([app/overview/page.tsx](app/overview/page.tsx)) defaults to the ov
 The React UI ([app/citation/page.tsx](app/citation/page.tsx)) provides an interactive dashboard with four analysis tabs. Users can define portfolio scope by assignee name, publication IDs, or search filters, then explore citation patterns through charts, tables, and exportable summaries.
 
 ### Scope Analysis
-[app/scope-analysis/page.tsx](app/scope-analysis/page.tsx) adds a preliminary freedom-to-operate (FTO) and infringement-risk tool to the platform: input subject matter of interest (e.g., a product description or draft claim set) and run a KNN search against every embedded independent claim to get a similarity node graph and results table with patent information and similarity-scored claims displayed inline. Results table and similarity scoring information is exportable in PDF format. ([app/api.py](app/api.py#L147), [app/repository.py](app/repository.py#L593))
+[app/scope-analysis/page.tsx](app/scope-analysis/page.tsx) adds an effective tool to the platform through quick and accurate semantic searches applicable to prior art search, FTO, clearance, and infringement-risk analyses: 
+- Input subject matter of interest (e.g., a product description or draft claim set).
+- KNN search is run against every embedded independent claim to get a similarity node graph and results table with patent information and similarity-scored claims displayed inline. 
+- Results table and similarity scoring information is exportable in PDF format. ([app/api.py](app/api.py#L147), [app/repository.py](app/repository.py#L593))
 
 ---
 
