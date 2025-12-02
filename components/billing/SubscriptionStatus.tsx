@@ -227,7 +227,7 @@ export default function SubscriptionStatus({ subscription, onManage, accountEmai
 
         {/* Manage Subscription Button */}
         <br /><br />
-        <div className="flex justify-center mt-3">
+        <div className="flex justify-center">
           <button
             onClick={onManage}
             className="px-6 py-3 text-white rounded-lg hover:bg-sky-600 font-semibold transition-colors hover:underline"
