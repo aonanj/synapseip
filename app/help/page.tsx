@@ -537,13 +537,13 @@ export default function HelpIndexPage() {
             <FlowStep
               num="1"
               title="Authentication"
-              description="SynapseIP uses Auth0 for secure authentication. Log in or sign up using the button in the top navigation bar. All features require authentication for security and subscription verification. ."
+              description="SynapseIP uses Auth0 for secure authentication. Log in or sign up using the button in the top navigation bar. All features require authentication for security and subscription verification. To log out, click on the account name in the upper right corner of the Navigation Bar, and click 'Logout' from the dropdown menu."
             />
 
             <FlowStep
               num="2"
               title="Subscription/Billing"
-              description="SynapseIP uses requires an active subscription to access and use the platform features. Payment information is securely handled through Stripe."
+              description="SynapseIP uses requires an active subscription to access and use the platform features. Payment information is securely handled through Stripe. To access the billing page, click on the account name in the upper right corner of the Navigation Bar, and click 'Billing' from the dropdown menu."
             />
 
             <FlowStep
@@ -555,7 +555,7 @@ export default function HelpIndexPage() {
             <FlowStep
               num="4"
               title="Save Searches as Alerts"
-              description="Relevant or important searches can be saved as alerts to avoid repeated manual runs. With search criteria of interest input, click 'Save as Alert' to receive notifications when new patents or publications match that criteria. The SynapseIP database is updated on a weekly basis, following the USPTO schedule, and alerts are sent accordingly. Alerts can be managed through the navigation bar (hover over username for menu)."
+              description="Relevant or important searches can be saved as alerts to avoid repeated manual runs. With search criteria of interest input, click 'Save as Alert' to receive notifications when new patents or publications match that criteria. The SynapseIP database is updated on a weekly basis, following the USPTO schedule, and alerts are sent accordingly. Alerts can be managed through the navigation bar (click on account name to view the dropdown menu)."
             />
 
             <FlowStep
