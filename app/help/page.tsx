@@ -2,6 +2,7 @@
 "use client";
 
 import type { CSSProperties } from "react";
+import { useState } from "react";
 import citationScreenshot from "../../docs/screenshots/citation-ui.png";
 import citationScreenshot2 from "../../docs/screenshots/citation-ui-2.png";
 import overviewScreenshot from "../../docs/screenshots/overview-ui.png";
@@ -80,11 +81,143 @@ const screenshotLinkStyle: CSSProperties = {
   fontSize: 13,
   border: "1px solid rgba(95, 168, 210, 0.28)",
   textDecoration: "none",
+  cursor: "pointer",
+};
+
+const modalOverlayStyle: CSSProperties = {
+  position: "fixed",
+  inset: 0,
+  background: "rgba(15, 23, 42, 0.72)",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  padding: 24,
+  zIndex: 1000,
+};
+
+const modalContentStyle: CSSProperties = {
+  position: "relative",
+  background: "#ffffff",
+  borderRadius: 18,
+  maxWidth: 1100,
+  width: "100%",
+  boxShadow: "0 26px 54px rgba(15, 23, 42, 0.4)",
+  padding: 24,
+  display: "grid",
+  gap: 12,
+};
+
+const modalCloseButtonStyle: CSSProperties = {
+  position: "absolute",
+  top: 12,
+  right: 12,
+  border: "none",
+  background: "rgba(16, 42, 67, 0.08)",
+  color: TEXT_COLOR,
+  borderRadius: 999,
+  width: 36,
+  height: 36,
+  cursor: "pointer",
+  fontWeight: 700,
+};
+
+const navButtonStyle: CSSProperties = {
+  border: "none",
+  background: "rgba(16, 42, 67, 0.12)",
+  color: TEXT_COLOR,
+  borderRadius: 12,
+  padding: "10px 14px",
+  cursor: "pointer",
 };
 
 export default function HelpIndexPage() {
+  const [screenshotModal, setScreenshotModal] = useState<{
+    title: string;
+    images: { src: string; alt: string }[];
+    index: number;
+  } | null>(null);
+
+  const openModal = (title: string, images: { src: string; alt: string }[]) => {
+    setScreenshotModal({ title, images, index: 0 });
+  };
+
+  const closeModal = () => setScreenshotModal(null);
+
+  const showNext = () =>
+    setScreenshotModal((prev) =>
+      prev
+        ? { ...prev, index: (prev.index + 1) % prev.images.length }
+        : prev
+    );
+
+  const showPrev = () =>
+    setScreenshotModal((prev) =>
+      prev
+        ? { ...prev, index: (prev.index - 1 + prev.images.length) % prev.images.length }
+        : prev
+    );
+
+  const screenshotSets = {
+    search: [{ src: searchScreenshot.src, alt: "Search & Trends interface" }],
+    overview: [
+      { src: overviewScreenshot.src, alt: "IP Overview dashboard" },
+      { src: overviewScreenshot2.src, alt: "IP Overview dashboard (continued)" },
+    ],
+    citation: [
+      { src: citationScreenshot.src, alt: "Citation Tracker interface" },
+      { src: citationScreenshot2.src, alt: "Citation Tracker interface (continued)" },
+    ],
+    scope: [{ src: scopeScreenshot.src, alt: "Scope Analysis interface" }],
+  };
+
   return (
     <div style={pageWrapperStyle}>
+      {screenshotModal && (
+        <div style={modalOverlayStyle} onClick={closeModal}>
+          <div style={modalContentStyle} onClick={(e) => e.stopPropagation()}>
+            <button type="button" style={modalCloseButtonStyle} onClick={closeModal} aria-label="Close screenshot">
+              X
+            </button>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div>
+                <h3 style={{ margin: 0, fontSize: 18, color: TEXT_COLOR }}>{screenshotModal.title}</h3>
+                <p style={{ margin: "4px 0 0 0", fontSize: 13, color: "#627D98" }}>
+                  {screenshotModal.images[screenshotModal.index].alt} ({screenshotModal.index + 1} of {screenshotModal.images.length})
+                </p>
+              </div>
+              {screenshotModal.images.length > 1 && (
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button type="button" style={navButtonStyle} onClick={showPrev} aria-label="Previous screenshot">
+                    {"<"}
+                  </button>
+                  <button type="button" style={navButtonStyle} onClick={showNext} aria-label="Next screenshot">
+                    {">"}
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <div
+              style={{
+                borderRadius: 14,
+                overflow: "hidden",
+                border: "1px solid rgba(16, 42, 67, 0.12)",
+                maxHeight: "70vh",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                background: "#0f172a",
+              }}
+            >
+              <img
+                src={screenshotModal.images[screenshotModal.index].src}
+                alt={screenshotModal.images[screenshotModal.index].alt}
+                style={{ width: "100%", height: "auto", maxHeight: "70vh", objectFit: "contain", display: "block" }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
       <div className="glass-surface" style={surfaceStyle}>
 
         {/* Header */}
@@ -139,15 +272,14 @@ export default function HelpIndexPage() {
                 </p>
               </div>
               <div style={actionRowStyle}>
-                <a
-                  href={searchScreenshot.src}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <button
+                  type="button"
+                  onClick={() => openModal("Search & Trends", screenshotSets.search)}
                   className="hover:underline"
                   style={screenshotLinkStyle}
                 >
-                  Screenshot ↗
-                </a>
+                  Screenshot
+                </button>
                 <a
                   href="/help/search_trends"
                   className="btn-modern"
@@ -209,24 +341,14 @@ export default function HelpIndexPage() {
                 </p>
               </div>
               <div style={actionRowStyle}>
-                <a
-                  href={overviewScreenshot.src}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <button
+                  type="button"
+                  onClick={() => openModal("IP Overview", screenshotSets.overview)}
                   className="hover:underline"
                   style={screenshotLinkStyle}
                 >
-                  Screenshot 1 ↗
-                </a>
-                <a
-                  href={overviewScreenshot2.src}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hover:underline"
-                  style={screenshotLinkStyle}
-                >
-                  Screenshot 2 ↗
-                </a>
+                  Screenshots
+                </button>
                 <a
                   href="/help/overview"
                   className="btn-modern"
@@ -288,24 +410,14 @@ export default function HelpIndexPage() {
                 </p>
               </div>
               <div style={actionRowStyle}>
-                <a
-                  href={citationScreenshot.src}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <button
+                  type="button"
+                  onClick={() => openModal("Citation Tracker", screenshotSets.citation)}
                   className="hover:underline"
                   style={screenshotLinkStyle}
                 >
-                  Screenshot 1 ↗
-                </a>
-                <a
-                  href={citationScreenshot2.src}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hover:underline"
-                  style={screenshotLinkStyle}
-                >
-                  Screenshot 2 ↗
-                </a>
+                  Screenshots
+                </button>
                 <a
                   href="/help/citation"
                   className="btn-modern"
@@ -366,15 +478,14 @@ export default function HelpIndexPage() {
               </p>
             </div>
             <div style={actionRowStyle}>
-              <a
-                href={scopeScreenshot.src}
-                target="_blank"
-                rel="noopener noreferrer"
+              <button
+                type="button"
+                onClick={() => openModal("Scope Analysis", screenshotSets.scope)}
                 className="hover:underline"
                 style={screenshotLinkStyle}
               >
-                Screenshot ↗
-              </a>
+                Screenshot
+              </button>
               <a
                 href="/help/scope-analysis"
                 className="btn-modern"

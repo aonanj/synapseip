@@ -82,11 +82,11 @@ def signal_focus_shift(dist_series: Sequence[float], share_series: Sequence[floa
 
     if not ok:
         conf = 0.0
-        message = "Assignee's recent filings are anchored in prior subject matter scope; no persistent convergence toward focus input(s) is evident. Higher existing overview potential."
+        message = "Assignee's recent filings are anchored in prior subject matter scope; no persistent convergence toward focus input(s) is evident. Higher whitespace potential."
     elif trend_votes == 1:
-        message = "Assignee's recent filings are converging toward focus input(s), but no clear pattern across volume and subject matter. Moderate existing overview potential."
+        message = "Assignee's recent filings are converging toward focus input(s), but no clear pattern across volume and subject matter. Moderate whitespace potential."
     else:
-        message = "Assignee's recent filings converge around focus input(s) and now comprise a growing share of Assignee's portfolio. Lower existing overview potential."
+        message = "Assignee's recent filings converge around focus input(s) and now comprise a growing share of Assignee's portfolio. Lower whitespace potential."
 
     debug = {
         "slope_dist": float(s_dist),
@@ -122,11 +122,11 @@ def signal_emerging_gap(
 
     if not ok:
         conf = 0.0
-        message = "Assignee's recent filings overlap or nearly overlap with subject matter area(s) already covered by other assignees' filings near focus input(s). Low overview potential near focus input(s)."
+        message = "Assignee's recent filings overlap or nearly overlap with subject matter area(s) already covered by other assignees' filings near focus input(s). Low whitespace potential near focus input(s)."
     elif heated_neighbors:
-        message = "Assignee's recent filings are directed to lower-density subject matter areas near focus input(s); other assignees' filings are markedly increasing. Moderate overview potential remains, but rising momentum indicates the window is closing."
+        message = "Assignee's recent filings are directed to lower-density subject matter areas near focus input(s); other assignees' filings are markedly increasing. Moderate whitespace potential remains, but rising momentum indicates the window is closing."
     else:
-        message = "Assignee's recent filings are directed to lower-density subject matter areas near focus input(s); no clear pattern is emerging in other assignees' filings. Higher existing overview potential."
+        message = "Assignee's recent filings are directed to lower-density subject matter areas near focus input(s); no clear pattern is emerging in other assignees' filings. Higher whitespace potential."
 
     debug = {
         "current_score": current_score,
@@ -169,11 +169,11 @@ def signal_crowd_out(
 
     if not ok:
         conf = 0.0
-        message = "Assignee's recent filings leave some latitude around focus input(s); no patterns indicative of significant crowd-out pressure. Higher overview potential exists."
+        message = "Assignee's recent filings leave some latitude around focus input(s); no patterns indicative of significant crowd-out pressure. Higher whitespace potential exists."
     elif ws_decline and density_gain:
-        message = "Assignee's recent filings are markedly increasing around focus input(s), reducing available overview and concentrating coverage. Moderate overview potential exists (caution)."
+        message = "Assignee's recent filings are markedly increasing around focus input(s), reducing available overview and concentrating coverage. Moderate whitespace potential exists (caution)."
     else:
-        message = "Assignee's recent filings are recently concentrated around focus input(s), which is already densely populated. Low overview potential exists."
+        message = "Assignee's recent filings are recently concentrated around focus input(s), which is already densely populated. Low whitespace potential exists."
 
     debug = {
         "slope_ws": float(slope_ws),
@@ -210,11 +210,11 @@ def signal_bridge(
 
     if not ok:
         conf = 0.0
-        message = "Recent filings in subject matter area(s) near focus input(s) are weakly connected and/or exhibit low filing momentum(s). Higher overview potential to link subject matter area(s) near focus input(s)."
+        message = "Recent filings in subject matter area(s) near focus input(s) are weakly connected and/or exhibit low filing momentum(s). Higher whitespace potential to link subject matter area(s) near focus input(s)."
     elif shared_growth:
-        message = "Higher momentum(s) for recent filings in neighboring/related subject matter area(s) near focus input(s), but low/no links connect the recent filings with higher momentum(s). Moderate overview potential remains."
+        message = "Higher momentum(s) for recent filings in neighboring/related subject matter area(s) near focus input(s), but low/no links connect the recent filings with higher momentum(s). Moderate whitespace potential remains."
     else:
-        message = "Asymmetric momentum patterns shown by recent filings in neighboring/related subject matter area(s) near focus input(s), and neighboring/related subject matter area(s) near focus input(s) have some existing links. Lower overview potential exists."
+        message = "Asymmetric momentum patterns shown by recent filings in neighboring/related subject matter area(s) near focus input(s), and neighboring/related subject matter area(s) near focus input(s) have some existing links. Lower whitespace potential exists."
 
     debug = {
         "openness": float(openness),
