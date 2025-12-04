@@ -2,6 +2,12 @@
 "use client";
 
 import type { CSSProperties } from "react";
+import citationScreenshot from "../../docs/screenshots/citation-ui.png";
+import citationScreenshot2 from "../../docs/screenshots/citation-ui-2.png";
+import overviewScreenshot from "../../docs/screenshots/overview-ui.png";
+import overviewScreenshot2 from "../../docs/screenshots/overview-ui-2.png";
+import scopeScreenshot from "../../docs/screenshots/scope-ui.png";
+import searchScreenshot from "../../docs/screenshots/search-ui.png";
 
 const TEXT_COLOR = "#102A43";
 const LINK_COLOR = "#5FA8D2";
@@ -38,6 +44,14 @@ const cardBaseStyle: CSSProperties = {
   WebkitBackdropFilter: "blur(18px)",
 };
 
+const actionRowStyle: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: 12,
+  flexWrap: "wrap",
+  justifyContent: "flex-end",
+};
+
 const linkButtonStyle: CSSProperties = {
   display: "inline-flex",
   alignItems: "center",
@@ -52,6 +66,20 @@ const linkButtonStyle: CSSProperties = {
   boxShadow: "0 18px 36px rgba(107, 174, 219, 0.55)",
   textDecoration: "none",
   transition: "transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease",
+};
+
+const screenshotLinkStyle: CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  gap: 6,
+  padding: "8px 12px",
+  borderRadius: 999,
+  background: "rgba(95, 168, 210, 0.12)",
+  color: LINK_COLOR,
+  fontWeight: 600,
+  fontSize: 13,
+  border: "1px solid rgba(95, 168, 210, 0.28)",
+  textDecoration: "none",
 };
 
 export default function HelpIndexPage() {
@@ -110,13 +138,24 @@ export default function HelpIndexPage() {
                   Hybrid search, trend visualization, and proactive alerts
                 </p>
               </div>
-              <a
-                href="/help/search_trends"
-                className="btn-modern"
-                style={linkButtonStyle}
-              >
-                View Guide →
-              </a>
+              <div style={actionRowStyle}>
+                <a
+                  href={searchScreenshot.src}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:underline"
+                  style={screenshotLinkStyle}
+                >
+                  Screenshot ↗
+                </a>
+                <a
+                  href="/help/search_trends"
+                  className="btn-modern"
+                  style={linkButtonStyle}
+                >
+                  View Guide →
+                </a>
+              </div>
             </div>
 
             <p style={{ marginTop: 20, fontSize: 14, lineHeight: 1.5, color: TEXT_COLOR, marginBottom: 8 }}>
@@ -140,7 +179,7 @@ export default function HelpIndexPage() {
                 padding: 18,
                 background: "rgba(57, 80, 107, 0.22)",
                 borderRadius: 14,
-                border: "1px solid rgba(155, 199, 255, 0.35)",
+                border: "1px solid rgba(107, 174, 219, 0.25)",
                 boxShadow: "0 14px 26px rgba(107, 174, 219, 0.18)",
                 backdropFilter: "blur(12px)",
                 WebkitBackdropFilter: "blur(12px)",
@@ -169,13 +208,33 @@ export default function HelpIndexPage() {
                   Insights on how crowded specific technology areas are and where opportunities may exist
                 </p>
               </div>
-              <a
-                href="/help/overview"
-                className="btn-modern"
-                style={linkButtonStyle}
-              >
-                View Guide →
-              </a>
+              <div style={actionRowStyle}>
+                <a
+                  href={overviewScreenshot.src}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:underline"
+                  style={screenshotLinkStyle}
+                >
+                  Screenshot 1 ↗
+                </a>
+                <a
+                  href={overviewScreenshot2.src}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:underline"
+                  style={screenshotLinkStyle}
+                >
+                  Screenshot 2 ↗
+                </a>
+                <a
+                  href="/help/overview"
+                  className="btn-modern"
+                  style={linkButtonStyle}
+                >
+                  View Guide →
+                </a>
+              </div>
             </div>
 
             <p style={{ marginTop: 20, fontSize: 14, lineHeight: 1.5, color: TEXT_COLOR, marginBottom: 8 }}>
@@ -228,13 +287,33 @@ export default function HelpIndexPage() {
                   Portfolio-aware forward citations, dependencies, risk radar, and encroachment insights
                 </p>
               </div>
-              <a
-                href="/help/citation"
-                className="btn-modern"
-                style={linkButtonStyle}
-              >
-                View Guide →
-              </a>
+              <div style={actionRowStyle}>
+                <a
+                  href={citationScreenshot.src}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:underline"
+                  style={screenshotLinkStyle}
+                >
+                  Screenshot 1 ↗
+                </a>
+                <a
+                  href={citationScreenshot2.src}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:underline"
+                  style={screenshotLinkStyle}
+                >
+                  Screenshot 2 ↗
+                </a>
+                <a
+                  href="/help/citation"
+                  className="btn-modern"
+                  style={linkButtonStyle}
+                >
+                  View Guide →
+                </a>
+              </div>
             </div>
 
             <p style={{ marginTop: 20, fontSize: 14, lineHeight: 1.5, color: TEXT_COLOR, marginBottom: 8 }}>
@@ -255,7 +334,7 @@ export default function HelpIndexPage() {
                 padding: 18,
                 background: "rgba(57, 80, 107, 0.22)",
                 borderRadius: 14,
-                border: "1px solid rgba(155, 199, 255, 0.35)",
+                border: "1px solid rgba(107, 174, 219, 0.25)",
                 boxShadow: "0 14px 26px rgba(107, 174, 219, 0.18)",
                 backdropFilter: "blur(12px)",
                 WebkitBackdropFilter: "blur(12px)",
@@ -286,13 +365,24 @@ export default function HelpIndexPage() {
                 Claim-level semantic comparison for preliminary FTO and infringement assessment
               </p>
             </div>
-            <a
-              href="/help/scope-analysis"
-              className="btn-modern"
-              style={linkButtonStyle}
-            >
-              View Guide →
-            </a>
+            <div style={actionRowStyle}>
+              <a
+                href={scopeScreenshot.src}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:underline"
+                style={screenshotLinkStyle}
+              >
+                Screenshot ↗
+              </a>
+              <a
+                href="/help/scope-analysis"
+                className="btn-modern"
+                style={linkButtonStyle}
+              >
+                View Guide →
+              </a>
+            </div>
           </div>
 
           <p style={{ marginTop: 20, fontSize: 14, lineHeight: 1.5, color: TEXT_COLOR, marginBottom: 8 }}>

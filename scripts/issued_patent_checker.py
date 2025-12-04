@@ -169,6 +169,14 @@ def parse_args() -> argparse.Namespace:
         help="Retries for transient database errors (default: 3).",
     )
     parser.add_argument(
+        "--after-pub-id",
+        default=None,
+        help=(
+            "Start scanning after this pub_id (use last pub_id from prior run to resume). "
+            "If omitted, processing starts from the beginning."
+        ),
+    )
+    parser.add_argument(
         "--dry-run",
         action="store_true",
         help="Fetch data but do not write to issued_patent_staging.",
@@ -506,11 +514,12 @@ def process_patents(
     max_retries: int,
     db_retries: int,
     dry_run: bool,
+    after_pub_id: str,
 ) -> Stats:
     stats = Stats()
     conn = connect_db(dsn)
     db_retry_limit = max(db_retries, 1)
-    after_pub_id = ""
+    after_pub_id = after_pub_id or ""
 
     def reconnect(context: str) -> None:
         nonlocal conn
@@ -695,6 +704,7 @@ def main() -> None:
             max_retries=args.max_retries,
             db_retries=args.db_retries,
             dry_run=args.dry_run,
+            after_pub_id=args.after_pub_id or "",
         )
     except psycopg.Error as exc:
         logger.error("Database execution failed: %s", exc)

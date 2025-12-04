@@ -2,7 +2,7 @@
 """
 etl_add_embeddings.py
 
-Backfill missing embeddings for patents within a date range.
+Backfill missing embeddings for patents within a date range or updated since a date.
 
 Queries patents with pub_date between --date-from and --date-to,
 checks for missing embeddings (title+abstract and claims),
@@ -10,6 +10,7 @@ and generates/upserts them into patent_embeddings.
 
 Usage:
     python etl_add_embeddings.py --date-from 2024-01-01 --date-to 2024-02-01
+    python etl_add_embeddings.py --updated-date 2024-03-15
 """
 
 from __future__ import annotations
@@ -63,6 +64,18 @@ FROM patent p
 WHERE p.pub_date >= %(date_from)s
   AND p.pub_date < %(date_to)s
 ORDER BY p.pub_date, p.pub_id;
+"""
+
+SELECT_PATENTS_BY_UPDATED_DATE_SQL = """
+SELECT
+    p.pub_id,
+    p.title,
+    p.abstract,
+    p.claims_text,
+    p.pub_date
+FROM patent p
+WHERE p.updated_at >= %(updated_at)s
+ORDER BY p.updated_at, p.pub_date, p.pub_id;
 """
 
 SELECT_EXISTING_EMB_SQL = """
@@ -249,6 +262,37 @@ def query_patents_by_date(
     """
     with pool.connection() as conn, conn.cursor() as cur:
         cur.execute(SELECT_PATENTS_BY_DATE_SQL, {"date_from": date_from, "date_to": date_to})
+        rows = cur.fetchall()
+
+    records = []
+    for row in rows:
+        records.append(
+            PatentRecord(
+                pub_id=row[0],
+                title=row[1],
+                abstract=row[2],
+                claims_text=row[3],
+                pub_date=row[4],
+            )
+        )
+    return records
+
+
+def query_patents_by_updated_date(
+    pool: ConnectionPool[PgConn], updated_date: int
+) -> list[PatentRecord]:
+    """
+    Query patents with updated_date on or after the provided date.
+
+    Args:
+        pool: Database connection pool.
+        updated_date: Lower bound date as YYYYMMDD integer.
+
+    Returns:
+        List of PatentRecord instances.
+    """
+    with pool.connection() as conn, conn.cursor() as cur:
+        cur.execute(SELECT_PATENTS_BY_UPDATED_DATE_SQL, {"updated_at": updated_date})
         rows = cur.fetchall()
 
     records = []
@@ -478,17 +522,22 @@ def parse_args() -> argparse.Namespace:
         Parsed arguments namespace.
     """
     p = argparse.ArgumentParser(
-        description="Backfill missing embeddings for patents within a date range."
+        description="Backfill missing embeddings for patents within a date range or updated_date."
     )
     p.add_argument(
         "--date-from",
-        required=True,
+        required=False,
         help="Start date (inclusive) in YYYY-MM-DD format",
     )
     p.add_argument(
         "--date-to",
-        required=True,
+        required=False,
         help="End date (exclusive) in YYYY-MM-DD format",
+    )
+    p.add_argument(
+        "--updated-date",
+        required=False,
+        help="Process patents with updated_date on or after this date (YYYY-MM-DD)",
     )
     p.add_argument(
         "--batch-size",
@@ -522,19 +571,35 @@ def main() -> int:
         logger.error("PG_DSN not set and --dsn not provided")
         return 2
 
+    if args.updated_date and (args.date_from or args.date_to):
+        logger.error("Provide either --updated-date or (--date-from and --date-to), not both")
+        return 2
+
     # Parse dates
+    updated_date_int: int | None = None
+    date_from: int | None = None
+    date_to: int | None = None
     try:
-        date_from = parse_date_arg(args.date_from)
-        date_to = parse_date_arg(args.date_to)
+        if args.updated_date:
+            updated_date_int = parse_date_arg(args.updated_date)
+        else:
+            if not args.date_from or not args.date_to:
+                logger.error("Either --updated-date or both --date-from and --date-to are required")
+                return 2
+            date_from = parse_date_arg(args.date_from)
+            date_to = parse_date_arg(args.date_to)
     except ValueError as e:
         logger.error(str(e))
         return 2
 
-    if date_from >= date_to:
+    if date_from is not None and date_to is not None and date_from >= date_to:
         logger.error(f"date-from ({args.date_from}) must be before date-to ({args.date_to})")
         return 2
 
-    logger.info(f"Processing patents from {args.date_from} to {args.date_to}")
+    if updated_date_int is not None:
+        logger.info(f"Processing patents with updated_date >= {args.updated_date}")
+    else:
+        logger.info(f"Processing patents from {args.date_from} to {args.date_to}")
 
     # Setup database pool
     pool = ConnectionPool[PgConn](
@@ -548,10 +613,20 @@ def main() -> int:
         },
     )
 
+    patents: list[PatentRecord] = []
+
     # Query patents
-    logger.info("Querying patents by date range")
-    patents = query_patents_by_date(pool, date_from, date_to)
-    logger.info(f"Found {len(patents)} patents in date range")
+    if updated_date_int is not None:
+        logger.info("Querying patents by updated_date lower bound")
+        patents = query_patents_by_updated_date(pool, updated_date_int)
+    elif date_from is not None and date_to is not None:
+        logger.info("Querying patents by date range")
+        patents = query_patents_by_date(pool, date_from, date_to)
+    else:
+        logger.error("Invalid date parameters: (date-from/date-to) or (updated-date) required")
+        raise RuntimeError("Invalid date parameters: (date-from/date-to) or (updated-date) required")
+    
+    logger.info(f"Found {len(patents)} patents in selection")
 
     if not patents:
         logger.info("No patents found in date range")
