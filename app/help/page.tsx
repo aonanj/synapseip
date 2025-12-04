@@ -291,7 +291,7 @@ export default function HelpIndexPage() {
             </div>
 
             <p style={{ marginTop: 20, fontSize: 14, lineHeight: 1.5, color: TEXT_COLOR, marginBottom: 8 }}>
-              The Search & Trends page is the primary interface for discovering and monitoring granted patents and published applications. It combines powerful search capabilities with visual trend analytics to provide an easily comprehensible view of the AI/ML IP landscape. The intuitive interface allows users to construct complex queries using both keywords and semantic natural language, filter results by various metadata fields, and visualize filing trends over time, by CPC code<a href="#1" className="hover:underline"style={{ fontSize: 16, fontWeight: 500, color: LINK_COLOR }}><sup>1</sup></a>classification, or by assignee. 
+              The Search & Trends page is the primary interface for discovering and monitoring granted patents and published applications. It combines powerful search capabilities with visual trend analytics to provide an easily comprehensible view of the AI/ML IP landscape. The intuitive interface allows users to construct complex queries using both keywords and semantic natural language, filter results by various metadata fields, and visualize filing trends over time, by CPC code<a href="#1" className="hover:underline"style={{ fontSize: 16, fontWeight: 500, color: LINK_COLOR }}><sup>1</sup></a> classification, or by assignee. 
             </p>
             <p style={{ fontSize: 14, lineHeight: 1.5, color: TEXT_COLOR, marginBottom: 16 }}>
               The Search & Trends page further includes the option to save a particular search configuration as an alert. SynapseIP updates its database on a weekly basis, following the USPTO schedule. Saved searches are automatically run when new data becomes available, and users are notified of new matches.
@@ -675,7 +675,7 @@ function ResourceLink({ title, description, href, external }: { title: string; d
 function Footnote({ id, title, description, href, external }: { id: string; title: string; description: string; href: string; external: boolean }) {
   return (
     <div id={id} style={{ padding: 16, border: `2px solid ${CARD_BORDER}`, borderRadius: 8 }}>
-      <sup style={{ fontSize: 16, fontWeight: 500, color: TEXT_COLOR}}>{id}</sup><a
+      <sup style={{color: TEXT_COLOR}}>{id} </sup><a
         href={href}
         className="hover:underline"
         target={external ? "_blank" : undefined}
