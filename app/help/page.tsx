@@ -291,7 +291,7 @@ export default function HelpIndexPage() {
             </div>
 
             <p style={{ marginTop: 20, fontSize: 14, lineHeight: 1.5, color: TEXT_COLOR, marginBottom: 8 }}>
-              The Search & Trends page is the primary interface for discovering and monitoring granted patents and published applications. It combines powerful search capabilities with visual trend analytics to provide an easily comprehensible view of the AI/ML IP landscape. The intuitive interface allows users to construct complex queries using both keywords and semantic natural language, filter results by various metadata fields, and visualize filing trends over time, by CPC classification, or by assignee. 
+              The Search & Trends page is the primary interface for discovering and monitoring granted patents and published applications. It combines powerful search capabilities with visual trend analytics to provide an easily comprehensible view of the AI/ML IP landscape. The intuitive interface allows users to construct complex queries using both keywords and semantic natural language, filter results by various metadata fields, and visualize filing trends over time, by CPC code<a href="#1" className="hover:underline"style={{ fontSize: 16, fontWeight: 500, color: LINK_COLOR }}><sup>1</sup></a>classification, or by assignee. 
             </p>
             <p style={{ fontSize: 14, lineHeight: 1.5, color: TEXT_COLOR, marginBottom: 16 }}>
               The Search & Trends page further includes the option to save a particular search configuration as an alert. SynapseIP updates its database on a weekly basis, following the USPTO schedule. Saved searches are automatically run when new data becomes available, and users are notified of new matches.
@@ -363,7 +363,7 @@ export default function HelpIndexPage() {
               The IP Overview page provides a quantitative view of patent and publication activity within a defined scope. This page includes analysis and insights for subject matter saturation, activity rates, and momentum measurements, as well as identifying CPC codes under which patent and publications are concentrated. The interface presents four primary metrics (subject matter saturation, patent and publication activity rate, patent grant and publication momentum, and top CPC codes) supported by a monthly trend line, CPC distribution chart, and sortable results table with direct links to the underlying patents and publications.
             </p>
             <p style={{ fontSize: 14, lineHeight: 1.5, color: TEXT_COLOR, marginBottom: 16 }}>
-              An optional “Group by Assignee” toggle enables the KNN Sigma graph visualization with confidence-scored signals highlighting potential gaps, bridging opportunities<a href="#footnote1" className="hover:underline"style={{ fontSize: 16, fontWeight: 600, color: LINK_COLOR }}>*</a>, focus convergence, and crowd-out patterns.
+              An optional “Group by Assignee” toggle enables the KNN Sigma graph visualization with confidence-scored signals highlighting potential gaps, bridging opportunities<a href="#2" className="hover:underline"style={{ fontSize: 16, fontWeight: 500, color: LINK_COLOR }}><sup>2</sup></a>, focus convergence, and crowd-out patterns.
             </p>
 
             <div style={{ display: "grid", gap: 12 }}>
@@ -429,7 +429,7 @@ export default function HelpIndexPage() {
             </div>
 
             <p style={{ marginTop: 20, fontSize: 14, lineHeight: 1.5, color: TEXT_COLOR, marginBottom: 8 }}>
-              The Citation Intelligence page layers analytics on the patent_citation table to reveal who cites your portfolio, where cross-assignee dependencies exist, and which competitors are encroaching on your space. A shared scope card defines portfolio and time window. The interface further includes four widgets: (1) Forward-citation impact, (2) Cross-assignee dependencies, (3) Risk radar, and (4) Assignee encroachment. The widgets are refreshed in parallel.
+              The Citation Tracker page adds a competitive analytics layer to the SynapseIP platform. Enter a source assignee, patents/publications from an IP portfolio, or focus keyword(s)/CPC(s) to find citation patterns, assignee relationships, and data points for infringement risks/potential via four widgets: (1) Forward-citation impact, (2) Cross-assignee dependencies, (3) Risk radar, and (4) Assignee encroachment. The widgets are refreshed in parallel via the search criteria.
             </p>
 
             <div style={{ display: "grid", gap: 12 }}>
@@ -537,37 +537,49 @@ export default function HelpIndexPage() {
             <FlowStep
               num="1"
               title="Authentication"
-              description="SynapseIP uses Auth0 for secure authentication. Log in or sign up using the button in the top navigation bar. All features require authentication to ensure data security and usage tracking."
+              description="SynapseIP uses Auth0 for secure authentication. Log in or sign up using the button in the top navigation bar. All features require authentication for security and subscription verification. ."
             />
 
             <FlowStep
               num="2"
-              title="Start with Search & Trends"
-              description="Search & Trends provides direct and easy access to the AI/ML patent and publication data set available through SynapseIP. Semantic queries, keyword input, and CPC filters are available to narrow results. Trend groupings may assist in understanding filing patterns."
+              title="Subscription/Billing"
+              description="SynapseIP uses requires an active subscription to access and use the platform features. Payment information is securely handled through Stripe."
             />
 
             <FlowStep
               num="3"
-              title="Save Searches as Alerts"
-              description="Relevant or important searches can be saved as alerts to avoid repeated manual runs. With search criteria of interest input, click 'Save as Alert' to receive notifications when new patents or publications match that criteria. Alerts can be managed through the navigation bar (hover over username for menu)."
+              title="Start at Search & Trends"
+              description="Search & Trends provides direct and easy access to the AI/ML patent and publication data set available through SynapseIP. Semantic queries, keyword input, and CPC filters are available to narrow results. Trend groupings may assist in understanding filing patterns."
             />
 
             <FlowStep
               num="4"
-              title="Run Scope Analysis Early"
-              description="Input a product description, invention disclosure, or draft claims into the Scope Analysis page to generate a semantic comparison against independent claims. Use the similarity graph and evidence table to identify relevant patents to assess infringement risks."
+              title="Save Searches as Alerts"
+              description="Relevant or important searches can be saved as alerts to avoid repeated manual runs. With search criteria of interest input, click 'Save as Alert' to receive notifications when new patents or publications match that criteria. The SynapseIP database is updated on a weekly basis, following the USPTO schedule, and alerts are sent accordingly. Alerts can be managed through the navigation bar (hover over username for menu)."
             />
 
             <FlowStep
               num="5"
-              title="Explore AI/ML IP Opportunities"
-              description="Navigate to the IP Overview page to view how busy a technology area is. Enter focus keywords and/or CPC codes, review the saturation/activity rate/momentum tiles, inspect the timeline and CPC bars, and review the result set table for representative patents and publications."
+              title="Run Scope Analysis"
+              description="Input a product description, invention disclosure, or draft claims into the Scope Analysis page to generate a semantic comparison against independent claims. Use the similarity graph and results table to identify relevant patents and assess infringement risks."
             />
 
             <FlowStep
               num="6"
-              title="Export and Share Insights"
-              description="Use CSV/PDF exports for shareable reports, and copy links from the IP Overview result set table to access full text and figures of specific patents or publications."
+              title="Monitor Competitors with Citation Tracker"
+              description="View relationships between IP portfolios and assignees through the Citation Tracker page. Identify licensing opportunities according to the citations from patents/publications in the SynapseIP database."
+            />
+
+            <FlowStep
+              num="7"
+              title="Explore AI/ML IP Opportunities"
+              description="Navigate to the IP Overview page to view how busy a technology area is. Enter focus keyword(s), CPC codes, and/or other filters to view the saturation, activity rate, and momentum around that search criteria. Timeline and CPC bars provide visual indicators, while the results table shows representative patents and publications."
+            />
+
+            <FlowStep
+              num="8"
+              title="Export Results Sets"
+              description="Tables on each page can be exported as PDF files for offline research and review. Additionally, patent and publication numbers link to the full corresponding reference via Google Patents. (Note: Google Patents does not update at the same frequency as SynapseIP, and therefore the most recent filings may not be available there. Visit the USPTO website for the most current data.)"
             />
           </div>
         </div>
@@ -578,18 +590,20 @@ export default function HelpIndexPage() {
 
           <div style={{ display: "grid", gap: 16 }}>
 
-            <Footnote
-              id="footnote1"
-              title="“Bridging” Patents and Publications"
-              description="A “bridging” patent/publication is one in which the invention is directed to one technology area but the scope of protection can be broadened to cover other areas. Example: a patent claiming an improvement to internal combustion engines in automobiles, and the improvement can also be used in aviation, marine, and other internal combustion engine applications. Bridging patents have been shown to be especially commercially valuable. See, e.g., Choi & Yoon, Measuring Knowledge Exploration Distance at the Patent Level, 16 J. Informetr. 101286 (2002) (linked here). See also Moehrle & Frischkorn, Bridge Strongly or Focus — An Analysis of Bridging Patents [...], 15 J. Informetr. 101138 (2001)."
-              href="https://ideas.repec.org/a/eee/infome/v16y2022i2s1751157722000384.html"
-              external={true}
-            />
 
-            <ResourceLink
+            <Footnote
+              id="1"
               title="Understanding CPC Codes"
               description="CPC (Cooperative Patent Classification) codes categorize patents and applications by technology area. For reference, the USPTO generally assigns AI and machine learning subject matter under one of the following CPC section (letter)+class(number)+subclass(letter) classifications: A61B, B60W, G05D, G06N, G06V, and G10L. More specific AI/ML-related subject matter is generally assigned to group, as well, as indicating by a number appended to the subclass: G06F17, G06F18, G06F40, G06K9, G06T7. A further subgroup indicates subject matter at an even more granular level, which is indicated by a third number, preceded by a backslash. For AI/ML-related subject matter, this is most commonly encoutered in CPC classification G06F16/90."
               href="https://www.uspto.gov/web/patents/classification/cpc/html/cpc.html"
+              external={true}
+            />
+
+            <Footnote
+              id="2"
+              title="“Bridging” Patents and Publications"
+              description="A “bridging” patent/publication is one in which the invention is directed to one technology area but the scope of protection can be broadened to cover other areas. Example: a patent claiming an improvement to internal combustion engines in automobiles, and the improvement can also be used in aviation, marine, and other internal combustion engine applications. Bridging patents have been shown to be especially commercially valuable. See, e.g., Choi & Yoon, Measuring Knowledge Exploration Distance at the Patent Level, 16 J. Informetr. 101286 (2002) (linked here). See also Moehrle & Frischkorn, Bridge Strongly or Focus — An Analysis of Bridging Patents [...], 15 J. Informetr. 101138 (2001)."
+              href="https://ideas.repec.org/a/eee/infome/v16y2022i2s1751157722000384.html"
               external={true}
             />
 
@@ -599,21 +613,14 @@ export default function HelpIndexPage() {
               href="/docs"
               external={false}
             />
-          </div>
-        </div>
 
-        {/* Support */}
-        <div className="glass-card" style={{ ...cardBaseStyle }}>
-          <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: TEXT_COLOR, marginBottom: 16 }}>Need Help?</h2>
-          <p style={{ fontSize: 14, lineHeight: 1.5, color: TEXT_COLOR, marginBottom: 12 }}>
-            If you have questions or encounter issues not covered in this documentation, please contact:
-          </p>
-          <div style={{ marginTop: 16 }}>
-            <p style={{ fontSize: 14, lineHeight: 1.5, color: TEXT_COLOR, margin: 0 }}>
-              <strong>Email</strong>: <a href="mailto:support@phaethon.llc" className="hover:underline" style={{ color: LINK_COLOR }}>support@phaethon.llc</a><br />
-              <strong>Subject Line</strong>: SynapseIP Support Request<br />
-              <strong>Website</strong>: <a href="https://phaethonorder.com" target="_blank" rel="noopener noreferrer" className="hover:underline" style={{ color: LINK_COLOR }}>https://phaethonorder.com</a>
-            </p>
+            <ResourceLink
+              title="Contact Support"
+              description="SynapseIP is a service provided by Phaethon Order LLC. For assistance with technical issues, account inquiries, or general questions, please contact us via phone at (949) 326-0878 or email at support@phaethon.llc."
+              href="mailto:support@phaethon.llc"
+              external={true}
+            />
+
           </div>
         </div>
       </div>
@@ -660,7 +667,7 @@ function ResourceLink({ title, description, href, external }: { title: string; d
       >
         {title} {external && "↗︎"}
       </a>
-      <p style={{ margin: "6px 0 0 0", fontSize: 13, color: "#627D98" }}>{description}</p>
+      <p style={{ margin: "6px 0 0 0", fontSize: 13, color: TEXT_COLOR }}>{description}</p>
     </div>
   );
 }
@@ -668,14 +675,14 @@ function ResourceLink({ title, description, href, external }: { title: string; d
 function Footnote({ id, title, description, href, external }: { id: string; title: string; description: string; href: string; external: boolean }) {
   return (
     <div id={id} style={{ padding: 16, border: `2px solid ${CARD_BORDER}`, borderRadius: 8 }}>
-      * <a
+      <sup style={{ fontSize: 16, fontWeight: 500, color: TEXT_COLOR}}>{id}</sup><a
         href={href}
         className="hover:underline"
         target={external ? "_blank" : undefined}
         rel={external ? "noopener noreferrer" : undefined}
         style={{ fontSize: 15, fontWeight: 600, color: LINK_COLOR }}
       >{title} {external && "↗︎"}</a>
-      <p style={{ margin: "6px 0 0 0", fontSize: 13, color: "#627D98" }}>{description}</p>
+      <p style={{ margin: "6px 0 0 0", fontSize: 13, color: TEXT_COLOR }}>{description}</p>
     </div>
   );
 }

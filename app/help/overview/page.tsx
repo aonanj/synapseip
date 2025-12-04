@@ -276,25 +276,6 @@ export default function OverviewHelpPage() {
             />
           </div>
         </div>
-
-        {/* Troubleshooting */}
-        <div className="glass-card" style={{ ...cardBaseStyle }}>
-          <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: TEXT_COLOR, marginBottom: 16 }}>Troubleshooting</h2>
-          <div style={{ display: "grid", gap: 16 }}>
-            <Troubleshoot
-              issue="No results returned"
-              solution="Verify at least one keyword or CPC is provided. Try expanding the date range or disabling semantic neighbors if the query is very niche."
-            />
-            <Troubleshoot
-              issue="Momentum stays flat"
-              solution="Check the timeline sparkline for month-to-month variability. Extending the window or adding semantic neighbors can expose greater insights."
-            />
-            <Troubleshoot
-              issue="Assignee graph looks empty"
-              solution="Ensure “Group by Assignee” is toggled on and the latest run completed. Some narrow scopes may lack a sufficient number of patents and publications per assignee to expose a signal with that satisfies a minimum level of confidence."
-            />
-          </div>
-        </div>
       </div>
       <div className="glass-surface" style={surfaceStyle}>
         {/* Footer */}

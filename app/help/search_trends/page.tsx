@@ -98,7 +98,7 @@ export default function SearchTrendsHelpPage() {
         <div className="glass-card" style={{ ...cardBaseStyle }}>
           <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: TEXT_COLOR, marginBottom: 16 }}>Search Interface & Inputs</h2>
           <p style={{ fontSize: 14, lineHeight: 1.5, color: TEXT_COLOR, marginBottom: 16 }}>
-            The search interface provides multiple input fields to refine your patent search. Inputs no longer auto-submit; make your edits and click <strong>Apply</strong> to run the search so the trend graph and table stay perfectly in sync.
+            The search interface provides multiple input fields to refine your patent search. Click <strong>Apply</strong> to run the search. The trend graph and results table are synchronized. Note that semantic search and keyword search can be used together, e.g., to refine results, filter is concentrated within a specific context, or ensure that a search for keywords of interest is limited to a domain of interest. Thus, fine-grained control can be achieved by using both a semantic query (to capture conceptually similar patents and publications) and keywords (to ensure specific terms are present). This hybrid approach prevents the signal from being lost in the noise by leveraging the strengths of both methods.
           </p>
 
           <div style={{ display: "grid", gap: 20 }}>
@@ -329,119 +329,6 @@ export default function SearchTrendsHelpPage() {
           <p style={{ fontSize: 14, lineHeight: 1.5, color: TEXT_COLOR, marginTop: 12 }}>
             This ensures email alerts are only triggered once when search criteria is met, and that the emails provide timely notifications of new matches on the alert search criteria.
           </p>
-        </div>
-
-        {/* UI/UX Flow Summary */}
-        <div className="glass-card" style={{ ...cardBaseStyle }}>
-          <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: TEXT_COLOR, marginBottom: 16 }}>UI/UX Flow Summary</h2>
-          <p style={{ fontSize: 14, lineHeight: 1.5, color: TEXT_COLOR, marginBottom: 16 }}>
-            Example walkthrough of a Search & Trends session:
-          </p>
-
-          <div style={{ display: "grid", gap: 16, marginTop: 16 }}>
-            <WorkflowStep
-              step="1"
-              title="Authentication"
-              description="Log in via Auth0 using the login button in the navigation bar. The page displays a login overlay if unauthenticated."
-            />
-            <WorkflowStep
-              step="2"
-              title="Enter Search Criteria"
-              description="Fill in one or more of the input fields (semantic query, keywords, assignee, CPC, date range). Inputs no longer auto-run searches; changes take effect only after you click Apply."
-            />
-            <WorkflowStep
-              step="3"
-              title="Review Results"
-              description="The Results section populates with up to 20 patents per page. Patent and publication number are clickable links to view the full document on Google Patents. Use Prev/Next to paginate through results."
-            />
-            <WorkflowStep
-              step="4"
-              title="Analyze Trends"
-              description="After clicking Apply, the Trend chart reflects your current filters. Use the 'Group by' dropdown to switch between Month, CPC, and Assignee views. Observe filing patterns, spikes, or dominant players."
-            />
-            <WorkflowStep
-              step="5"
-              title="Export Data"
-              description="To save search results for later research and review, options to export the data set are provided for CSV and PDF. Preferred format is selected by clicking the corresponding button: 'Export CSV' or 'Export PDF'. Results exporting supports up to 1,000 results matching the current semantic search, keyword(s), and other filters."
-            />
-            <WorkflowStep
-              step="6"
-              title="Save Alert (Optional)"
-              description="If this is a search you want to monitor over time, click 'Save Alert', name the alert, and confirm. The automated backend process will then check the whether the search criteria match any new filings during the next scheduled alerts run, not an email notification will be triggered if necessary."
-            />
-            <WorkflowStep
-              step="7"
-              title="Refine or Reset"
-              description="Click 'Reset' to clear all filters (no search runs until you hit Apply again), or refine your inputs and click 'Apply' to re-run the search."
-            />
-          </div>
-        </div>
-
-        {/* Best Practices */}
-        <div className="glass-card" style={{ ...cardBaseStyle }}>
-          <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: TEXT_COLOR, marginBottom: 16 }}>Best Practices</h2>
-
-          <div style={{ display: "grid", gap: 16 }}>
-            <BestPractice
-              title="Combine Semantic and Keyword Search"
-              tip="AI semantic search and keyword search can be used together, e.g., to refine results, filter is concentrated within a specific context, or ensure that a search for keywords of interest is limited to a domain of interest. Thus, fine-grained control can be achieved by using both a semantic query (to capture conceptually similar patents and publications) and keywords (to ensure specific terms are present). This hybrid approach prevents the signal from being lost in the noise by leveraging the strengths of both methods."
-            />
-            <BestPractice
-              title="Use Broad CPC Codes for Exploration"
-              tip="To broadly explore technology areas, a CPC code (e.g., 'G06N' for Computing and Calculating; Counting) can be specified as a search criteria. The results can be further refined, e.g., by reference to the trend chart. CPC codes are hierarchical, so broader codes capture more patents and publications, while specific codes narrow the focus. (Note: patents and publications generally have multiple CPC codes, so counts may exceed total results.)"
-            />
-            <BestPractice
-              title="Monitor Competitors with Assignee Filters"
-              tip="Create alerts for specific assignees (e.g., 'Google', 'Microsoft') to stay informed about their latest patents and applications. Combine with CPC and/or keyword filters to focus on technology areas of interest."
-            />
-            <BestPractice
-              title="Review Trend Charts For Exporting"
-              tip="Trend Chart can provide a quick and convenient visual reference in a variety of contexts. For example, momentums, new products and services, shifts in technology focus, increases/decreases in R&D investment and allocation, etc. can be easily identified by tuning semantic and keyword searching and other filters to values consistent with a trend of interest. Accordingly, Trend Chart can provide a visual verification before exporting a results set."
-            />
-            <BestPractice
-              title="Alerts Allow Automatic Monitoring, Not One-Time Searches"
-              tip="Alerts provide a mechanism for continuous passive monitoring, avoiding the need for repetitive searches after each USPTO patent grant and application publication date."
-            />
-          </div>
-        </div>
-
-        {/* Troubleshooting */}
-        <div className="glass-card" style={{ ...cardBaseStyle }}>
-          <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: TEXT_COLOR, marginBottom: 16 }}>Troubleshooting</h2>
-
-          <div style={{ display: "grid", gap: 16 }}>
-            <Troubleshoot
-              issue="No results found"
-              solution="Try broadening the search by removing filters or using a more general semantic query. Verify that the specified date range does not fall outside the searchable database (2023–present). Check that CPC codes are valid and assignee names are spelled correctly."
-            />
-            <Troubleshoot
-              issue="Trend chart shows 'No data'"
-              solution="Usually caused by filters that are too narrow for any matches. If results are returned with no semantic search, keywords, or other filters applied, try resetting and incrementally narrowing the search focus."
-            />
-            <Troubleshoot
-              issue="Alert save fails"
-              solution="Ensure you are authenticated (logged in via Auth0) and you have an active subscription. Check that at least one filter is active (an empty alert with no criteria cannot be saved). Verify the alert name is not empty."
-            />
-            <Troubleshoot
-              issue="Export downloads are empty or fail"
-              solution="Verify that the current search returns results before exporting. Check your browser's download settings to ensure the file is not being blocked. If the PDF fails, try CSV export as a fallback."
-            />
-            <Troubleshoot
-              issue="Search is slow or times out"
-              solution="Very broad semantic queries or large date ranges can be slow. Try narrowing the date range or adding additional filters (assignee, CPC) to reduce the search space. Contact support if timeouts persist."
-            />
-          </div>
-        </div>
-
-        {/* Related Resources */}
-        <div className="glass-card" style={{ ...cardBaseStyle }}>
-          <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: TEXT_COLOR, marginBottom: 16 }}>Related Resources</h2>
-          <ul style={{ marginLeft: 20, fontSize: 14, lineHeight: 1.5, listStyleType: "disc", listStylePosition: "outside", color: TEXT_COLOR }}>
-            <li><a href="/help/overview" style={{ color: LINK_COLOR }}>IP Overview Guide</a> – Learn how to identify strategic opportunities and risks</li>
-            <li><a href="/help" style={{ color: LINK_COLOR }}>Help Home</a> – Return to the main help index</li>
-            <li><a href="https://www.uspto.gov/web/patents/classification/cpc/html/cpc.html" target="_blank" rel="noopener noreferrer" style={{ color: LINK_COLOR }}>USPTO CPC Reference</a> – Official CPC code definitions</li>
-            <li><a href="/docs" style={{ color: LINK_COLOR }}>Legal Documentation</a> – Terms of Service, Privacy Policy, DPA</li>
-          </ul>
         </div>
       </div>
       <div className="glass-surface" style={surfaceStyle}>
