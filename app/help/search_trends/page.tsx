@@ -339,38 +339,38 @@ export default function SearchTrendsHelpPage() {
           </p>
 
           <div style={{ display: "grid", gap: 16, marginTop: 16 }}>
-            <FlowStep
-              num="1"
+            <WorkflowStep
+              step="1"
               title="Authentication"
               description="Log in via Auth0 using the login button in the navigation bar. The page displays a login overlay if unauthenticated."
             />
-            <FlowStep
-              num="2"
+            <WorkflowStep
+              step="2"
               title="Enter Search Criteria"
               description="Fill in one or more of the input fields (semantic query, keywords, assignee, CPC, date range). Inputs no longer auto-run searches; changes take effect only after you click Apply."
             />
-            <FlowStep
-              num="3"
+            <WorkflowStep
+              step="3"
               title="Review Results"
               description="The Results section populates with up to 20 patents per page. Patent and publication number are clickable links to view the full document on Google Patents. Use Prev/Next to paginate through results."
             />
-            <FlowStep
-              num="4"
+            <WorkflowStep
+              step="4"
               title="Analyze Trends"
               description="After clicking Apply, the Trend chart reflects your current filters. Use the 'Group by' dropdown to switch between Month, CPC, and Assignee views. Observe filing patterns, spikes, or dominant players."
             />
-            <FlowStep
-              num="5"
+            <WorkflowStep
+              step="5"
               title="Export Data"
               description="To save search results for later research and review, options to export the data set are provided for CSV and PDF. Preferred format is selected by clicking the corresponding button: 'Export CSV' or 'Export PDF'. Results exporting supports up to 1,000 results matching the current semantic search, keyword(s), and other filters."
             />
-            <FlowStep
-              num="6"
+            <WorkflowStep
+              step="6"
               title="Save Alert (Optional)"
               description="If this is a search you want to monitor over time, click 'Save Alert', name the alert, and confirm. The automated backend process will then check the whether the search criteria match any new filings during the next scheduled alerts run, not an email notification will be triggered if necessary."
             />
-            <FlowStep
-              num="7"
+            <WorkflowStep
+              step="7"
               title="Refine or Reset"
               description="Click 'Reset' to clear all filters (no search runs until you hit Apply again), or refine your inputs and click 'Apply' to re-run the search."
             />

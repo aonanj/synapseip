@@ -363,7 +363,7 @@ export default function HelpIndexPage() {
               The IP Overview page provides a quantitative view of patent and publication activity within a defined scope. This page includes analysis and insights for subject matter saturation, activity rates, and momentum measurements, as well as identifying CPC codes under which patent and publications are concentrated. The interface presents four primary metrics (subject matter saturation, patent and publication activity rate, patent grant and publication momentum, and top CPC codes) supported by a monthly trend line, CPC distribution chart, and sortable results table with direct links to the underlying patents and publications.
             </p>
             <p style={{ fontSize: 14, lineHeight: 1.5, color: TEXT_COLOR, marginBottom: 16 }}>
-              An optional “Group by Assignee” toggle enables the KNN Sigma graph visualization with confidence-scored signals highlighting potential gaps, bridging opportunities*, focus convergence, and crowd-out patterns.
+              An optional “Group by Assignee” toggle enables the KNN Sigma graph visualization with confidence-scored signals highlighting potential gaps, bridging opportunities<a href="#footnote1" className="hover:underline"style={{ fontSize: 16, fontWeight: 600, color: LINK_COLOR }}>*</a>, focus convergence, and crowd-out patterns.
             </p>
 
             <div style={{ display: "grid", gap: 12 }}>
@@ -534,34 +534,40 @@ export default function HelpIndexPage() {
           <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: TEXT_COLOR, marginBottom: 16 }}>Quick Start Guide</h2>
 
           <div style={{ display: "grid", gap: 20 }}>
-            <InfoSection
-              title="1. Authentication"
-              content="SynapseIP uses Auth0 for secure authentication. Log in or sign up using the button in the top navigation bar. All features require authentication to ensure data security and usage tracking."
+            <FlowStep
+              num="1"
+              title="Authentication"
+              description="SynapseIP uses Auth0 for secure authentication. Log in or sign up using the button in the top navigation bar. All features require authentication to ensure data security and usage tracking."
             />
 
-            <InfoSection
-              title="2. Start with Search & Trends"
-              content="Search & Trends provides direct and easy access to the AI/ML patent and publication data set available through SynapseIP. Semantic queries, keyword input, and CPC filters are available to narrow results. Trend groupings may assist in understanding filing patterns."
+            <FlowStep
+              num="2"
+              title="Start with Search & Trends"
+              description="Search & Trends provides direct and easy access to the AI/ML patent and publication data set available through SynapseIP. Semantic queries, keyword input, and CPC filters are available to narrow results. Trend groupings may assist in understanding filing patterns."
             />
 
-            <InfoSection
-              title="3. Save Searches as Alerts"
-              content="Relevant or important searches can be saved as alerts to avoid repeated manual runs. With search criteria of interest input, click 'Save as Alert' to receive notifications when new patents or publications match that criteria. Alerts can be managed through the navigation bar (hover over username for menu)."
+            <FlowStep
+              num="3"
+              title="Save Searches as Alerts"
+              description="Relevant or important searches can be saved as alerts to avoid repeated manual runs. With search criteria of interest input, click 'Save as Alert' to receive notifications when new patents or publications match that criteria. Alerts can be managed through the navigation bar (hover over username for menu)."
             />
 
-            <InfoSection
-              title="4. Run Scope Analysis Early"
-              content="Input a product description, invention disclosure, or draft claims into the Scope Analysis page to generate a semantic comparison against independent claims. Use the similarity graph and evidence table to identify relevant patents to assess infringement risks."
+            <FlowStep
+              num="4"
+              title="Run Scope Analysis Early"
+              description="Input a product description, invention disclosure, or draft claims into the Scope Analysis page to generate a semantic comparison against independent claims. Use the similarity graph and evidence table to identify relevant patents to assess infringement risks."
             />
 
-            <InfoSection
-              title="5. Explore AI/ML IP Opportunities"
-              content="Navigate to the IP Overview page to view how busy a technology area is. Enter focus keywords and/or CPC codes, review the saturation/activity rate/momentum tiles, inspect the timeline and CPC bars, and review the result set table for representative patents and publications."
+            <FlowStep
+              num="5"
+              title="Explore AI/ML IP Opportunities"
+              description="Navigate to the IP Overview page to view how busy a technology area is. Enter focus keywords and/or CPC codes, review the saturation/activity rate/momentum tiles, inspect the timeline and CPC bars, and review the result set table for representative patents and publications."
             />
 
-            <InfoSection
-              title="6. Export and Share Insights"
-              content="Use CSV/PDF exports for shareable reports, and copy links from the IP Overview result set table to access full text and figures of specific patents or publications."
+            <FlowStep
+              num="6"
+              title="Export and Share Insights"
+              description="Use CSV/PDF exports for shareable reports, and copy links from the IP Overview result set table to access full text and figures of specific patents or publications."
             />
           </div>
         </div>
@@ -670,6 +676,20 @@ function Footnote({ id, title, description, href, external }: { id: string; titl
         style={{ fontSize: 15, fontWeight: 600, color: LINK_COLOR }}
       >{title} {external && "↗︎"}</a>
       <p style={{ margin: "6px 0 0 0", fontSize: 13, color: "#627D98" }}>{description}</p>
+    </div>
+  );
+}
+
+function FlowStep({ num, title, description }: { num: string; title: string; description: string }) {
+  return (
+    <div style={{ padding: 20, borderRadius: 18, background: "rgba(95, 168, 210, 0.16)", border: "1px solid rgba(155, 199, 255, 0.35)", boxShadow: "0 6px 12px rgba(107, 174, 219, 0.2)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)" }}>
+      <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
+        <div style={{ minWidth: 30, height: 30, borderRadius: "50%", background: "rgba(16, 42, 67, 0.92)", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 600, fontSize: 15 }}>
+          {num}
+        </div>
+        <h4 style={{ margin: 0, fontSize: 15, fontWeight: 600, color: TEXT_COLOR }}>{title}</h4>
+      </div>
+      <p style={{ margin: "12px 0 0 52px", fontSize: 14, lineHeight: 1.5, color: TEXT_COLOR }}>{description}</p>
     </div>
   );
 }
