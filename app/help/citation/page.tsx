@@ -133,9 +133,6 @@ export default function CitationHelpPage() {
               ]}
             />
           </div>
-          <p style={{ fontSize: 12, color: "#627D98", marginTop: 16, marginBottom: 0 }}>
-            <strong>Note:</strong> Backward citations are not currently available for publications. Contact <a href="mailto:support@phaethon.llc" style={{ color: LINK_COLOR}} className="hover:underline">support@phaethon.llc</a> to request this feature.
-          </p>
         </div>
 
         {/* Forward Impact */}
@@ -206,7 +203,7 @@ export default function CitationHelpPage() {
           <div style={{ padding: 10, border: `2px solid ${CARD_BORDER}`, borderRadius: 8, marginBottom: 10, marginTop: 10 }}>
             <h2 style={{ margin: 0, fontSize: 16, fontWeight: 500, color: TEXT_COLOR, marginBottom: 10 }}>Exposure Score</h2>
             <p style={{ fontSize: 13, lineHeight: 1.5, color: TEXT_COLOR, marginBottom: 8 }}>
-              <strong>What it measures:</strong> Exposure Score quantifies the <em>relevancy</em> of a particular patent (using number and velocity of forward citations as a proxy). A patent with many forward citations is more likely to be the subject of post-grant procedures (e.g., <em>inter partes</em> review). 
+              <strong>What it measures:</strong> Exposure Score quantifies the relevancy of a particular patent (using number and velocity of forward citations as a proxy). A patent with many forward citations is more likely to be the subject of post-grant procedures (e.g., <em>inter partes</em> review). 
             </p>
             <p style={{ fontSize: 13, lineHeight: 1.5, color: TEXT_COLOR, marginBottom: 8 }}>
               Implies: Industry/technology relevance and/or de facto standard; significantly important to another assignee's patent(s).
@@ -420,7 +417,7 @@ export default function CitationHelpPage() {
             
             <ResourceLink
               title="Note: Terms of Service"
-              description="Please note that citation data for the patents and publications available in the SynapseIP database may be incomplete. For clarity and relevancy, cited patents and publications filed prior to 2007 (approximately) may be absent. Additionally, foreign references and non-patent literature are excluded at this time. As set forth in the SynapseIP Terms of Service, no express or implied warranties are made regarding the completeness or accuracy of the available dataset."
+              description={"Please note that citation data for the patents and publications available in the SynapseIP database may be incomplete. For clarity and relevancy, cited patents and publications filed prior to 2007 (approximately) may be absent. Backward citations are not currently available for publications. Contact <a href=\"mailto:support@phaethon.llc\" style={{ color: LINK_COLOR}} className=\"hover:underline\">support@phaethon.llc</a> to request this feature. Additionally, foreign references and non-patent literature are excluded at this time. As set forth in the SynapseIP Terms of Service, no express or implied warranties are made regarding the completeness of the available dataset."}
               href="/docs/tos"
               external={false}
             />

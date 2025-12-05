@@ -357,8 +357,25 @@ function LineChart({
           value: values[hoveredIdx],
         }
       : null;
-  const tooltipLeft = hovered ? hovered.coord[0] - (containerRef.current?.scrollLeft ?? 0) : 0;
-  const tooltipTop = hovered ? hovered.coord[1] : 0;
+  const tooltipInfo = (() => {
+    if (!hovered || !containerRef.current) return null;
+    const rect = containerRef.current.getBoundingClientRect();
+    const scrollLeft = containerRef.current.scrollLeft;
+    const baseLeft = rect.left + hovered.coord[0] - scrollLeft;
+    const viewportWidth = typeof window !== "undefined" ? window.innerWidth : rect.width;
+    const clampedLeft = Math.max(12, Math.min(viewportWidth - 12, baseLeft));
+    let translateX = "-50%";
+    if (clampedLeft < 140) {
+      translateX = "0%";
+    } else if (viewportWidth - clampedLeft < 140) {
+      translateX = "-100%";
+    }
+    return {
+      left: clampedLeft,
+      top: rect.top + hovered.coord[1],
+      translateX,
+    };
+  })();
   const tooltipCompetitor = hovered
     ? (() => {
         const name = hovered.point.top_competitor_assignee_name;
@@ -427,13 +444,14 @@ function LineChart({
         ))}
       </svg>
 
-      {hovered ? (
+      {tooltipInfo && hovered ? (
         <div
           className="pointer-events-none absolute z-10 rounded-lg border border-slate-200 bg-white/95 px-3 py-2 text-xs text-[#102A43] shadow-lg backdrop-blur-sm"
           style={{
-            left: tooltipLeft,
-            top: tooltipTop,
-            transform: "translate(-50%, -110%)",
+            position: "fixed",
+            left: tooltipInfo.left,
+            top: tooltipInfo.top,
+            transform: `translate(${tooltipInfo.translateX}, -110%)`,
           }}
         >
           <div className="font-semibold text-[11px] text-[#0ea5e9]">

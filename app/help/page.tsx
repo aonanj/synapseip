@@ -368,10 +368,10 @@ export default function HelpIndexPage() {
 
             <div style={{ display: "grid", gap: 12 }}>
               <DetailItem icon="⬩" title="Saturation & Activity Rate Tiles" text="Exact vs. semantic counts, patent grants and publications per month, and percentile labels indicate how much activity a focus search set is experiencing." />
-              <DetailItem icon="⬩" title="Momentum Labeling" text="Monthly trendline, slope, and CAGR classify patent grant and publication activity as rising, declining, or flat." />
+              <DetailItem icon="⬩" title="Momentum Labeling" text="Monthly trendline, slope, and compound annual growth rate (CAGR) classify patent grant and publication activity as rising, declining, or flat." />
               <DetailItem icon="⬩" title="CPC Distribution" text="Top CPC codes plus a ranked bar chart highlight relevant technology areas." />
               <DetailItem icon="⬩" title="Result Set Table" text="Patent and publication rows (with CPC codes and external links) illustrate the data supporting the IP overview analysis and insights." />
-              <DetailItem icon="⬩" title="(Optional) Group by Assignee" text="Enable to view a KNN graph and per-assignee opportunity and risk confidence signals for potential gap, bridge opportunity*, crowd-out risk, and focus convergence risk." />
+              <DetailItem icon="⬩" title="(Optional) Group by Assignee" text={"Enable to view a KNN graph and per-assignee opportunity and risk confidence signals for potential gaps, bridge opportunities, and crowd-out and focus convergence risks."} />
             </div>
 
             <div
@@ -594,7 +594,7 @@ export default function HelpIndexPage() {
             <Footnote
               id="1"
               title="Understanding CPC Codes"
-              description="CPC (Cooperative Patent Classification) codes categorize patents and applications by technology area. For reference, the USPTO generally assigns AI and machine learning subject matter under one of the following CPC section (letter)+class(number)+subclass(letter) classifications: A61B, B60W, G05D, G06N, G06V, and G10L. More specific AI/ML-related subject matter is generally assigned to group, as well, as indicating by a number appended to the subclass: G06F17, G06F18, G06F40, G06K9, G06T7. A further subgroup indicates subject matter at an even more granular level, which is indicated by a third number, preceded by a backslash. For AI/ML-related subject matter, this is most commonly encoutered in CPC classification G06F16/90."
+              description="CPC (Cooperative Patent Classification) codes categorize patents and applications by technology area. For reference, the USPTO generally assigns AI and machine learning subject matter under one of the following CPC section (letter) + class (number) + subclass (letter) classifications: A61B, B60W, G05D, G06N, G06V, and G10L. More specific AI/ML-related subject matter is often assigned to a group, indicated by a number appended to the subclass: G06F17, G06F18, G06F40, G06K9, G06T7. A further subgroup indicates subject matter at an even more granular level, indicated by a third number, preceded by a backslash. For AI/ML-related subject matter, this is most commonly encountered in CPC classification G06F16/90."
               href="https://www.uspto.gov/web/patents/classification/cpc/html/cpc.html"
               external={true}
             />
