@@ -417,7 +417,7 @@ export default function CitationHelpPage() {
             
             <ResourceLink
               title="Note: Terms of Service"
-              description={"Please note that citation data for the patents and publications available in the SynapseIP database may be incomplete. For clarity and relevancy, cited patents and publications filed prior to 2007 (approximately) may be absent. Backward citations are not currently available for publications. Contact <a href=\"mailto:support@phaethon.llc\" style={{ color: LINK_COLOR}} className=\"hover:underline\">support@phaethon.llc</a> to request this feature. Additionally, foreign references and non-patent literature are excluded at this time. As set forth in the SynapseIP Terms of Service, no express or implied warranties are made regarding the completeness of the available dataset."}
+              description="Please note that citation data for the patents and publications available in the SynapseIP database may be incomplete. For clarity and relevancy, cited patents and publications filed prior to 2007 (approximately) may be absent. Backward citations are currently available only for patents. Contact support@phaethon.llc to request extension of this feature to publications. Additionally, foreign references and non-patent literature are excluded at this time. As set forth in the SynapseIP Terms of Service, no express or implied warranties are made regarding the completeness of the available dataset."
               href="/docs/tos"
               external={false}
             />

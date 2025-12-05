@@ -312,6 +312,7 @@ function LineChart({
   height?: number;
   accent?: string;
 }) {
+  const wrapperRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
 
@@ -358,21 +359,22 @@ function LineChart({
         }
       : null;
   const tooltipInfo = (() => {
-    if (!hovered || !containerRef.current) return null;
-    const rect = containerRef.current.getBoundingClientRect();
+    if (!hovered || !containerRef.current || !wrapperRef.current) return null;
+    const containerRect = containerRef.current.getBoundingClientRect();
+    const wrapperRect = wrapperRef.current.getBoundingClientRect();
     const scrollLeft = containerRef.current.scrollLeft;
-    const baseLeft = rect.left + hovered.coord[0] - scrollLeft;
-    const viewportWidth = typeof window !== "undefined" ? window.innerWidth : rect.width;
-    const clampedLeft = Math.max(12, Math.min(viewportWidth - 12, baseLeft));
+
+    const relativeLeft = hovered.coord[0] - scrollLeft + (containerRect.left - wrapperRect.left);
+    const clampedLeft = Math.max(12, Math.min(wrapperRect.width - 12, relativeLeft));
     let translateX = "-50%";
     if (clampedLeft < 140) {
       translateX = "0%";
-    } else if (viewportWidth - clampedLeft < 140) {
+    } else if (wrapperRect.width - clampedLeft < 140) {
       translateX = "-100%";
     }
     return {
       left: clampedLeft,
-      top: rect.top + hovered.coord[1],
+      top: hovered.coord[1] + (containerRect.top - wrapperRect.top),
       translateX,
     };
   })();
@@ -388,67 +390,68 @@ function LineChart({
     : null;
 
   return (
-    <div className="relative overflow-x-auto" ref={containerRef}>
-      <svg
-        width={width}
-        height={height}
-        className="min-w-full"
-        onMouseLeave={() => setHoveredIdx(null)}
-        role="img"
-        aria-label="Influence timeline"
-      >
-        <defs>
-          <linearGradient id="chartFill" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={accent} stopOpacity="0.26" />
-            <stop offset="100%" stopColor={accent} stopOpacity="0" />
-          </linearGradient>
-        </defs>
+    <div className="relative" ref={wrapperRef}>
+      <div className="relative overflow-x-auto" ref={containerRef}>
+        <svg
+          width={width}
+          height={height}
+          className="min-w-full"
+          onMouseLeave={() => setHoveredIdx(null)}
+          role="img"
+          aria-label="Influence timeline"
+        >
+          <defs>
+            <linearGradient id="chartFill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={accent} stopOpacity="0.26" />
+              <stop offset="100%" stopColor={accent} stopOpacity="0" />
+            </linearGradient>
+          </defs>
 
-        <line x1={margin.left} x2={width - margin.right} y1={baselineY} y2={baselineY} stroke="#e2e8f0" />
+          <line x1={margin.left} x2={width - margin.right} y1={baselineY} y2={baselineY} stroke="#e2e8f0" />
 
-        {yTicks.map((tick) => {
-          const y = margin.top + (1 - tick / maxVal) * innerHeight;
-          return (
-            <g key={`y-${tick}`}>
-              <line x1={margin.left} x2={width - margin.right} y1={y} y2={y} stroke="#e2e8f0" strokeDasharray="4 4" />
-              <text x={margin.left - 10} y={y + 4} textAnchor="end" className="text-[11px] fill-[#3A506B]">
-                {tick}
+          {yTicks.map((tick) => {
+            const y = margin.top + (1 - tick / maxVal) * innerHeight;
+            return (
+              <g key={`y-${tick}`}>
+                <line x1={margin.left} x2={width - margin.right} y1={y} y2={y} stroke="#e2e8f0" strokeDasharray="4 4" />
+                <text x={margin.left - 10} y={y + 4} textAnchor="end" className="text-[11px] fill-[#3A506B]">
+                  {tick}
+                </text>
+              </g>
+            );
+          })}
+
+          <path d={areaPath} fill="url(#chartFill)" />
+          <path d={path} fill="none" stroke={accent} strokeWidth={2.5} strokeLinejoin="round" strokeLinecap="round" />
+
+          {coords.map(([x, y], idx) => (
+            <g key={idx}>
+              <circle
+                cx={x}
+                cy={y}
+                r={4.5}
+                fill="#fff"
+                stroke={accent}
+                strokeWidth={2}
+                onMouseEnter={() => setHoveredIdx(idx)}
+              />
+              <text
+                x={x}
+                y={height - margin.bottom + 18}
+                textAnchor="middle"
+                className="text-[11px] fill-[#3A506B]"
+              >
+                {fmtDate(points[idx].bucket_start).slice(0, 7)}
               </text>
             </g>
-          );
-        })}
-
-        <path d={areaPath} fill="url(#chartFill)" />
-        <path d={path} fill="none" stroke={accent} strokeWidth={2.5} strokeLinejoin="round" strokeLinecap="round" />
-
-        {coords.map(([x, y], idx) => (
-          <g key={idx}>
-            <circle
-              cx={x}
-              cy={y}
-              r={4.5}
-              fill="#fff"
-              stroke={accent}
-              strokeWidth={2}
-              onMouseEnter={() => setHoveredIdx(idx)}
-            />
-            <text
-              x={x}
-              y={height - margin.bottom + 18}
-              textAnchor="middle"
-              className="text-[11px] fill-[#3A506B]"
-            >
-              {fmtDate(points[idx].bucket_start).slice(0, 7)}
-            </text>
-          </g>
-        ))}
-      </svg>
+          ))}
+        </svg>
+      </div>
 
       {tooltipInfo && hovered ? (
         <div
           className="pointer-events-none absolute z-10 rounded-lg border border-slate-200 bg-white/95 px-3 py-2 text-xs text-[#102A43] shadow-lg backdrop-blur-sm"
           style={{
-            position: "fixed",
             left: tooltipInfo.left,
             top: tooltipInfo.top,
             transform: `translate(${tooltipInfo.translateX}, -110%)`,
