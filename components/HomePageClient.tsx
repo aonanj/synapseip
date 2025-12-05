@@ -587,7 +587,7 @@ export default function HomePageClient() {
                   id="semantic"
                   value={semantic}
                   onChange={(e) => setSemantic(e.target.value)}
-                  placeholder="Natural language description of technology"
+                  placeholder="Natural language description of search focus"
                   style={{ ...inputStyle, minWidth: 410, width: 440, maxWidth: 500 }}
                 />
               </div>
@@ -597,7 +597,7 @@ export default function HomePageClient() {
                   id="q"
                   value={q}
                   onChange={(e) => setQ(e.target.value)}
-                  placeholder="Title/abstract/claims keywords"
+                  placeholder="e.g., transformer, unmanned aerial vehicle, …"
                   style={{ ...inputStyle, minWidth: 280, width: 300, maxWidth: 320 }}
                 />
               </div>
@@ -608,20 +608,19 @@ export default function HomePageClient() {
                   id="assignee"
                   value={assignee}
                   onChange={(e) => setAssignee(e.target.value)}
-                  placeholder="e.g., Google, Oracle, ..."
+                  placeholder="e.g., Google, Oracle, …"
                   style={{ ...inputStyle, minWidth: 280, width: 300, maxWidth: 320 }}
                 />
               </div>
 
               <div style={{ display: "grid", gap: 6 }}>
-                <Label htmlFor="cpc">CPC 
-                  (<a href="https://www.uspto.gov/web/patents/classification/cpc/html/cpc.html" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">reference</a>)
+                <Label htmlFor="cpc"><a href="https://www.uspto.gov/web/patents/classification/cpc/html/cpc.html" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">CPC Code(s)↗︎</a>
                 </Label>
                 <input
                   id="cpc"
                   value={cpc}
                   onChange={(e) => setCpc(e.target.value)}
-                  placeholder="e.g., G06N, G06F17/00, ..."
+                  placeholder="e.g., G06N, G06F17/00, …"
                   style={inputStyle}
                 />
               </div>
