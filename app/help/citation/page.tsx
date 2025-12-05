@@ -203,7 +203,7 @@ export default function CitationHelpPage() {
           />
 
           {/* Exposure Score Deep Dive */}
-          <div style={{ padding: 16, border: `2px solid ${CARD_BORDER}`, borderRadius: 8 }}>
+          <div style={{ padding: 10, border: `2px solid ${CARD_BORDER}`, borderRadius: 8, marginBottom: 10, marginTop: 10 }}>
             <h2 style={{ margin: 0, fontSize: 16, fontWeight: 500, color: TEXT_COLOR, marginBottom: 10 }}>Exposure Score</h2>
             <p style={{ fontSize: 13, lineHeight: 1.5, color: TEXT_COLOR, marginBottom: 8 }}>
               <strong>What it measures:</strong> Exposure Score quantifies the <em>relevancy</em> of a particular patent (using number and velocity of forward citations as a proxy). A patent with many forward citations is more likely to be the subject of post-grant procedures (e.g., <em>inter partes</em> review). 
@@ -239,7 +239,7 @@ export default function CitationHelpPage() {
           </div>
 
           {/* Fragility Score Deep Dive */}
-          <div style={{ padding: 16, border: `2px solid ${CARD_BORDER}`, borderRadius: 8 }}>
+          <div style={{ padding: 10, border: `2px solid ${CARD_BORDER}`, borderRadius: 8, marginBottom: 10 }}>
             <h2 style={{ margin: 0, fontSize: 16, fontWeight: 500, color: TEXT_COLOR, marginBottom: 10 }}>Fragility Score</h2>
             <p style={{ fontSize: 13, lineHeight: 1.5, color: TEXT_COLOR, marginBottom: 8 }}>
               <strong>What it measures:</strong> Fragility Score measures how <em>narrow, clustered, or homogeneous</em> the cited prior art is for a patent. A patent is considered "fragile" when a small, concentrated slice of prior art supports it. For example, a patent that disproportionately cites prior art in a single CPC technology area or a small set of assignees is more likely to have a meaingfully narrower claim scope and/or a less robus detailed description. 
@@ -278,13 +278,13 @@ export default function CitationHelpPage() {
           </div>
 
           {/* Overall Risk Score Deep Dive */}
-          <div style={{ padding: 16, border: `2px solid ${CARD_BORDER}`, borderRadius: 8 }}>
+          <div style={{ padding: 10, border: `2px solid ${CARD_BORDER}`, borderRadius: 8, marginBottom: 10 }}>
             <h2 style={{ margin: 0, fontSize: 16, fontWeight: 500, color: TEXT_COLOR, marginBottom: 10 }}>Overall Risk Score</h2>
             <p style={{ fontSize: 13, lineHeight: 1.5, color: TEXT_COLOR, marginBottom: 8 }}>
               <strong>What it measures:</strong> Overall Risk Score blends <strong>Exposure</strong> (external pressure from other assignees) and <strong>Fragility</strong> (internal robustness/weakness) to estimate the <em>strategic risk</em> associated with a patent.
             </p>
             <p style={{ fontSize: 13, lineHeight: 1.5, color: TEXT_COLOR, marginBottom: 8 }}>
-              Implies: <em>Patent strength and robustness; coarse metric for forecasting ROI.</em>
+              Implies: Patent strength and robustness; coarse metric for forecasting ROI.
             </p>
             <p style={{ fontSize: 13, lineHeight: 1.5, color: TEXT_COLOR, marginBottom: 8 }}>
               <strong>Why it's included:</strong> Executives and portfolio managers need a single, sortable metric to identify patents that are high-risk and high-attention, prioritize legal review or design-around analysis, support pruning/licensing/divestiture decisions, catch patents that are under attack and/or weakly supported, highlight patents with low ROI potential. This is a portfolio prioritization heuristic, not a legal invalidity score.
@@ -307,7 +307,7 @@ export default function CitationHelpPage() {
           </div>
 
           {/* Why These Scores Work Together */}
-          <div style={{ padding: 16, border: `2px solid ${CARD_BORDER}`, borderRadius: 8 }}>
+          <div style={{ padding: 10, border: `2px solid ${CARD_BORDER}`, borderRadius: 8, marginBottom: 10 }}>
             <h2 style={{ margin: 0, fontSize: 16, fontWeight: 500, color: TEXT_COLOR, marginBottom: 10 }}>Why These Three Scores Work Together</h2>
             <p style={{ fontSize: 13, lineHeight: 1.5, color: TEXT_COLOR, marginBottom: 8 }}>
               Each score captures a distinct dimension of patent risk, and together they provide a complete strategic picture:
