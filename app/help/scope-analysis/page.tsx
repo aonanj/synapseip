@@ -65,7 +65,7 @@ export default function ScopeAnalysisHelpPage() {
             <div>
               <h1 style={{ margin: 0, fontSize: 32, fontWeight: 700, color: TEXT_COLOR }}>Scope Analysis Guide</h1>
               <p style={{ marginTop: 8, fontSize: 14, color: "#627D98", marginBottom: 0 }}>
-                <a href="/help" style={{ color: LINK_COLOR, textDecoration: "none" }}>← Back to Help</a>
+                <a href="/help" style={{ color: LINK_COLOR}} className="hover:underline">← Back to Help</a>
               </p>
             </div>
             <a
@@ -165,7 +165,7 @@ export default function ScopeAnalysisHelpPage() {
         {/* Tips */}
         <div className="glass-card" style={{ ...cardBaseStyle }}>
           <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: TEXT_COLOR, marginBottom: 16 }}>Tips & troubleshooting</h2>
-          <ul style={{ marginLeft: 20, marginTop: 12, fontSize: 14, lineHeight: 1.6, color: TEXT_COLOR }}>
+          <ul style={{ marginLeft: 20, marginTop: 12, fontSize: 14, lineHeight: 1.5, color: TEXT_COLOR }}>
             <li><strong>Too few matches</strong>: Increase the <em># of claim comparisons</em> slider or broaden the description with additional functional detail.</li>
             <li><strong>Mixed technology stack</strong>: Run separate analyses for each subsystem (e.g., hardware vs. software) to isolate potential infringement risks or clearance opportunities.</li>
             <li><strong>Monitor competitors & infringement risk</strong>: Use the table's assignee column to see which entities own the patents with the closest claims, and whether those patents are clustered near the same or similar technology areas.</li>

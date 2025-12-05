@@ -65,7 +65,7 @@ export default function SearchTrendsHelpPage() {
             <div>
               <h1 style={{ margin: 0, fontSize: 32, fontWeight: 700, color: TEXT_COLOR }}>Search & Trends Guide</h1>
               <p style={{ marginTop: 8, fontSize: 14, color: "#627D98", marginBottom: 0 }}>
-                <a href="/help" style={{ color: LINK_COLOR, textDecoration: "none" }}>← Back to Help</a>
+                <a href="/help" style={{ color: LINK_COLOR}} className="hover:underline">← Back to Help</a>
               </p>
             </div>
             <a

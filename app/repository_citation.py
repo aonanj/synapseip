@@ -44,7 +44,7 @@ async def resolve_portfolio_pub_ids(
     conn: psycopg.AsyncConnection,
     scope: CitationScope,
     *,
-    limit: int = 500,
+    limit: int | None = None,
 ) -> list[str]:
     """Convert CitationScope into a concrete list of patent pub_ids."""
     # Priority 1: explicit pub IDs
@@ -56,7 +56,7 @@ async def resolve_portfolio_pub_ids(
             if pid not in seen:
                 seen.add(pid)
                 ordered.append(pid)
-        return ordered[:limit]
+        return ordered[:limit] if limit is not None else ordered
 
     # Priority 2: assignee IDs or names
     args: list[Any] = []
@@ -103,7 +103,10 @@ async def resolve_portfolio_pub_ids(
         # No filters to constrain; return empty to avoid sweeping the table.
         return []
 
-    limit = max(1, min(limit, 800))
+    # Apply a limit only when explicitly provided.
+    limit_value: int | None = limit
+    if limit_value is not None:
+        limit_value = max(1, limit_value)
     base_query = [
         "SELECT p.pub_id",
         f"FROM patent p {CANONICAL_ASSIGNEE_LATERAL}",
@@ -116,8 +119,9 @@ async def resolve_portfolio_pub_ids(
         else:
             base_query.append(f"WHERE {' AND '.join(clauses)}")
     base_query.append("ORDER BY p.pub_date DESC NULLS LAST")
-    base_query.append("LIMIT %s")
-    args.append(limit)
+    if limit_value is not None:
+        base_query.append("LIMIT %s")
+        args.append(limit_value)
 
     async with conn.cursor(row_factory=dict_row) as cur:
         await cur.execute(_sql.SQL("\n".join(base_query)), args) # type: ignore
@@ -316,7 +320,7 @@ async def get_risk_raw_metrics(
     if not portfolio_pub_ids:
         return []
     competitor_ids = competitor_assignee_ids or []
-    limit = max(1, min(limit, 500))
+    limit = max(1, limit)
     args: list[Any] = [portfolio_pub_ids, competitor_ids, portfolio_pub_ids, portfolio_pub_ids, limit]
     query = """
     WITH resolved_fwd AS (

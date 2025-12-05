@@ -164,6 +164,33 @@ function parseListInput(value: string, opts?: { allowSpaceDelimiter?: boolean })
     .filter(Boolean);
 }
 
+function normalizePubId(value: string): string {
+  const raw = value.trim();
+  if (!raw) return "";
+  const compact = raw.replace(/[^A-Za-z0-9]/g, "");
+  const match = compact.match(/^([A-Za-z]{2})(.+)$/);
+  if (!match) return raw.toUpperCase();
+  const [, country, remainder] = match;
+  const kindMatch = remainder.match(/([A-Za-z]{1,2}\d[A-Za-z0-9]?|[A-Za-z]{1,3})$/);
+  if (!kindMatch) return `${country.toUpperCase()}-${remainder.toUpperCase()}`;
+  const kind = kindMatch[1].toUpperCase();
+  const numberPart = remainder.slice(0, remainder.length - kind.length).toUpperCase();
+  if (!numberPart) return `${country.toUpperCase()}-${kind}`;
+  return `${country.toUpperCase()}-${numberPart}-${kind}`;
+}
+
+function normalizePubIdList(values: string[]): string[] {
+  return values
+    .map(normalizePubId)
+    .map((v) => v.trim())
+    .filter(Boolean);
+}
+
+function parseAndNormalizePubIdsInput(value: string): { normalized: string[]; formattedInput: string } {
+  const normalized = normalizePubIdList(parseListInput(value, { allowSpaceDelimiter: true }));
+  return { normalized, formattedInput: normalized.join("\n") };
+}
+
 function fmtDate(value: string | null | undefined): string {
   if (!value) return "—";
   const s = String(value);
@@ -230,6 +257,20 @@ function SortableHeader({
         <span className="text-base text-[#3A506B]">{active ? (direction === "asc" ? "↑" : "↓") : "⇅"}</span>
       </span>
     </th>
+  );
+}
+
+function LoadingOverlay({ visible, label = "Refreshing data…" }: { visible: boolean; label?: string }) {
+  if (!visible) return null;
+  return (
+    <div
+      className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 rounded-xl bg-slate-200/70 text-xs font-semibold text-[#102A43] backdrop-blur-[1px]"
+      role="status"
+      aria-live="polite"
+    >
+      <div className="h-5 w-5 animate-spin rounded-full border-2 border-slate-400 border-t-transparent" aria-hidden="true" />
+      <span>{label}</span>
+    </div>
   );
 }
 
@@ -452,7 +493,8 @@ function ForwardImpactCard({ scope, scopeVersion, tokenGetter }: ForwardImpactCa
   );
 
   return (
-    <div className={`${cardClass} relative`}>
+    <div className={`${cardClass} relative`} aria-busy={loading}>
+      <LoadingOverlay visible={loading} label="Refreshing impact…" />
       <button
         onClick={load}
         className="refresh-btn absolute right-5 top-2 px-4 text-3xl font-semibold"
@@ -626,6 +668,8 @@ type DependencyMatrixCardProps = {
   competitorNames: string[] | null;
 };
 
+type DependencySortKey = "citing" | "cited" | "citations" | "pct";
+
 function DependencyMatrixCard({ scope, scopeVersion, tokenGetter, competitorNames }: DependencyMatrixCardProps) {
   const [minCitations, setMinCitations] = useState(1);
   const [normalize, setNormalize] = useState(true);
@@ -633,6 +677,10 @@ function DependencyMatrixCard({ scope, scopeVersion, tokenGetter, competitorName
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<DependencyMatrixResponse | null>(null);
   const [dependencyPage, setDependencyPage] = useState(1);
+  const [dependencySort, setDependencySort] = useState<{ key: DependencySortKey; direction: SortDirection }>({
+    key: "citations",
+    direction: "desc",
+  });
 
   const hasPortfolio = Boolean(scope?.focus_assignee_names?.length || scope?.focus_pub_ids?.length);
 
@@ -655,6 +703,13 @@ function DependencyMatrixCard({ scope, scopeVersion, tokenGetter, competitorName
     load();
   }, [load, scopeVersion]);
 
+  const handleDependencySort = useCallback((key: DependencySortKey) => {
+    const defaultDir = key === "citing" || key === "cited" ? "asc" : "desc";
+    setDependencySort((prev) =>
+      prev.key === key ? { key, direction: prev.direction === "asc" ? "desc" : "asc" } : { key, direction: defaultDir }
+    );
+  }, []);
+
   const filteredEdges = useMemo(() => {
     if (!data?.edges) return [];
     if (!competitorNames?.length) return data.edges;
@@ -666,44 +721,70 @@ function DependencyMatrixCard({ scope, scopeVersion, tokenGetter, competitorName
     });
   }, [data, competitorNames]);
 
-  const topEdges = useMemo(
+  const heatmapEdges = useMemo(
     () => filteredEdges.slice().sort((a, b) => b.citation_count - a.citation_count),
     [filteredEdges]
   );
 
+  const sortedEdges = useMemo(() => {
+    const getValue = (e: DependencyEdge) => {
+      switch (dependencySort.key) {
+        case "citing":
+          return e.citing_assignee_name || "Unknown";
+        case "cited":
+          return e.cited_assignee_name || "Unknown";
+        case "pct":
+          return normalize && e.citing_to_cited_pct != null ? e.citing_to_cited_pct : null;
+        default:
+          return e.citation_count;
+      }
+    };
+    return filteredEdges
+      .slice()
+      .sort((a, b) => {
+        const aVal = getValue(a);
+        const bVal = getValue(b);
+        if (aVal == null && bVal == null) return 0;
+        if (aVal == null) return 1;
+        if (bVal == null) return -1;
+        return compareValues(aVal as any, bVal as any, dependencySort.direction);
+      });
+  }, [filteredEdges, dependencySort, normalize]);
+
   useEffect(() => {
     setDependencyPage(1);
-  }, [filteredEdges]);
+  }, [filteredEdges, dependencySort]);
 
   const citingNames = useMemo(() => {
     const names: string[] = [];
-    for (const e of topEdges) {
+    for (const e of heatmapEdges) {
       const name = e.citing_assignee_name || "Unknown";
       if (!names.includes(name)) names.push(name);
       if (names.length >= 8) break;
     }
     return names;
-  }, [topEdges]);
+  }, [heatmapEdges]);
   const citedNames = useMemo(() => {
     const names: string[] = [];
-    for (const e of topEdges) {
+    for (const e of heatmapEdges) {
       const name = e.cited_assignee_name || "Unknown";
       if (!names.includes(name)) names.push(name);
       if (names.length >= 8) break;
     }
     return names;
-  }, [topEdges]);
-  const maxVal = topEdges.reduce((m, e) => Math.max(m, e.citation_count), 0) || 1;
-  const hasEdges = topEdges.length > 0;
-  const dependencyTotalPages = Math.max(1, Math.ceil(topEdges.length / SMALL_ROWS_PER_PAGE));
+  }, [heatmapEdges]);
+  const maxVal = heatmapEdges.reduce((m, e) => Math.max(m, e.citation_count), 0) || 1;
+  const hasEdges = heatmapEdges.length > 0;
+  const dependencyTotalPages = Math.max(1, Math.ceil(sortedEdges.length / SMALL_ROWS_PER_PAGE));
   const currentDependencyPage = Math.min(dependencyPage, dependencyTotalPages);
-  const pagedEdges = topEdges.slice(
+  const pagedEdges = sortedEdges.slice(
     (currentDependencyPage - 1) * SMALL_ROWS_PER_PAGE,
     currentDependencyPage * SMALL_ROWS_PER_PAGE
   );
 
   return (
-    <div className={`${cardClass} relative`}>
+    <div className={`${cardClass} relative`} aria-busy={loading}>
+      <LoadingOverlay visible={loading} label="Refreshing dependencies…" />
       <button onClick={load} className="refresh-btn absolute right-5 top-2 px-4 text-3xl font-semibold" disabled={!scope || loading}>
         {loading ? "…" : "⟳"}
       </button>
@@ -756,7 +837,7 @@ function DependencyMatrixCard({ scope, scopeVersion, tokenGetter, competitorName
                   <tr key={row}>
                     <th className="px-3 py-2 border-b text-xs text-[#102A43] text-left">{row}</th>
                     {citedNames.map((col) => {
-                      const edge = topEdges.find(
+                      const edge = heatmapEdges.find(
                         (e) => (e.citing_assignee_name || "Unknown") === row && (e.cited_assignee_name || "Unknown") === col
                       );
                       const val = edge?.citation_count || 0;
@@ -780,10 +861,32 @@ function DependencyMatrixCard({ scope, scopeVersion, tokenGetter, competitorName
             <table className="min-w-full border-collapse">
               <thead>
                 <tr className="text-xs uppercase tracking-wide text-[#3A506B]">
-                  <th className="px-3 py-2 border-b text-left">Citing Assignee</th>
-                  <th className="px-3 py-2 border-b text-left">Cited Assignee</th>
-                  <th className="px-3 py-2 border-b text-left">Citations</th>
-                  <th className="px-3 py-2 border-b text-left">Cited / Citing Assignee (%)</th>
+                  <SortableHeader
+                    label="Citing Assignee"
+                    active={dependencySort.key === "citing"}
+                    direction={dependencySort.direction}
+                    onClick={() => handleDependencySort("citing")}
+                  />
+                  <SortableHeader
+                    label="Cited Assignee"
+                    active={dependencySort.key === "cited"}
+                    direction={dependencySort.direction}
+                    onClick={() => handleDependencySort("cited")}
+                  />
+                  <SortableHeader
+                    label="Citations"
+                    active={dependencySort.key === "citations"}
+                    direction={dependencySort.direction}
+                    onClick={() => handleDependencySort("citations")}
+                    align="right"
+                  />
+                  <SortableHeader
+                    label="Cited / Citing Assignee (%)"
+                    active={dependencySort.key === "pct"}
+                    direction={dependencySort.direction}
+                    onClick={() => handleDependencySort("pct")}
+                    align="right"
+                  />
                 </tr>
               </thead>
               <tbody>
@@ -793,8 +896,8 @@ function DependencyMatrixCard({ scope, scopeVersion, tokenGetter, competitorName
                     <tr key={rowKey} className="odd:bg-white even:bg-slate-50/60">
                       <td className="px-3 py-2 text-xs text-[#102A43]">{e.citing_assignee_name || "Unknown"}</td>
                       <td className="px-3 py-2 text-xs text-[#102A43]">{e.cited_assignee_name || "Unknown"}</td>
-                      <td className="px-3 py-2 text-xs font-semibold text-[#102A43]">{e.citation_count}</td>
-                      <td className="px-3 py-2 text-xs text-[#102A43]">
+                      <td className="px-3 py-2 text-xs font-semibold text-[#102A43] text-right">{e.citation_count}</td>
+                      <td className="px-3 py-2 text-xs text-[#102A43] text-right">
                         {normalize && e.citing_to_cited_pct != null ? `${(e.citing_to_cited_pct * 100).toFixed(1)}%` : "—"}
                       </td>
                     </tr>
@@ -803,11 +906,11 @@ function DependencyMatrixCard({ scope, scopeVersion, tokenGetter, competitorName
               </tbody>
             </table>
           </div>
-          {topEdges.length ? (
+          {sortedEdges.length ? (
             <div className="flex items-center justify-between mt-3 text-xs text-[#102A43]">
               <span>
-                Showing {(currentDependencyPage - 1) * ROWS_PER_PAGE + 1}-
-                {Math.min(currentDependencyPage * ROWS_PER_PAGE, topEdges.length)} of {topEdges.length}
+                Showing {(currentDependencyPage - 1) * SMALL_ROWS_PER_PAGE + 1}-
+                {Math.min(currentDependencyPage * SMALL_ROWS_PER_PAGE, sortedEdges.length)} of {sortedEdges.length}
               </span>
               <div className="flex items-center gap-2">
                 <button
@@ -983,7 +1086,8 @@ function RiskRadarCard({ scope, scopeVersion, tokenGetter, competitorNames }: Ri
   }, [scope, data, competitorNames, topN, riskSort, tokenGetter]);
 
   return (
-    <div className={cardClass}>
+    <div className={`${cardClass} relative`} aria-busy={loading}>
+      <LoadingOverlay visible={loading} label="Refreshing risk signals…" />
       <div className="flex items-start justify-between gap-3 mb-3">
         <SectionHeader title="Risk Radar" subtitle="Forward exposure + backward fragility indicators." />
         <div className="flex items-center gap-3">
@@ -991,10 +1095,9 @@ function RiskRadarCard({ scope, scopeVersion, tokenGetter, competitorNames }: Ri
             <span>Top N</span>
             <input
               type="number"
-              min={10}
-              max={400}
+              min={1}
               value={topN}
-              onChange={(e) => setTopN(Number(e.target.value) || 10)}
+              onChange={(e) => setTopN(Number(e.target.value) || 1)}
               className={inlineInputClass}
             />
           </label>
@@ -1144,6 +1247,8 @@ type EncroachmentCardProps = {
   competitorNames: string[] | null;
 };
 
+type EncroachmentSortKey = "assignee" | "total" | "score" | "velocity";
+
 function EncroachmentCard({ scope, scopeVersion, tokenGetter, competitorNames }: EncroachmentCardProps) {
   const [bucket, setBucket] = useState<"month" | "quarter">("quarter");
   const [topK, setTopK] = useState(10);
@@ -1151,6 +1256,10 @@ function EncroachmentCard({ scope, scopeVersion, tokenGetter, competitorNames }:
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<EncroachmentResponse | null>(null);
+  const [encroachSort, setEncroachSort] = useState<{ key: EncroachmentSortKey; direction: SortDirection }>({
+    key: "total",
+    direction: "desc",
+  });
 
   const hasTargets = Boolean(scope?.focus_assignee_names?.length);
   const scopedCompetitors = competitorNames && competitorNames.length ? competitorNames : null;
@@ -1182,15 +1291,28 @@ function EncroachmentCard({ scope, scopeVersion, tokenGetter, competitorNames }:
     load();
   }, [load, scopeVersion]);
 
+  const handleEncroachSort = useCallback((key: EncroachmentSortKey) => {
+    const defaultDir = key === "assignee" ? "asc" : "desc";
+    setEncroachSort((prev) =>
+      prev.key === key ? { key, direction: prev.direction === "asc" ? "desc" : "asc" } : { key, direction: defaultDir }
+    );
+  }, []);
+
+  const competitorKey = useCallback(
+    (entry: { competitor_assignee_id: string | null; competitor_assignee_name: string | null }) =>
+      entry.competitor_assignee_id || entry.competitor_assignee_name || "Unknown",
+    []
+  );
+
   const totalsByComp = useMemo(() => {
     if (!data?.timeline) return new Map<string, number>();
     const map = new Map<string, number>();
     for (const pt of data.timeline) {
-      const key = pt.competitor_assignee_id || pt.competitor_assignee_name || "Unknown";
+      const key = competitorKey(pt);
       map.set(key, (map.get(key) || 0) + (pt.citing_patent_count || 0));
     }
     return map;
-  }, [data]);
+  }, [data, competitorKey]);
 
   const topCompetitorKeys = useMemo(() => {
     const entries = Array.from(totalsByComp.entries()).sort((a, b) => b[1] - a[1]);
@@ -1200,29 +1322,37 @@ function EncroachmentCard({ scope, scopeVersion, tokenGetter, competitorNames }:
   const filteredTimeline = useMemo(() => {
     if (!data?.timeline) return [];
     return data.timeline.filter((pt) => {
-      const key = pt.competitor_assignee_id || pt.competitor_assignee_name || "Unknown";
+      const key = competitorKey(pt);
       return topCompetitorKeys.includes(key);
     });
-  }, [data, topCompetitorKeys]);
+  }, [data, topCompetitorKeys, competitorKey]);
 
   const competitorLabelMap = useMemo(() => {
     const map = new Map<string, string>();
     for (const pt of filteredTimeline) {
-      const key = pt.competitor_assignee_id || pt.competitor_assignee_name || "Unknown";
+      const key = competitorKey(pt);
       if (!map.has(key)) {
         map.set(key, pt.competitor_assignee_name || pt.competitor_assignee_id || "Unknown");
       }
     }
     if (data?.competitors) {
       data.competitors.forEach((c) => {
-        const key = c.competitor_assignee_id || c.competitor_assignee_name || "Unknown";
+        const key = competitorKey(c);
         if (!map.has(key)) {
           map.set(key, c.competitor_assignee_name || c.competitor_assignee_id || "Unknown");
         }
       });
     }
     return map;
-  }, [filteredTimeline, data?.competitors]);
+  }, [filteredTimeline, data?.competitors, competitorKey]);
+
+  const formatCompetitorName = useCallback(
+    (c: AssigneeEncroachmentSummary) => {
+      const key = competitorKey(c);
+      return competitorLabelMap.get(key) || c.competitor_assignee_name || c.competitor_assignee_id || "Unknown";
+    },
+    [competitorKey, competitorLabelMap]
+  );
 
   const bucketLabels = useMemo(() => {
     const set = new Set<string>();
@@ -1252,8 +1382,38 @@ function EncroachmentCard({ scope, scopeVersion, tokenGetter, competitorNames }:
 
   const colorPalette = ["#0ea5e9", "#f59e0b", "#ef4444", "#10b981", "#6366f1", "#8b5cf6", "#14b8a6", "#f97316"];
 
+  const tableCompetitors = useMemo(() => {
+    if (!data?.competitors) return [];
+    const subset = data.competitors
+      .filter((c) => topCompetitorKeys.includes(competitorKey(c)))
+      .slice(0, topK);
+    const getValue = (c: AssigneeEncroachmentSummary) => {
+      switch (encroachSort.key) {
+        case "assignee":
+          return formatCompetitorName(c);
+        case "score":
+          return c.encroachment_score;
+        case "velocity":
+          return c.velocity;
+        default:
+          return c.total_citing_patents;
+      }
+    };
+    return subset
+      .slice()
+      .sort((a, b) => {
+        const aVal = getValue(a);
+        const bVal = getValue(b);
+        if (aVal == null && bVal == null) return 0;
+        if (aVal == null) return 1;
+        if (bVal == null) return -1;
+        return compareValues(aVal as any, bVal as any, encroachSort.direction);
+      });
+  }, [data?.competitors, topCompetitorKeys, topK, encroachSort, formatCompetitorName, competitorKey]);
+
   return (
-    <div className={`${cardClass} relative`}>
+    <div className={`${cardClass} relative`} aria-busy={loading}>
+      <LoadingOverlay visible={loading} label="Refreshing encroachment…" />
       <button
         className="refresh-btn absolute right-5 top-2 px-4 text-3xl font-semibold"
         disabled={!hasTargets || loading}
@@ -1408,34 +1568,52 @@ function EncroachmentCard({ scope, scopeVersion, tokenGetter, competitorNames }:
             <table className="min-w-full border-collapse">
               <thead>
                 <tr className="text-xs uppercase tracking-wide text-[#3A506B]">
-                  <th className="px-3 py-2 border-b text-left">Assignee</th>
-                  <th className="px-3 py-2 border-b text-left">Total citing patents</th>
-                  <th className="px-3 py-2 border-b text-left">Encroachment score</th>
-                  <th className="px-3 py-2 border-b text-left">Velocity</th>
+                  <SortableHeader
+                    label="Assignee"
+                    active={encroachSort.key === "assignee"}
+                    direction={encroachSort.direction}
+                    onClick={() => handleEncroachSort("assignee")}
+                  />
+                  <SortableHeader
+                    label="Total citing patents"
+                    active={encroachSort.key === "total"}
+                    direction={encroachSort.direction}
+                    onClick={() => handleEncroachSort("total")}
+                    align="right"
+                  />
+                  <SortableHeader
+                    label="Encroachment score"
+                    active={encroachSort.key === "score"}
+                    direction={encroachSort.direction}
+                    onClick={() => handleEncroachSort("score")}
+                    align="right"
+                  />
+                  <SortableHeader
+                    label="Velocity"
+                    active={encroachSort.key === "velocity"}
+                    direction={encroachSort.direction}
+                    onClick={() => handleEncroachSort("velocity")}
+                    align="right"
+                  />
                 </tr>
               </thead>
               <tbody>
-                {data.competitors
-                  .filter((c) => topCompetitorKeys.includes(c.competitor_assignee_id || c.competitor_assignee_name || "Unknown"))
-                  .slice(0, topK)
-                  .map((c, idx) => {
-                    const compKey = c.competitor_assignee_id || c.competitor_assignee_name || `unknown-${idx}`;
-                    const displayName =
-                      competitorLabelMap.get(compKey) || c.competitor_assignee_name || c.competitor_assignee_id || "Unknown";
-                    return (
-                      <tr key={compKey} className="odd:bg-white even:bg-slate-50/60">
-                        <td className="px-3 py-2 text-xs text-[#102A43]">{displayName}</td>
-                        <td className="px-3 py-2 text-xs font-semibold text-[#102A43]">{c.total_citing_patents}</td>
-                        <td className="px-3 py-2 text-xs text-[#102A43]">
-                          <div className="w-24"><ScoreBar value={c.encroachment_score} color="rose" /></div>
-                          <div className="text-xs text-[#3A506B] mt-1">{c.encroachment_score.toFixed(1)}</div>
-                        </td>
-                        <td className="px-3 py-2 text-xs text-[#102A43]">
-                          {c.velocity != null ? `${c.velocity.toFixed(2)} / bucket` : "—"}
-                        </td>
-                      </tr>
-                    );
-                  })}
+                {tableCompetitors.map((c, idx) => {
+                  const compKey = competitorKey(c);
+                  return (
+                    <tr key={`${compKey}-${idx}`} className="odd:bg-white even:bg-slate-50/60">
+                      <td className="px-3 py-2 text-xs text-[#102A43]">{formatCompetitorName(c)}</td>
+                      <td className="px-3 py-2 text-xs font-semibold text-[#102A43] text-right">{c.total_citing_patents}</td>
+                      <td className="px-3 py-2 text-xs text-[#102A43] text-right">
+                        <div className="w-24 ml-auto"><ScoreBar value={c.encroachment_score} color="rose" /></div>
+                        <div className="text-xs text-[#3A506B] mt-1">{c.encroachment_score.toFixed(1)}</div>
+                      </td>
+                      <td className="px-3 py-2 text-xs text-[#102A43] text-right">
+                        {c.velocity != null ? `${c.velocity.toFixed(2)} / bucket` : "—"}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -1459,7 +1637,8 @@ export default function CitationPage() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const focusAssigneeNames = parseListInput(params.get("assignee_names") || "");
-    const pubIds = parseListInput(params.get("pub_ids") || "", { allowSpaceDelimiter: true });
+    const rawPubIds = parseListInput(params.get("pub_ids") || "", { allowSpaceDelimiter: true });
+    const normalizedPubIds = normalizePubIdList(rawPubIds);
     const competitors = parseListInput(params.get("competitors") || "");
     const nextState: ScopePanelState = {
       ...INITIAL_SCOPE_STATE,
@@ -1467,8 +1646,8 @@ export default function CitationPage() {
       bucket: (params.get("bucket") as "month" | "quarter") || INITIAL_SCOPE_STATE.bucket,
       focusAssigneeNames,
       focusAssigneeInput: focusAssigneeNames.join("\n"),
-      pubIds,
-      pubIdsInput: pubIds.join("\n"),
+      pubIds: normalizedPubIds,
+      pubIdsInput: normalizedPubIds.join("\n"),
       keyword: params.get("keyword") || "",
       cpc: params.get("cpc") || "",
       assigneeFilter: params.get("assignee") || "",
@@ -1514,7 +1693,7 @@ export default function CitationPage() {
     if (state.mode === "assignee") {
       scope.focus_assignee_names = state.focusAssigneeNames;
     } else if (state.mode === "pub") {
-      scope.focus_pub_ids = state.pubIds;
+      scope.focus_pub_ids = normalizePubIdList(state.pubIds);
     } else {
       scope.filters = {
         keyword: state.keyword || undefined,
@@ -1572,7 +1751,7 @@ export default function CitationPage() {
           </p>
           <h1 style={{ color: TEXT_COLOR, fontSize: 22, fontWeight: 700 }}>Patent & Publication Citation Tracker</h1>
           <p style={{ margin: 0, fontSize: 14, color: "#475569" }}>
-            Discover forward citations, cross-assignee dependencies, risk signals, and assignee encroachment based on citation data published on patents and publications.
+            Discover forward citations, cross-assignee dependencies, risk signals, and assignee encroachment using patent citation data enriched through canonicalization, normalization, time-series, and other methods as a proxy.
           </p>
         </div>
 
@@ -1583,7 +1762,7 @@ export default function CitationPage() {
           <div className="space-y-5">
             <div className="flex flex-col gap-3 md:flex-row md:items-start">
               <div className="md:w-56">
-                <div className={fieldLabel}>Scope picker</div>
+                <div className={fieldLabel}>Portfolio Definition</div>
                 <select
                   value={scopeState.mode}
                   onChange={(e) => switchMode(e.target.value as ScopeMode)}
@@ -1612,37 +1791,50 @@ export default function CitationPage() {
                   className={inputClass}
                 />
                     <p className="text-[11px] text-[#3A506B] mt-1">
-                      Enter one name per line; similarity matching will include aliases automatically.
+                      Enter one assignee per line. Similarity matching includes aliases.
                     </p>
                   </div>
                 )}
                 {scopeState.mode === "pub" && (
                   <div>
-                    <div className={fieldLabel}>Portfolio patents/publications</div>
+                    <div className={fieldLabel}>Patent/Publication #(s)</div>
                     <textarea
                       value={scopeState.pubIdsInput}
-                      onChange={(e) =>
+                      onChange={(e) => {
+                        const nextInput = e.target.value;
+                        const { normalized } = parseAndNormalizePubIdsInput(nextInput);
                         setScopeState((s) => ({
                           ...s,
-                          pubIdsInput: e.target.value,
-                          pubIds: parseListInput(e.target.value, { allowSpaceDelimiter: true }),
-                        }))
+                          pubIdsInput: nextInput,
+                          pubIds: normalized,
+                        }));
+                      }}
+                      onBlur={() =>
+                        setScopeState((s) => {
+                          const { normalized, formattedInput } = parseAndNormalizePubIdsInput(s.pubIdsInput);
+                          const samePubIds = normalized.length === s.pubIds.length && normalized.every((id, idx) => id === s.pubIds[idx]);
+                          if (formattedInput === s.pubIdsInput && samePubIds) return s;
+                          return { ...s, pubIds: normalized, pubIdsInput: formattedInput };
+                        })
                       }
                       rows={4}
-                      placeholder="US-12345678-B1, US-20250001234-A1"
+                      placeholder={"US-12345678-B1\nUS-20250001234-A1\nUS-10987654-B2"}
                       className={inputClass}
                     />
+                    <p className="text-[11px] text-[#3A506B] mt-1">
+                      Enter one patent/publication # per line. Country code (e.g., US) and kind code (e.g., B1) are required.
+                    </p>
                   </div>
                 )}
                 {scopeState.mode === "search" && (
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
-                      <div className={fieldLabel}>Keyword</div>
+                      <div className={fieldLabel}>Keyword(s)</div>
                       <input
                         type="text"
                         value={scopeState.keyword}
                         onChange={(e) => setScopeState((s) => ({ ...s, keyword: e.target.value }))}
-                        placeholder="Autonomous vehicles, 5G, …"
+                        placeholder="Autonomous vehicles, Lidar, …"
                         className={inputClass}
                       />
                     </div>
@@ -1652,7 +1844,7 @@ export default function CitationPage() {
                         type="text"
                         value={scopeState.cpc}
                         onChange={(e) => setScopeState((s) => ({ ...s, cpc: e.target.value }))}
-                        placeholder="G06N, H04W…"
+                        placeholder="G06N, H04W, …"
                         className={inputClass}
                       />
                     </div>
