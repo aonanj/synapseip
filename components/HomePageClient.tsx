@@ -588,28 +588,28 @@ export default function HomePageClient() {
                   value={semantic}
                   onChange={(e) => setSemantic(e.target.value)}
                   placeholder="Natural language description of technology"
-                  style={{ ...inputStyle, minWidth: 380, width: 420, maxWidth: 500 }}
+                  style={{ ...inputStyle, minWidth: 410, width: 440, maxWidth: 500 }}
                 />
               </div>
               <div style={{ display: "grid", gap: 6 }}>
-                <Label htmlFor="q">Keywords</Label>
+                <Label htmlFor="q">Keyword(s)</Label>
                 <input
                   id="q"
                   value={q}
                   onChange={(e) => setQ(e.target.value)}
                   placeholder="Title/abstract/claims keywords"
-                  style={inputStyle}
+                  style={{ ...inputStyle, minWidth: 280, width: 300, maxWidth: 320 }}
                 />
               </div>
 
               <div style={{ display: "grid", gap: 6 }}>
-                <Label htmlFor="assignee">Assignee</Label>
+                <Label htmlFor="assignee">Assignee(s)</Label>
                 <input
                   id="assignee"
                   value={assignee}
                   onChange={(e) => setAssignee(e.target.value)}
                   placeholder="e.g., Google, Oracle, ..."
-                  style={inputStyle}
+                  style={{ ...inputStyle, minWidth: 280, width: 300, maxWidth: 320 }}
                 />
               </div>
 
