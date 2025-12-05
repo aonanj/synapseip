@@ -462,7 +462,7 @@ function LineChart({
           </div>
           <div className="font-semibold">Count: {hovered.value}</div>
           <div className="text-[11px] text-[#3A506B]">
-            Top competitor: {tooltipCompetitor}
+            Most citations: {tooltipCompetitor}
           </div>
         </div>
       ) : null}
