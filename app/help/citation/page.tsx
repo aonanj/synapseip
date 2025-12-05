@@ -415,8 +415,8 @@ export default function CitationHelpPage() {
               ]}
             />
           </div>
-          <div style={{ display: "grid", gap: 16 }}>
-
+          <div style={{ marginTop: 16, display: "grid", gap: 16 }}>
+            
             <ResourceLink
               title="Note: Terms of Service"
               description="Please note that citation data for the patents and publications available in the SynapseIP database may be incomplete. For clarity and relevancy, cited patents and publications filed prior to 2007 (approximately) may be absent. Additionally, foreign references and non-patent literature are excluded at this time. As set forth in the SynapseIP Terms of Service, no express or implied warranties are made regarding the completeness or accuracy of the available dataset."
