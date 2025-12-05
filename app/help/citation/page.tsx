@@ -123,12 +123,12 @@ export default function CitationHelpPage() {
               ]}
             />
             <InputDescription
-              label="Competitors"
-              description="Optionally specify competitor assignee names to focus Risk Radar and Encroachment analysis on citations from those specific entities."
-              example="Example: 'Apple Inc.', 'Amazon Technologies Inc.', 'Meta Platforms Inc.'"
+              label="Target Assignees"
+              description="Optionally specify target assignee to focus Risk Radar and Encroachment analysis on citations from those specific entities."
+              example="Examples: 'Apple', 'Amazon', 'Meta Platforms'"
               tips={[
-                "When competitors are specified, Exposure Score weights competitor citations more heavily.",
-                "Encroachment analysis shows only citations from the specified competitors.",
+                "When target assignees are specified, Exposure Score weights their citations more heavily.",
+                "Encroachment analysis shows only citations from the specified target assignees.",
                 "Leave empty to analyze citations from all assignees."
               ]}
             />
@@ -140,7 +140,7 @@ export default function CitationHelpPage() {
 
         {/* Forward Impact */}
         <div className="glass-card" style={{ ...cardBaseStyle }}>
-          <SectionHeader title="Forward-Citation Impact" link="/citation" />
+          <SectionHeader title="Forward-Citation Impact" />
           <p style={{ fontSize: 14, lineHeight: 1.5, color: TEXT_COLOR, marginBottom: 16 }}>
             Forward-Citation Impact quantifies the influence and market relevance of a source assignee's portfolio by analyzing which patents cite the source assignee's patents/publications. Patents with high forward citation counts tend to represent foundational innovations that shape subsequent R&D directions. This section helps identify the most influential IP and track how that influence evolves over time.
           </p>
@@ -165,7 +165,7 @@ export default function CitationHelpPage() {
 
         {/* Dependency Matrix */}
         <div className="glass-card" style={{ ...cardBaseStyle }}>
-          <SectionHeader title="Cross-Assignee Dependency Matrix" link="/citation" />
+          <SectionHeader title="Cross-Assignee Dependency Matrix" />
           <p style={{ fontSize: 14, lineHeight: 1.5, color: TEXT_COLOR, marginBottom: 16 }}>
             The Dependency Matrix visualizes citation relationships between assignees to expose technology dependencies, potential licensing relationships, and competitive dynamics. Frequent citations from one assignee to another may suggest freedom-to-operate, infringement, licensing, or other strategic implications.
           </p>
@@ -189,7 +189,7 @@ export default function CitationHelpPage() {
 
         {/* Risk Radar */}
         <div className="glass-card" style={{ ...cardBaseStyle }}>
-          <SectionHeader title="Risk Radar" link="/citation" />
+          <SectionHeader title="Risk Radar" />
           <p style={{ fontSize: 14, lineHeight: 1.5, color: TEXT_COLOR, marginBottom: 16 }}>
             Risk Radar ranks patents in a source assignee's portfolio by strategic risk, combining two complementary signals: <strong>Exposure</strong> (external pressure from other assignees' citations) and <strong>Fragility</strong> (internal structural weakness in the prior art foundation). The resulting <strong>Overall Risk Score</strong> provides a single, sortable metric for prioritizing legal review, design-around analysis, and portfolio management decisions.
           </p>
@@ -201,155 +201,164 @@ export default function CitationHelpPage() {
               { title: "PDF Export", text: "Generate a downloadable PDF report of the Risk Radar analysis for offline review." },
             ]}
           />
-        </div>
 
-        {/* Exposure Score Deep Dive */}
-        <div className="glass-card" style={{ ...cardBaseStyle }}>
-          <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: TEXT_COLOR, marginBottom: 16 }}>Exposure Score</h2>
-          <p style={{ fontSize: 14, lineHeight: 1.5, color: TEXT_COLOR, marginBottom: 12 }}>
-            <strong>What it measures:</strong> Exposure Score quantifies the <em>relevancy</em> of a particular patent (using number and velocity of forward citations as a proxy). A patent with many forward citations is more likely to be the subject of post-grant procedures (e.g., inter partes review). Implications: <em>"Industry/technology relevance and/or de facto standard; foundational component of significant importance to another assignee's portfolio"</em>
-          </p>
-          <p style={{ fontSize: 14, lineHeight: 1.5, color: TEXT_COLOR, marginBottom: 12 }}>
-            <strong>Why it's included:</strong> Exposure Score is frequently a primary indicator in relation to infringement risk, competitor monitoring, strategic licensing/defensive considerations, and identifying patents that are likely to influence future filings.
-          </p>
-          <div style={{ marginTop: 16, padding: 16, background: "rgba(57, 80, 107, 0.12)", borderRadius: 12, border: "1px solid rgba(107, 174, 219, 0.25)" }}>
-            <h4 style={{ margin: 0, fontSize: 14, fontWeight: 600, color: TEXT_COLOR, marginBottom: 8 }}>Formula (0–100 scale)</h4>
-            <p style={{ fontSize: 13, lineHeight: 1.6, color: TEXT_COLOR, marginBottom: 8 }}>
-              Exposure combines normalized forward citation volume with other assignee citation ratio:
+          {/* Exposure Score Deep Dive */}
+          <div style={{ padding: 16, border: `2px solid ${CARD_BORDER}`, borderRadius: 8 }}>
+            <h2 style={{ margin: 0, fontSize: 16, fontWeight: 500, color: TEXT_COLOR, marginBottom: 10 }}>Exposure Score</h2>
+            <p style={{ fontSize: 13, lineHeight: 1.5, color: TEXT_COLOR, marginBottom: 8 }}>
+              <strong>What it measures:</strong> Exposure Score quantifies the <em>relevancy</em> of a particular patent (using number and velocity of forward citations as a proxy). A patent with many forward citations is more likely to be the subject of post-grant procedures (e.g., <em>inter partes</em> review). 
             </p>
-            <ul style={{ marginLeft: 20, fontSize: 13, lineHeight: 1.6, listStyleType: "disc", listStylePosition: "outside", color: TEXT_COLOR, marginBottom: 8 }}>
-              <li><code>norm_total</code> = log-scaled forward citation count (calibrated against corpus 95th percentile)</li>
-              <li><code>comp_ratio</code> = forward citations from other assignees / total forward citations</li>
-            </ul>
-            <p style={{ fontSize: 13, lineHeight: 1.6, color: TEXT_COLOR, marginBottom: 0, fontFamily: "monospace", background: "rgba(255,255,255,0.5)", padding: 8, borderRadius: 6 }}>
-              Exposure = 70 × norm_total + 30 × comp_ratio
+            <p style={{ fontSize: 13, lineHeight: 1.5, color: TEXT_COLOR, marginBottom: 8 }}>
+              Implies: Industry/technology relevance and/or de facto standard; significantly important to another assignee's patent(s).
             </p>
-            <p style={{ fontSize: 12, color: "#627D98", marginTop: 8, marginBottom: 0 }}>
-              The 70/30 weighting reflects the historical trend that absolute citation volume explains variance to a more significant degree than other assignee citation ratio, while other assignee ratio provides directional sensitivity.
+            <p style={{ fontSize: 13, lineHeight: 1.5, color: TEXT_COLOR, marginBottom: 8 }}>
+              <strong>Why it's included:</strong> Exposure Score is frequently a primary indicator in relation to infringement risk, competitor monitoring, strategic licensing/defensive considerations, and identifying patents that are likely to influence future filings.
             </p>
+            <div style={{ marginTop: 8, padding: 16, background: "rgba(57, 80, 107, 0.12)", borderRadius: 12, border: "1px solid rgba(107, 174, 219, 0.25)" }}>
+              <h4 style={{ margin: 0, fontSize: 13, fontWeight: 500, color: TEXT_COLOR, marginBottom: 8 }}>Formula (0–100 scale)</h4>
+              <p style={{ fontSize: 13, lineHeight: 1.5, color: TEXT_COLOR, marginBottom: 8 }}>
+                Exposure combines normalized forward citation volume with other assignee citation ratio:
+              </p>
+              <ul style={{ marginLeft: 20, fontSize: 12, lineHeight: 1.5, listStyleType: "disc", listStylePosition: "outside", color: TEXT_COLOR, marginBottom: 8 }}>
+                <li><code>norm_total</code> = log-scaled forward citation count (calibrated against corpus 95th percentile)</li>
+                <li><code>comp_ratio</code> = forward citations from other assignees / total forward citations</li>
+              </ul>
+              <p style={{ fontSize: 12, lineHeight: 1.5, color: TEXT_COLOR, marginBottom: 0, fontFamily: "monospace", background: "rgba(255,255,255,0.5)", padding: 8, borderRadius: 6 }}>
+                Exposure = 70 × norm_total + 30 × comp_ratio
+              </p>
+              <p style={{ fontSize: 12, color: "#627D98", marginTop: 8, marginBottom: 0 }}>
+                The 70/30 weighting reflects the historical trend that absolute citation volume explains variance to a more significant degree than other assignee citation ratio, while other assignee ratio provides directional sensitivity.
+              </p>
+            </div>
+            <div style={{ marginTop: 16 }}>
+              <h4 style={{ margin: 0, fontSize: 13, fontWeight: 500, color: TEXT_COLOR, marginBottom: 6 }}>Interpretation</h4>
+              <InterpretationBand color="#ef4444" range="80–100" label="High competitor reliance; potential constraining prior art or infringement relevance." />
+              <InterpretationBand color="#f59e0b" range="40–79" label="Moderate exposure; should be monitored." />
+              <InterpretationBand color="#22c55e" range="0–39" label="Low attention from competitors." />
+            </div>
           </div>
-          <div style={{ marginTop: 16 }}>
-            <h4 style={{ margin: 0, fontSize: 14, fontWeight: 600, color: TEXT_COLOR, marginBottom: 8 }}>Interpretation</h4>
-            <InterpretationBand color="#ef4444" range="80–100" label="High competitor reliance; potential constraining prior art or infringement relevance." />
-            <InterpretationBand color="#f59e0b" range="40–79" label="Moderate exposure; should be monitored." />
-            <InterpretationBand color="#22c55e" range="0–39" label="Low attention from competitors." />
-          </div>
-        </div>
 
-        {/* Fragility Score Deep Dive */}
-        <div className="glass-card" style={{ ...cardBaseStyle }}>
-          <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: TEXT_COLOR, marginBottom: 16 }}>Fragility Score</h2>
-          <p style={{ fontSize: 14, lineHeight: 1.5, color: TEXT_COLOR, marginBottom: 12 }}>
-            <strong>What it measures:</strong> Fragility Score measures how <em>narrow, clustered, or homogeneous</em> the cited prior art is for a patent. A patent is considered "fragile" when a small, concentrated slice of prior art supports it. For example, a patent that disproportionately cites prior art in a single CPC technology area or a small set of assignees is more likely to have a meaingfully narrower claim scope and/or a less robus detailed description. Implies: <em>Vulnerabilities to invalidation attacks (e.g., not sufficiently enabling, etc.); relatively less difficult to design around.</em>
-          </p>
-          <p style={{ fontSize: 14, lineHeight: 1.5, color: TEXT_COLOR, marginBottom: 12 }}>
-            <strong>Why it's included:</strong> From a legal/portfolio perspective, fragility matters because concentrated CPC prior art indicates a narrow conceptual base that's easier to design around. Low assignee diversity means high dependence on a small set of references that are easier to attack. This provides insight into invalidity risk, lower commercial value, and relatively lower likelihood of patent robustness.
-          </p>
-          <p style={{ fontSize: 14, lineHeight: 1.5, color: TEXT_COLOR, marginBottom: 12 }}>
-            <strong>Contraindications:</strong> Concentrated CPC prior art and/or little to no citations to other assignees can indicate seminal or highly innovative subject matter, which may not necessarily imply fragility.
-          </p>
-          <div style={{ marginTop: 16, padding: 16, background: "rgba(57, 80, 107, 0.12)", borderRadius: 12, border: "1px solid rgba(107, 174, 219, 0.25)" }}>
-            <h4 style={{ margin: 0, fontSize: 14, fontWeight: 600, color: TEXT_COLOR, marginBottom: 8 }}>Formula (0–100 scale)</h4>
-            <p style={{ fontSize: 13, lineHeight: 1.6, color: TEXT_COLOR, marginBottom: 8 }}>
-              Fragility combines CPC concentration with assignee diversity:
+          {/* Fragility Score Deep Dive */}
+          <div style={{ padding: 16, border: `2px solid ${CARD_BORDER}`, borderRadius: 8 }}>
+            <h2 style={{ margin: 0, fontSize: 16, fontWeight: 500, color: TEXT_COLOR, marginBottom: 10 }}>Fragility Score</h2>
+            <p style={{ fontSize: 13, lineHeight: 1.5, color: TEXT_COLOR, marginBottom: 8 }}>
+              <strong>What it measures:</strong> Fragility Score measures how <em>narrow, clustered, or homogeneous</em> the cited prior art is for a patent. A patent is considered "fragile" when a small, concentrated slice of prior art supports it. For example, a patent that disproportionately cites prior art in a single CPC technology area or a small set of assignees is more likely to have a meaingfully narrower claim scope and/or a less robus detailed description. 
             </p>
-            <ul style={{ marginLeft: 20, fontSize: 13, lineHeight: 1.6, listStyleType: "disc", listStylePosition: "outside", color: TEXT_COLOR, marginBottom: 8 }}>
-              <li><code>cpc_top_share</code> = fraction of backward citations in the dominant CPC code</li>
-              <li><code>assignee_diversity</code> = 1 − (top assignee share of backward citations)</li>
-            </ul>
-            <p style={{ fontSize: 13, lineHeight: 1.6, color: TEXT_COLOR, marginBottom: 0, fontFamily: "monospace", background: "rgba(255,255,255,0.5)", padding: 8, borderRadius: 6 }}>
-              Fragility = 60 × cpc_top_share + 40 × (1 − assignee_diversity)
+            <p style={{ fontSize: 13, lineHeight: 1.5, color: TEXT_COLOR, marginBottom: 8 }}>
+              Implies: Vulnerabilities to invalidation attacks (e.g., not sufficiently enabling, etc.); relatively less difficult to design around.
             </p>
-            <p style={{ fontSize: 12, color: "#627D98", marginTop: 8, marginBottom: 0 }}>
-              CPC concentration is generally a stronger predictor of narrow prior art scope than assignee diversity; accordingly, cpc concentration is given greater weight than assignee diversity.
+            <p style={{ fontSize: 13, lineHeight: 1.5, color: TEXT_COLOR, marginBottom: 8 }}>
+              <strong>Why it's included:</strong> From a legal/portfolio perspective, fragility matters because concentrated CPC prior art indicates a narrow conceptual base that's easier to design around. Low assignee diversity means high dependence on a small set of references that are easier to attack. This provides insight into invalidity risk, lower commercial value, and relatively lower likelihood of patent robustness.
             </p>
+            <p style={{ fontSize: 13, lineHeight: 1.5, color: TEXT_COLOR, marginBottom: 8 }}>
+              <strong>Contraindications:</strong> Concentrated CPC prior art and/or little to no citations to other assignees can indicate seminal or highly innovative subject matter, which may not necessarily imply fragility.
+            </p>
+            <div style={{ marginTop: 8, padding: 16, background: "rgba(57, 80, 107, 0.12)", borderRadius: 12, border: "1px solid rgba(107, 174, 219, 0.25)" }}>
+              <h4 style={{ margin: 0, fontSize: 13, fontWeight: 500, color: TEXT_COLOR, marginBottom: 8 }}>Formula (0–100 scale)</h4>
+              <p style={{ fontSize: 13, lineHeight: 1.5, color: TEXT_COLOR, marginBottom: 8 }}>
+                Fragility combines CPC concentration with assignee diversity:
+              </p>
+              <ul style={{ marginLeft: 20, fontSize: 13, lineHeight: 1.5, listStyleType: "disc", listStylePosition: "outside", color: TEXT_COLOR, marginBottom: 8 }}>
+                <li><code>cpc_top_share</code> = fraction of backward citations in the dominant CPC code</li>
+                <li><code>assignee_diversity</code> = 1 − (top assignee share of backward citations)</li>
+              </ul>
+              <p style={{ fontSize: 12, lineHeight: 1.5, color: TEXT_COLOR, marginBottom: 0, fontFamily: "monospace", background: "rgba(255,255,255,0.5)", padding: 8, borderRadius: 6 }}>
+                Fragility = 60 × cpc_top_share + 40 × (1 − assignee_diversity)
+              </p>
+              <p style={{ fontSize: 12, color: "#627D98", marginTop: 8, marginBottom: 0 }}>
+                CPC concentration is generally a stronger predictor of narrow prior art scope than assignee diversity; accordingly, cpc concentration is given greater weight than assignee diversity.
+              </p>
+            </div>
+            <div style={{ marginTop: 10 }}>
+              <h4 style={{ margin: 0, fontSize: 13, fontWeight: 500, color: TEXT_COLOR, marginBottom: 8 }}>Interpretation</h4>
+              <InterpretationBand color="#ef4444" range="80–100" label="Fragile; likely narrow and easy to design around or challenge." />
+              <InterpretationBand color="#f59e0b" range="40–79" label="Moderately robust." />
+              <InterpretationBand color="#22c55e" range="0–39" label="Robust; diverse prior art foundation." />
+            </div>
           </div>
-          <div style={{ marginTop: 16 }}>
-            <h4 style={{ margin: 0, fontSize: 14, fontWeight: 600, color: TEXT_COLOR, marginBottom: 8 }}>Interpretation</h4>
-            <InterpretationBand color="#ef4444" range="80–100" label="Fragile; likely narrow and easy to design around or challenge." />
-            <InterpretationBand color="#f59e0b" range="40–79" label="Moderately robust." />
-            <InterpretationBand color="#22c55e" range="0–39" label="Robust; diverse prior art foundation." />
-          </div>
-        </div>
 
-        {/* Overall Risk Score Deep Dive */}
-        <div className="glass-card" style={{ ...cardBaseStyle }}>
-          <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: TEXT_COLOR, marginBottom: 16 }}>Overall Risk Score</h2>
-          <p style={{ fontSize: 14, lineHeight: 1.5, color: TEXT_COLOR, marginBottom: 12 }}>
-            <strong>What it measures:</strong> Overall Risk Score blends <strong>Exposure</strong> (external pressure from other assignees) and <strong>Fragility</strong> (internal robustness/weakness) to estimate the <em>strategic risk</em> associated with a patent. Implies: <em>patent strength and robustness, rough indicator of ROI"</em>
-          </p>
-          <p style={{ fontSize: 14, lineHeight: 1.5, color: TEXT_COLOR, marginBottom: 12 }}>
-            <strong>Why it's included:</strong> Executives and portfolio managers need a single, sortable metric to identify patents that are high-risk and high-attention, prioritize legal review or design-around analysis, support pruning/licensing/divestiture decisions, catch patents that are under attack and/or weakly supported, highlight patents with low ROI potential. This is a <em>portfolio prioritization heuristic</em>, not a legal invalidity score.
-          </p>
-          <div style={{ marginTop: 16, padding: 16, background: "rgba(57, 80, 107, 0.12)", borderRadius: 12, border: "1px solid rgba(107, 174, 219, 0.25)" }}>
-            <h4 style={{ margin: 0, fontSize: 14, fontWeight: 600, color: TEXT_COLOR, marginBottom: 8 }}>Formula (0–100 scale)</h4>
-            <p style={{ fontSize: 13, lineHeight: 1.6, color: TEXT_COLOR, marginBottom: 0, fontFamily: "monospace", background: "rgba(255,255,255,0.5)", padding: 8, borderRadius: 6 }}>
-              Overall = 55 × (Exposure / 100) + 45 × (Fragility / 100)
+          {/* Overall Risk Score Deep Dive */}
+          <div style={{ padding: 16, border: `2px solid ${CARD_BORDER}`, borderRadius: 8 }}>
+            <h2 style={{ margin: 0, fontSize: 16, fontWeight: 500, color: TEXT_COLOR, marginBottom: 10 }}>Overall Risk Score</h2>
+            <p style={{ fontSize: 13, lineHeight: 1.5, color: TEXT_COLOR, marginBottom: 8 }}>
+              <strong>What it measures:</strong> Overall Risk Score blends <strong>Exposure</strong> (external pressure from other assignees) and <strong>Fragility</strong> (internal robustness/weakness) to estimate the <em>strategic risk</em> associated with a patent.
             </p>
-            <p style={{ fontSize: 12, color: "#627D98", marginTop: 8, marginBottom: 0 }}>
-              The 55/45 weighting slightly prioritizes Exposure because it is generally a more consistent metric than Fragility.
+            <p style={{ fontSize: 13, lineHeight: 1.5, color: TEXT_COLOR, marginBottom: 8 }}>
+              Implies: <em>Patent strength and robustness; coarse metric for forecasting ROI.</em>
             </p>
+            <p style={{ fontSize: 13, lineHeight: 1.5, color: TEXT_COLOR, marginBottom: 8 }}>
+              <strong>Why it's included:</strong> Executives and portfolio managers need a single, sortable metric to identify patents that are high-risk and high-attention, prioritize legal review or design-around analysis, support pruning/licensing/divestiture decisions, catch patents that are under attack and/or weakly supported, highlight patents with low ROI potential. This is a portfolio prioritization heuristic, not a legal invalidity score.
+            </p>
+            <div style={{ marginTop: 8, padding: 16, background: "rgba(57, 80, 107, 0.12)", borderRadius: 12, border: "1px solid rgba(107, 174, 219, 0.25)" }}>
+              <h4 style={{ margin: 0, fontSize: 13, fontWeight: 500, color: TEXT_COLOR, marginBottom: 8 }}>Formula (0–100 scale)</h4>
+              <p style={{ fontSize: 12, lineHeight: 1.5, color: TEXT_COLOR, marginBottom: 0, fontFamily: "monospace", background: "rgba(255,255,255,0.5)", padding: 8, borderRadius: 6 }}>
+                Overall = 55 × (Exposure / 100) + 45 × (Fragility / 100)
+              </p>
+              <p style={{ fontSize: 12, color: "#627D98", marginTop: 8, marginBottom: 0 }}>
+                The 55/45 weighting slightly prioritizes Exposure because it is generally a more consistent metric than Fragility.
+              </p>
+            </div>
+            <div style={{ marginTop: 10 }}>
+              <h4 style={{ margin: 0, fontSize: 13, fontWeight: 500, color: TEXT_COLOR, marginBottom: 8 }}>Interpretation</h4>
+              <InterpretationBand color="#ef4444" range="80–100" label="High strategic risk. Cited signficantly by other assignees; also non-negligible fragility. Recommend review before further time and resources are invested." />
+              <InterpretationBand color="#f59e0b" range="40–79" label="Moderate strategic risk. Monitor regularly, especially in crowded and/or activity technology areas." />
+              <InterpretationBand color="#22c55e" range="0–39" label="Low strategic risk." />
+            </div>
           </div>
-          <div style={{ marginTop: 16 }}>
-            <h4 style={{ margin: 0, fontSize: 14, fontWeight: 600, color: TEXT_COLOR, marginBottom: 8 }}>Interpretation</h4>
-            <InterpretationBand color="#ef4444" range="80–100" label="High strategic risk. Cited signficantly by other assignees; also non-negligible fragility. Recommend review before further time and resources are invested." />
-            <InterpretationBand color="#f59e0b" range="40–79" label="Moderate strategic risk. Monitor regularly, especially in crowded and/or activity technology areas." />
-            <InterpretationBand color="#22c55e" range="0–39" label="Low strategic risk." />
-          </div>
-        </div>
 
-        {/* Why These Scores Work Together */}
-        <div className="glass-card" style={{ ...cardBaseStyle }}>
-          <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: TEXT_COLOR, marginBottom: 16 }}>Why These Three Scores Work Together</h2>
-          <p style={{ fontSize: 14, lineHeight: 1.5, color: TEXT_COLOR, marginBottom: 16 }}>
-            Each score captures a distinct dimension of patent risk, and together they provide a complete strategic picture:
-          </p>
-          <div style={{ overflowX: "auto" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
-              <thead>
-                <tr style={{ background: "rgba(107, 174, 219, 0.15)" }}>
-                  <th style={{ padding: "12px 16px", textAlign: "left", fontWeight: 600, borderBottom: "2px solid rgba(107, 174, 219, 0.3)" }}>Score</th>
-                  <th style={{ padding: "12px 16px", textAlign: "left", fontWeight: 600, borderBottom: "2px solid rgba(107, 174, 219, 0.3)" }}>Measures</th>
-                  <th style={{ padding: "12px 16px", textAlign: "left", fontWeight: 600, borderBottom: "2px solid rgba(107, 174, 219, 0.3)" }}>Type of Risk</th>
-                  <th style={{ padding: "12px 16px", textAlign: "left", fontWeight: 600, borderBottom: "2px solid rgba(107, 174, 219, 0.3)" }}>Relevance</th>
-                  <th style={{ padding: "12px 16px", textAlign: "left", fontWeight: 600, borderBottom: "2px solid rgba(107, 174, 219, 0.3)" }}>Significance</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr style={{ borderBottom: "1px solid rgba(107, 174, 219, 0.15)" }}>
-                  <td style={{ padding: "12px 16px", fontWeight: 600 }}>Exposure</td>
-                  <td style={{ padding: "12px 16px" }}>Competitor forward citations</td>
-                  <td style={{ padding: "12px 16px" }}>External pressure</td>
-                  <td style={{ padding: "12px 16px" }}>FTO, litigation</td>
-                  <td style={{ padding: "12px 16px" }}>Predicts infringement/competition risk</td>
-                </tr>
-                <tr style={{ borderBottom: "1px solid rgba(107, 174, 219, 0.15)" }}>
-                  <td style={{ padding: "12px 16px", fontWeight: 600 }}>Fragility</td>
-                  <td style={{ padding: "12px 16px" }}>Prior-art diversity & narrowness</td>
-                  <td style={{ padding: "12px 16px" }}>Internal structural weakness</td>
-                  <td style={{ padding: "12px 16px" }}>Prosecution, IP counsel</td>
-                  <td style={{ padding: "12px 16px" }}>Predicts invalidity/design-around vulnerability</td>
-                </tr>
-                <tr>
-                  <td style={{ padding: "12px 16px", fontWeight: 600 }}>Overall</td>
-                  <td style={{ padding: "12px 16px" }}>Weighted blend</td>
-                  <td style={{ padding: "12px 16px" }}>Strategic portfolio risk</td>
-                  <td style={{ padding: "12px 16px" }}>Executives, R&D</td>
-                  <td style={{ padding: "12px 16px" }}>Sort/prioritize patents for action</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          <div style={{ marginTop: 16, padding: 16, background: "rgba(57, 80, 107, 0.12)", borderRadius: 12, border: "1px solid rgba(107, 174, 219, 0.25)" }}>
-            <p style={{ fontSize: 13, lineHeight: 1.6, color: TEXT_COLOR, margin: 0 }}>
-              <strong>Aggregate Implications:</strong> What patents are highly relevant to some or one other assignee, which patents are estimated to be sunk costs now, where should future AI/ML IP investments be directed
+          {/* Why These Scores Work Together */}
+          <div style={{ padding: 16, border: `2px solid ${CARD_BORDER}`, borderRadius: 8 }}>
+            <h2 style={{ margin: 0, fontSize: 16, fontWeight: 500, color: TEXT_COLOR, marginBottom: 10 }}>Why These Three Scores Work Together</h2>
+            <p style={{ fontSize: 13, lineHeight: 1.5, color: TEXT_COLOR, marginBottom: 8 }}>
+              Each score captures a distinct dimension of patent risk, and together they provide a complete strategic picture:
             </p>
+            <div style={{ overflowX: "auto" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+                <thead>
+                  <tr style={{ background: "rgba(107, 174, 219, 0.15)" }}>
+                    <th style={{ padding: "12px 16px", textAlign: "left", fontWeight: 600, borderBottom: "2px solid rgba(107, 174, 219, 0.3)" }}>Score</th>
+                    <th style={{ padding: "12px 16px", textAlign: "left", fontWeight: 600, borderBottom: "2px solid rgba(107, 174, 219, 0.3)" }}>Measures</th>
+                    <th style={{ padding: "12px 16px", textAlign: "left", fontWeight: 600, borderBottom: "2px solid rgba(107, 174, 219, 0.3)" }}>Type of Risk</th>
+                    <th style={{ padding: "12px 16px", textAlign: "left", fontWeight: 600, borderBottom: "2px solid rgba(107, 174, 219, 0.3)" }}>Relevance</th>
+                    <th style={{ padding: "12px 16px", textAlign: "left", fontWeight: 600, borderBottom: "2px solid rgba(107, 174, 219, 0.3)" }}>Significance</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr style={{ borderBottom: "1px solid rgba(107, 174, 219, 0.15)" }}>
+                    <td style={{ padding: "12px 16px", fontWeight: 500 }}>Exposure</td>
+                    <td style={{ padding: "12px 16px" }}>Competitor forward citations</td>
+                    <td style={{ padding: "12px 16px" }}>External pressure</td>
+                    <td style={{ padding: "12px 16px" }}>FTO, litigation</td>
+                    <td style={{ padding: "12px 16px" }}>Predicts infringement/competition risk</td>
+                  </tr>
+                  <tr style={{ borderBottom: "1px solid rgba(107, 174, 219, 0.15)" }}>
+                    <td style={{ padding: "12px 16px", fontWeight: 500 }}>Fragility</td>
+                    <td style={{ padding: "12px 16px" }}>Prior-art diversity & narrowness</td>
+                    <td style={{ padding: "12px 16px" }}>Internal structural weakness</td>
+                    <td style={{ padding: "12px 16px" }}>Prosecution, IP counsel</td>
+                    <td style={{ padding: "12px 16px" }}>Predicts invalidity/design-around vulnerability</td>
+                  </tr>
+                  <tr>
+                    <td style={{ padding: "12px 16px", fontWeight: 500 }}>Overall</td>
+                    <td style={{ padding: "12px 16px" }}>Weighted blend</td>
+                    <td style={{ padding: "12px 16px" }}>Strategic portfolio risk</td>
+                    <td style={{ padding: "12px 16px" }}>Executives, R&D</td>
+                    <td style={{ padding: "12px 16px" }}>Sort/prioritize patents for action</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div style={{ marginTop: 10, padding: 16, background: "rgba(57, 80, 107, 0.12)", borderRadius: 12, border: "1px solid rgba(107, 174, 219, 0.25)" }}>
+              <p style={{ fontSize: 13, lineHeight: 1.5, color: TEXT_COLOR, margin: 0 }}>
+                <strong>Aggregate Implications:</strong> What patents are highly relevant to some or one other assignee, which patents are estimated to be sunk costs now, where should future AI/ML IP investments be directed
+              </p>
+            </div>
           </div>
         </div>
 
         {/* Encroachment */}
         <div className="glass-card" style={{ ...cardBaseStyle }}>
-          <SectionHeader title="Assignee Encroachment" link="/citation" />
+          <SectionHeader title="Assignee Encroachment" />
           <p style={{ fontSize: 14, lineHeight: 1.5, color: TEXT_COLOR, marginBottom: 16 }}>
             Encroachment analysis tracks how target assignees are citing patents/publications held by a source assignee over time. When a target assignee's patent cites a source assignee's patent, it indicates relevancy in a technology space. Monitoring encroachment trends may assist in early identification of licensing potential, technology areas of increasing value, and/or potential infringement actions.
           </p>
@@ -406,29 +415,6 @@ export default function CitationHelpPage() {
               ]}
             />
           </div>
-        </div>
-
-        {/* Best Practices */}
-        <div className="glass-card" style={{ ...cardBaseStyle }}>
-          <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: TEXT_COLOR, marginBottom: 16 }}>Implicit Signals</h2>
-          <div style={{ display: "grid", gap: 16 }}>
-            <BestPractice
-              title="Start narrow, then expand"
-              tip="Begin with specific assignee names or patent numbers to establish baseline metrics. Expand scope gradually to reduce noise in dependency and risk outputs."
-            />
-            <BestPractice
-              title="Discover licensing opportunities"
-              tip="Cross-assignee dependency widget generates a heatmap of citation relationships. Quickly identify specific patents or publications that are heavily cited by other assignees, or one assignee with patents and publications that disproportionately cite another assignee, which may reveal licensing potential."
-            />
-            <BestPractice
-              title="Velocity can imply trend"
-              tip="Velocity indicates momentum, showing whether citation activity is increasing or decreasing over time. A declining velocity may suggest decreasing relevance or obsolescence, whereas an increasing velocity may indicate growing importance or industry adoption."
-            />
-          </div>
-        </div>
-        <div className="glass-card" style={{ ...cardBaseStyle }}>
-          <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: TEXT_COLOR, marginBottom: 16 }}>Additional Resources</h2>
-
           <div style={{ display: "grid", gap: 16 }}>
 
             <ResourceLink
@@ -450,13 +436,10 @@ export default function CitationHelpPage() {
   );
 }
 
-function SectionHeader({ title, link }: { title: string; link: string }) {
+function SectionHeader({ title }: { title: string }) {
   return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap", marginBottom: 12 }}>
       <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: TEXT_COLOR }}>{title}</h2>
-      <a href={link} className="btn-outline" style={linkButtonStyle}>
-        Open →
-      </a>
     </div>
   );
 }
@@ -570,11 +553,11 @@ function ResourceLink({ title, description, href, external }: { title: string; d
         className="hover:underline"
         target={external ? "_blank" : undefined}
         rel={external ? "noopener noreferrer" : undefined}
-        style={{ fontSize: 12, fontWeight: 400, color: LINK_COLOR }}
+        style={{ fontSize: 13, fontWeight: 500, color: LINK_COLOR }}
       >
         {title} {external && "↗︎"}
       </a>
-      <p style={{ margin: "6px 0 0 0", fontSize: 11, color: "#627D98" }}>{description}</p>
+      <p style={{ margin: "6px 0 0 0", fontSize: 12, color: TEXT_COLOR }}>{description}</p>
     </div>
   );
 }

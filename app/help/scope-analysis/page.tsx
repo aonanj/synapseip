@@ -85,7 +85,7 @@ export default function ScopeAnalysisHelpPage() {
         <div className="glass-card" style={{ ...cardBaseStyle }}>
           <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: TEXT_COLOR, marginBottom: 16 }}>What is Scope Analysis?</h2>
           <p style={{ fontSize: 14, lineHeight: 1.5, color: TEXT_COLOR, marginBottom: 12 }}>
-            Traditional search tools focus on matching titles or abstracts. Scope Analysis dives into claim language, which is paramount in determining infringement exposure. Each independent claim in the SynapseIP database is embedded and indexed. Features:
+            Traditional search tools require exact keyword matches. Scope Analysis dives into claim language, which is paramount in determining infringement exposure. Each independent claim in the SynapseIP database is embedded and indexed. Features:
           </p>
           <ul style={{ marginLeft: 20, marginTop: 12, fontSize: 14, lineHeight: 1.5, listStyleType: "disc", listStylePosition: "outside", color: TEXT_COLOR }}>
             <li>Returns patents with claim scopes semantically closest to the input subject matter.</li>
@@ -103,8 +103,8 @@ export default function ScopeAnalysisHelpPage() {
         <div className="glass-card" style={{ ...cardBaseStyle }}>
           <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: TEXT_COLOR, marginBottom: 16 }}>How Scope Analysis works</h2>
           <ol style={{ marginLeft: 20, marginTop: 12, fontSize: 14, lineHeight: 1.7, color: TEXT_COLOR }}>
-            <li><strong>User input</strong>: Provide up to ~20k characters describing the feature(s) or claim(s) to clear. Embedding quality improves with richer technical detail.</li>
-            <li><strong>Embedding generation</strong>: SynapseIP generates an embedding vector for the submitted text (no data is stored beyond what is required to fulfill the request).</li>
+            <li><strong>User input</strong>: Provide up to ~20k characters describing the feature(s) or claim(s) to semantically search. Embedding quality improves with richer technical detail.</li>
+            <li><strong>Embedding generation</strong>: SynapseIP generates an embedding vector for the input text (no data is stored beyond what is required to fulfill the request).</li>
             <li><strong>KNN search</strong>: Generated embedding vector is semantically compared against those generated from independent claims of the patents in the SynapseIP database. Closest matches (top-k configurable) are returned.</li>
             <li><strong>Visualization + evidence</strong>: Results populate both the similarity map and the results table to concurrently provide both macro and micro views.</li>
           </ol>
@@ -117,28 +117,34 @@ export default function ScopeAnalysisHelpPage() {
         <div className="glass-card" style={{ ...cardBaseStyle }}>
           <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: TEXT_COLOR, marginBottom: 16 }}>Example workflow</h2>
           <div style={{ display: "grid", gap: 18 }}>
-            <InfoBlock
-              title="1. Describe subject matter"
+            <WorkflowStep
+              step="1"
+              title="Describe subject matter"
               description="Draft a description or list that captures subject matter of interest, inventive concepts, implementation details, etc. Including language tied to technical components is recommended for best results."
             />
-            <InfoBlock
-              title="2. Choose sampling depth"
+            <WorkflowStep
+              step="2"
+              title="Choose sampling depth"
               description="Use the '# of claim comparisons' input to specify the number independent claims to be returned. Default is 15; expanding to 40-50 can be useful where an initial scope analysis run shows high risk."
             />
-            <InfoBlock
-              title="3. Run the analysis"
+            <WorkflowStep
+              step="3"
+              title="Run the analysis"
               description="Click 'Run scope analysis' to execute embeddings search + KNN graphing operations. Results are returned with similarity scores, graph positioning, and risk tiles tailored to that query."
             />
-            <InfoBlock
-              title="4. Scan the graph"
+            <WorkflowStep
+              step="4"
+              title="Check the graph"
               description="The graph displays nodes representing independent claims and graphically presents their distances from the input. Hover nodes to preview claim snippets, click to highlight a specific patent."
             />
-            <InfoBlock
-              title="5. Review supporting claims"
+            <WorkflowStep
+              step="5"
+              title="Review supporting claims"
               description="In the table, click any claim cell to expand the full text. Patent numbers link to Google Patents to view full documents."
             />
-            <InfoBlock
-              title="6. Export Results"
+            <WorkflowStep
+              step="6"
+              title="Export Results"
               description="Results table can be exported as a PDF document for offline reference and review."
             />
           </div>
@@ -164,7 +170,6 @@ export default function ScopeAnalysisHelpPage() {
             <li><strong>Mixed technology stack</strong>: Run separate analyses for each subsystem (e.g., hardware vs. software) to isolate potential infringement risks or clearance opportunities.</li>
             <li><strong>Monitor competitors & infringement risk</strong>: Use the table's assignee column to see which entities own the patents with the closest claims, and whether those patents are clustered near the same or similar technology areas.</li>
             <li><strong>Offline reference & review</strong>: Use the Export feature to save the results table as a PDF document. The exported document includes full claim text and similarity scores.</li>
-            <li><strong>Support/Requests</strong>: Email <a href="mailto:support@phaethon.llc" style={{ color: LINK_COLOR }}>support@phaethon.llc</a> with any issues, questions, or requested features, and we will respond promptly.</li>
           </ul>
         </div>
       </div>
@@ -196,6 +201,20 @@ function DetailItem({ title, description }: { title: string; description: string
     </div>
   );
 };
+
+function WorkflowStep({ step, title, description }: { step: string; title: string; description: string }) {
+  return (
+    <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+      <div style={{ minWidth: 28, height: 28, borderRadius: "50%", background: LINK_COLOR, color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 600, fontSize: 14 }}>
+        {step}
+      </div>
+      <div style={{ flex: 1 }}>
+        <h4 style={{ margin: 0, fontSize: 15, fontWeight: 600, color: TEXT_COLOR }}>{title}</h4>
+        <p style={{ margin: "6px 0 0", fontSize: 14, lineHeight: 1.5, color: TEXT_COLOR }}>{description}</p>
+      </div>
+    </div>
+  );
+}
 
 const footerStyle: React.CSSProperties = {
   alignSelf: "center",
