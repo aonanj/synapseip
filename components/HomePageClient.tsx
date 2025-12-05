@@ -588,7 +588,7 @@ export default function HomePageClient() {
                   value={semantic}
                   onChange={(e) => setSemantic(e.target.value)}
                   placeholder="Natural language description of search focus"
-                  style={{ ...inputStyle, minWidth: 410, width: 440, maxWidth: 500 }}
+                  style={{ ...inputStyle, minWidth: 440, width: 480, maxWidth: 550 }}
                 />
               </div>
               <div style={{ display: "grid", gap: 6 }}>
@@ -597,8 +597,8 @@ export default function HomePageClient() {
                   id="q"
                   value={q}
                   onChange={(e) => setQ(e.target.value)}
-                  placeholder="e.g., transformer, unmanned aerial vehicle, …"
-                  style={{ ...inputStyle, minWidth: 280, width: 300, maxWidth: 320 }}
+                  placeholder="e.g., transformer, encoder, …"
+                  style={{ ...inputStyle, minWidth: 320, width: 350, maxWidth: 400 }}
                 />
               </div>
 

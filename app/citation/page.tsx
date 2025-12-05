@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuth0 } from "@auth0/auth0-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 
 type ScopeMode = "assignee" | "pub" | "search";
@@ -18,6 +18,9 @@ type CitationScope = {
 type ForwardImpactPoint = {
   bucket_start: string;
   citing_count: number;
+  top_competitor_assignee_id?: string | null;
+  top_competitor_assignee_name?: string | null;
+  top_competitor_citing_count?: number | null;
 };
 
 type PatentImpactSummary = {
@@ -309,6 +312,9 @@ function LineChart({
   height?: number;
   accent?: string;
 }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
+
   if (!points.length) {
     return (
       <div className="h-[220px] grid place-items-center text-xs text-[#3A506B]">
@@ -316,38 +322,129 @@ function LineChart({
       </div>
     );
   }
+
   const values = points.map((p) => Number(p[valueKey] ?? 0));
   const maxVal = Math.max(...values, 1);
-  const width = Math.max(360, points.length * 70);
-  const margin = 24;
-  const step = points.length > 1 ? (width - margin * 2) / (points.length - 1) : 0;
+  const width = Math.max(420, points.length * 90);
+  const margin = { top: 18, right: 28, bottom: 46, left: 64 };
+  const innerWidth = width - margin.left - margin.right;
+  const innerHeight = height - margin.top - margin.bottom;
+  const step = points.length > 1 ? innerWidth / (points.length - 1) : innerWidth;
   const coords = points.map((p, idx) => {
-    const x = margin + idx * step;
-    const y = margin + (1 - (Number(p[valueKey] ?? 0) / maxVal)) * (height - margin * 2);
+    const x = margin.left + idx * step;
+    const y = margin.top + (1 - (Number(p[valueKey] ?? 0) / maxVal)) * innerHeight;
     return [x, y];
   });
   const path = coords.map(([x, y], i) => `${i === 0 ? "M" : "L"}${x},${y}`).join(" ");
+  const baselineY = margin.top + innerHeight;
+  const areaPath =
+    coords.length > 0
+      ? `${path} L${coords[coords.length - 1][0]},${baselineY} L${coords[0][0]},${baselineY} Z`
+      : path;
+
+  const approxStep = Math.max(1, Math.ceil(maxVal / 4));
+  const tickValues = new Set<number>([0, maxVal]);
+  for (let v = approxStep; v < maxVal; v += approxStep) {
+    tickValues.add(v);
+  }
+  const yTicks = Array.from(tickValues).sort((a, b) => a - b);
+
+  const hovered =
+    hoveredIdx != null
+      ? {
+          point: points[hoveredIdx],
+          coord: coords[hoveredIdx],
+          value: values[hoveredIdx],
+        }
+      : null;
+  const tooltipLeft = hovered ? hovered.coord[0] - (containerRef.current?.scrollLeft ?? 0) : 0;
+  const tooltipTop = hovered ? hovered.coord[1] : 0;
+  const tooltipCompetitor = hovered
+    ? (() => {
+        const name = hovered.point.top_competitor_assignee_name;
+        const count = hovered.point.top_competitor_citing_count;
+        if (name) {
+          return count != null ? `${name} (${count})` : name;
+        }
+        return count != null ? `${count} citing patent(s)` : "—";
+      })()
+    : null;
 
   return (
-    <div className="overflow-x-auto">
-      <svg width={width} height={height} className="min-w-full">
+    <div className="relative overflow-x-auto" ref={containerRef}>
+      <svg
+        width={width}
+        height={height}
+        className="min-w-full"
+        onMouseLeave={() => setHoveredIdx(null)}
+        role="img"
+        aria-label="Influence timeline"
+      >
         <defs>
           <linearGradient id="chartFill" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor={accent} stopOpacity="0.26" />
             <stop offset="100%" stopColor={accent} stopOpacity="0" />
           </linearGradient>
         </defs>
-        <path d={`${path} V${height - margin} H${margin} Z`} fill="url(#chartFill)" />
+
+        <line x1={margin.left} x2={width - margin.right} y1={baselineY} y2={baselineY} stroke="#e2e8f0" />
+
+        {yTicks.map((tick) => {
+          const y = margin.top + (1 - tick / maxVal) * innerHeight;
+          return (
+            <g key={`y-${tick}`}>
+              <line x1={margin.left} x2={width - margin.right} y1={y} y2={y} stroke="#e2e8f0" strokeDasharray="4 4" />
+              <text x={margin.left - 10} y={y + 4} textAnchor="end" className="text-[11px] fill-[#3A506B]">
+                {tick}
+              </text>
+            </g>
+          );
+        })}
+
+        <path d={areaPath} fill="url(#chartFill)" />
         <path d={path} fill="none" stroke={accent} strokeWidth={2.5} strokeLinejoin="round" strokeLinecap="round" />
+
         {coords.map(([x, y], idx) => (
           <g key={idx}>
-            <circle cx={x} cy={y} r={4} fill="#fff" stroke={accent} strokeWidth={2} />
-            <text x={x} y={height - 6} textAnchor="middle" className="text-[11px] fill-[#3A506B]">
+            <circle
+              cx={x}
+              cy={y}
+              r={4.5}
+              fill="#fff"
+              stroke={accent}
+              strokeWidth={2}
+              onMouseEnter={() => setHoveredIdx(idx)}
+            />
+            <text
+              x={x}
+              y={height - margin.bottom + 18}
+              textAnchor="middle"
+              className="text-[11px] fill-[#3A506B]"
+            >
               {fmtDate(points[idx].bucket_start).slice(0, 7)}
             </text>
           </g>
         ))}
       </svg>
+
+      {hovered ? (
+        <div
+          className="pointer-events-none absolute z-10 rounded-lg border border-slate-200 bg-white/95 px-3 py-2 text-xs text-[#102A43] shadow-lg backdrop-blur-sm"
+          style={{
+            left: tooltipLeft,
+            top: tooltipTop,
+            transform: "translate(-50%, -110%)",
+          }}
+        >
+          <div className="font-semibold text-[11px] text-[#0ea5e9]">
+            {fmtDate(hovered.point.bucket_start).slice(0, 10)}
+          </div>
+          <div className="font-semibold">Count: {hovered.value}</div>
+          <div className="text-[11px] text-[#3A506B]">
+            Top competitor: {tooltipCompetitor}
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -59,6 +59,13 @@ def build_forward_timeline_points(rows: Iterable[dict[str, Any]], bucket: str) -
             ForwardImpactPoint(
                 bucket_start=b,
                 citing_count=int(r.get("citing_count") or 0),
+                top_competitor_assignee_id=r.get("top_competitor_assignee_id"),
+                top_competitor_assignee_name=r.get("top_competitor_assignee_name"),
+                top_competitor_citing_count=(
+                    None
+                    if r.get("top_competitor_citing_count") is None
+                    else int(r.get("top_competitor_citing_count") or 0)
+                ),
             )
         )
     return points

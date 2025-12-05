@@ -29,6 +29,9 @@ class ForwardImpactRequest(BaseModel):
 class ForwardImpactPoint(BaseModel):
     bucket_start: date
     citing_count: int
+    top_competitor_assignee_id: UUID | None = None
+    top_competitor_assignee_name: str | None = None
+    top_competitor_citing_count: int | None = None
 
 
 class PatentImpactSummary(BaseModel):

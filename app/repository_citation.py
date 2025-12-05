@@ -157,16 +157,44 @@ async def get_forward_citation_timeline(
             COALESCE(pc.cited_pub_id, cited_app.pub_id) AS cited_pub_id
         FROM patent_citation pc
         LEFT JOIN patent cited_app ON cited_app.application_number = pc.cited_application_number AND pc.cited_pub_id IS NULL
+    ),
+    bucketed AS (
+        SELECT
+            {bucket_expr} AS bucket_start,
+            citing.canonical_assignee_name_id AS competitor_assignee_id,
+            COALESCE(citing_can.canonical_assignee_name, citing.assignee_name, 'Unknown') AS competitor_assignee_name,
+            COUNT(*) AS citation_total,
+            COUNT(DISTINCT r.citing_pub_id) AS citing_count
+        FROM resolved r
+        JOIN patent citing ON citing.pub_id = r.citing_pub_id
+        LEFT JOIN canonical_assignee_name citing_can ON citing_can.id = citing.canonical_assignee_name_id
+        WHERE {' AND '.join(where)}
+        GROUP BY bucket_start, competitor_assignee_id, competitor_assignee_name
+    ),
+    bucket_totals AS (
+        SELECT
+            bucket_start,
+            SUM(citation_total) AS citation_total,
+            SUM(citing_count) AS citing_count
+        FROM bucketed
+        GROUP BY bucket_start
     )
     SELECT
-        {bucket_expr} AS bucket_start,
-        COUNT(*) AS citation_total,
-        COUNT(DISTINCT r.citing_pub_id) AS citing_count
-    FROM resolved r
-    JOIN patent citing ON citing.pub_id = r.citing_pub_id
-    WHERE {' AND '.join(where)}
-    GROUP BY bucket_start
-    ORDER BY bucket_start;
+        bt.bucket_start,
+        bt.citation_total,
+        bt.citing_count,
+        top_point.competitor_assignee_id AS top_competitor_assignee_id,
+        top_point.competitor_assignee_name AS top_competitor_assignee_name,
+        top_point.citing_count AS top_competitor_citing_count
+    FROM bucket_totals bt
+    LEFT JOIN LATERAL (
+        SELECT competitor_assignee_id, competitor_assignee_name, citing_count
+        FROM bucketed b
+        WHERE b.bucket_start = bt.bucket_start
+        ORDER BY citing_count DESC NULLS LAST, competitor_assignee_name ASC
+        LIMIT 1
+    ) AS top_point ON TRUE
+    ORDER BY bt.bucket_start;
     """
     async with conn.cursor(row_factory=dict_row) as cur:
         await cur.execute(_sql.SQL(query), args) # type: ignore
