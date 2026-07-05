@@ -1,6 +1,6 @@
 # .github/workflows/etl_weekly.yml
 name: ETL weekly
-on: { schedule: [ { cron: "0 9 1 * *" } ], workflow_dispatch: {} } # At 09:00 on day-of-month 1.
+on: { schedule: [ { cron: "0 9 1 1 *" } ], workflow_dispatch: {} } # At 09:00 on day-of-month 1.
 jobs:
   run-etl:
     runs-on: ubuntu-latest
@@ -33,4 +33,4 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           BQ_PROJECT_ID: ${{ env.BQ_PROJECT_ID }}
           PG_DSN: ${{ secrets.PG_DSN }}
-        run: python etl.py
+        run: python scripts/big-query-etl/etl.py

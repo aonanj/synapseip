@@ -56,14 +56,14 @@ from infrastructure.logger import setup_logger
 # Reuse canonicalization + upsert logic from add_canon_name.py
 try:
     # If run as `python -m scripts.backfill_cited_patent_assignee`
-    from scripts.add_canon_name import (
+    from scripts.backfill.add_canon_name import (
         canonicalize_assignee,
         upsert_aliases,
         upsert_canonical_names,
     )
 except ImportError:
     # If run as `python scripts/backfill_cited_patent_assignee.py`
-    from add_canon_name import (  # type: ignore[no-redef]
+    from scripts.backfill.add_canon_name import (  # type: ignore[no-redef]
         canonicalize_assignee,
         upsert_aliases,
         upsert_canonical_names,
