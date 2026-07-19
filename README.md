@@ -374,7 +374,7 @@ The React UI ([app/citation/page.tsx](app/citation/page.tsx)) provides an intera
 
 ## License
 This repository is publicly viewable for portfolio purposes only. The code is proprietary.
-Copyright © 2025 Phaethon Order LLC. All rights reserved.
+Copyright © 2026 Phaethon Order LLC. All rights reserved.
 See [LICENSE](LICENSE.md) for terms.
 
 ## Contact
