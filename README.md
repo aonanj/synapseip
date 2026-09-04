@@ -2,7 +2,7 @@
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          BQ_PROJECT_ID: ${{ env.BQ_PROJECT_ID }}
+          BQ_PROJECT_ID: ${{ vars.BQ_PROJECT_ID }}
           PG_DSN: ${{ secrets.PG_DSN }}
         run: python scripts/big-query-etl/etl.py# SynapseIP
 
