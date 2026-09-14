@@ -9,52 +9,52 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
-        with: { python-version: "3.12" }
+        with: { python-version: "3.13" }
       - name: Show repo and requirements
         run: |
           pwd; ls -la
           echo "---- requirements.txt ----"
           sed -n '1,120p' requirements.txt || true
           echo "---- end requirements.txt ----"
-      - name: Install deps
-        run: |
-          set -euxo pipefail
-          python -m pip install --upgrade pip setuptools wheel
-          python -m pip install --no-cache-dir -r "$GITHUB_WORKSPACE/requirements.txt"
-          python -m pip show google-cloud-bigquery
-      - name: Auth
-        env: 
-          GOOGLE_APPLICATION_CREDENTIALS: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
-        run: |
-          echo "$GOOGLE_APPLICATION_CREDENTIALS" > /tmp/gcp.json
-          export GOOGLE_APPLICATION_CREDENTIALS=/tmp/gcp.json
-          echo "GOOGLE_APPLICATION_CREDENTIALS=/tmp/gcp.json" >> $GITHUB_ENV
-      - name: Run ETL
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          BQ_PROJECT_ID: ${{ vars.BQ_PROJECT_ID }}
-          PG_DSN: ${{ secrets.PG_DSN }}
-        run: python scripts/big-query-etl/etl.py
-      - name: Run Embedding Backfill
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          BQ_PROJECT_ID: ${{ vars.BQ_PROJECT_ID }}
-          PG_DSN: ${{ secrets.PG_DSN }}
-        run: python scripts/generate-embeddings/etl_add_embeddings.py
-      - name: Run Canonical Assignee Normalizer
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          BQ_PROJECT_ID: ${{ vars.BQ_PROJECT_ID }}
-          PG_DSN: ${{ secrets.PG_DSN }}
-        run: python scripts/backfill/add_canon_name.py
-      - name: Update Applications Issued as Patents
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          BQ_PROJECT_ID: ${{ vars.BQ_PROJECT_ID }}
-          PG_DSN: ${{ secrets.PG_DSN }}
-          USPTO_ODP_API_KEY: ${{ secrets.USPTO_ODP_API_KEY }}
-        run: python scripts/utilities/issued_patent_checker.py
+      # - name: Install deps
+      #   run: |
+      #     set -euxo pipefail
+      #     python -m pip install --upgrade pip setuptools wheel
+      #     python -m pip install --no-cache-dir -r "$GITHUB_WORKSPACE/requirements.txt"
+      #     python -m pip show google-cloud-bigquery
+      # - name: Auth
+      #   env: 
+      #     GOOGLE_APPLICATION_CREDENTIALS: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
+      #   run: |
+      #     echo "$GOOGLE_APPLICATION_CREDENTIALS" > /tmp/gcp.json
+      #     export GOOGLE_APPLICATION_CREDENTIALS=/tmp/gcp.json
+      #     echo "GOOGLE_APPLICATION_CREDENTIALS=/tmp/gcp.json" >> $GITHUB_ENV
+      # - name: Run ETL
+      #   env:
+      #     DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      #     OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      #     BQ_PROJECT_ID: ${{ vars.BQ_PROJECT_ID }}
+      #     PG_DSN: ${{ secrets.PG_DSN }}
+      #   run: python scripts/big-query-etl/etl.py
+      # - name: Run Embedding Backfill
+      #   env:
+      #     DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      #     OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      #     BQ_PROJECT_ID: ${{ vars.BQ_PROJECT_ID }}
+      #     PG_DSN: ${{ secrets.PG_DSN }}
+      #   run: python scripts/generate-embeddings/etl_add_embeddings.py
+      # - name: Run Canonical Assignee Normalizer
+      #   env:
+      #     DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      #     OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      #     BQ_PROJECT_ID: ${{ vars.BQ_PROJECT_ID }}
+      #     PG_DSN: ${{ secrets.PG_DSN }}
+      #   run: python scripts/backfill/add_canon_name.py
+      # - name: Update Applications Issued as Patents
+      #   env:
+      #     DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      #     OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      #     BQ_PROJECT_ID: ${{ vars.BQ_PROJECT_ID }}
+      #     PG_DSN: ${{ secrets.PG_DSN }}
+      #     USPTO_ODP_API_KEY: ${{ secrets.USPTO_ODP_API_KEY }}
+      #   run: python scripts/utilities/issued_patent_checker.py
