@@ -18,7 +18,10 @@ import argparse
 import os
 import sys
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Iterable, Iterator
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 import psycopg
 from dotenv import load_dotenv

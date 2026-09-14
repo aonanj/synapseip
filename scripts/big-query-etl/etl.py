@@ -77,7 +77,7 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import LiteralString
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 import psycopg
 from dotenv import load_dotenv
@@ -96,18 +96,28 @@ from tenacity import (
 from infrastructure.logger import setup_logger
 
 # Reuse the shared assignee canonicalization logic so canonical names and
-# aliases stay consistent with the rest of the pipeline.
+# aliases stay consistent with the rest of the pipeline, and the shared claim
+# extractor so scripts/backfill/backfill_patent_claims.py writes identical
+# patent_claim rows.
 try:
     from scripts.backfill.add_canon_name import (
         canonicalize_assignee,
         upsert_aliases,
         upsert_canonical_names,
     )
+    from scripts.backfill.claim_extraction import (
+        IndependentClaim,
+        extract_independent_claims,
+    )
 except ImportError:  # running as `python scripts/etl_complete_July_2026.py`
     from scripts.backfill.add_canon_name import (  # type: ignore[no-redef]
         canonicalize_assignee,
         upsert_aliases,
         upsert_canonical_names,
+    )
+    from scripts.backfill.claim_extraction import (  # type: ignore[no-redef]
+        IndependentClaim,
+        extract_independent_claims,
     )
 
 logger = setup_logger(__name__)
@@ -478,12 +488,6 @@ class CitationRecord:
         return self.cited_pub_id or (self.cited_application_number or "")
 
 
-@dataclass(frozen=True)
-class IndependentClaim:
-    claim_number: int
-    claim_text: str
-
-
 @dataclass
 class BatchIngestResult:
     records: list[PatentRecord] = field(default_factory=list)
@@ -533,12 +537,6 @@ _CLAIM_PREAMBLES = (
     "we we/i claim is",
     "what we/i claim",
 )
-
-# Claim numbering heuristics (mirrors scripts/bq_update_issued_patent_staging.py,
-# which is not imported because that module sets GOOGLE_APPLICATION_CREDENTIALS
-# as an import side effect).
-CLAIM_START_RE = re.compile(r"(?m)^\s*(\d+)\.\s")
-INDEPENDENT_CLAIM_RE = re.compile(r"(?mi)^\s*(\d+)\.\s{1,4}a[n]?\s")
 
 
 def chunked(iterable: Iterable, size: int) -> Iterator[list]:
@@ -595,48 +593,6 @@ def _clean_claims(claims: str | None) -> str | None:
             cleaned = re.sub(rf"^\s*{re.escape(preamble)}:?\s*", "", claims, flags=re.IGNORECASE)
             return cleaned.strip()
     return claims.strip()
-
-
-def extract_independent_claims(claims_text: str | None) -> list[IndependentClaim]:
-    """Extract independent claims from a claims blob using numbering heuristics.
-
-    Independent claims start with "<num>. A/An" and run until the next claim
-    number or the end of the string. The returned claim_text excludes the
-    leading number/dot prefix.
-    """
-    if not claims_text:
-        return []
-
-    boundaries = [m.start() for m in CLAIM_START_RE.finditer(claims_text)]
-    if not boundaries:
-        return []
-
-    next_boundary_by_start = {
-        start: boundaries[idx + 1] if idx + 1 < len(boundaries) else len(claims_text)
-        for idx, start in enumerate(boundaries)
-    }
-
-    seen_numbers: set[int] = set()
-    claims: list[IndependentClaim] = []
-    for match in INDEPENDENT_CLAIM_RE.finditer(claims_text):
-        start_idx = match.start()
-        end_idx = next_boundary_by_start.get(start_idx, len(claims_text))
-        claim_number = int(match.group(1))
-        if claim_number in seen_numbers:
-            continue
-
-        segment = claims_text[start_idx:end_idx].strip()
-        if not segment:
-            continue
-
-        cleaned_text = re.sub(r"^\s*\d+\.\s+", "", segment, count=1).strip()
-        if not cleaned_text:
-            continue
-
-        claims.append(IndependentClaim(claim_number=claim_number, claim_text=cleaned_text))
-        seen_numbers.add(claim_number)
-
-    return claims
 
 
 def content_hash(rec: PatentRecord) -> str:

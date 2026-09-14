@@ -59,7 +59,7 @@ Stores the core patent data. Entries in this table have at least one AI/ML-relat
 | `abstract` | `text` | true | |
 | `claims_text` | `text` | true | |
 | `assignee_name` | `text` | true | |
-| `inventors` | `jsonb` | true | |
+| `inventor_name` | `jsonb` | true | |
 | `cpc` | `jsonb` | true | |
 | `created_at` | `timestamp with time zone` | not null | `now()` |
 | `updated_at` | `timestamp with time zone` | not null | `now()` |

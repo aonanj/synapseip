@@ -152,6 +152,14 @@ async def post_search(req: SearchRequest, conn: Conn, user: ActiveSubscription) 
     return SearchResponse(total=total, items=items)
 
 
+def _scope_embedding_text(text: str) -> str:
+    # Claim vectors in patent_claim_embeddings were built from whitespace-
+    # collapsed text (split_by_words in the ETL rejoins words with single
+    # spaces). Embed the query the same way so a pasted claim's line breaks
+    # and indentation don't add distance.
+    return " ".join(text.split())
+
+
 @app.post("/scope_analysis", response_model=ScopeAnalysisResponse)
 async def post_scope_analysis(
     req: ScopeAnalysisRequest,
@@ -162,14 +170,18 @@ async def post_scope_analysis(
     if not text:
         raise HTTPException(status_code=400, detail="text must not be empty")
 
-    maybe = embed_text(text)
+    maybe = embed_text(_scope_embedding_text(text))
     if inspect.isawaitable(maybe):
         query_vec = list(cast(Sequence[float], await maybe))
     else:
         query_vec = list(cast(Sequence[float], maybe))
 
-    matches = await scope_claim_knn(conn, query_vec=query_vec, limit=req.top_k)
-    return ScopeAnalysisResponse(query_text=text, top_k=req.top_k, matches=matches)
+    matches = await scope_claim_knn(
+        conn, query_vec=query_vec, limit=req.top_k, patents_only=req.patents_only
+    )
+    return ScopeAnalysisResponse(
+        query_text=text, top_k=req.top_k, patents_only=req.patents_only, matches=matches
+    )
 
 
 @app.post("/scope_analysis/export")
@@ -185,13 +197,15 @@ async def export_scope_analysis(
     if not text:
         raise HTTPException(status_code=400, detail="text must not be empty")
 
-    maybe = embed_text(text)
+    maybe = embed_text(_scope_embedding_text(text))
     if inspect.isawaitable(maybe):
         query_vec = list(cast(Sequence[float], await maybe))
     else:
         query_vec = list(cast(Sequence[float], maybe))
 
-    matches = await scope_claim_knn(conn, query_vec=query_vec, limit=req.top_k)
+    matches = await scope_claim_knn(
+        conn, query_vec=query_vec, limit=req.top_k, patents_only=req.patents_only
+    )
 
     buffer = BytesIO()
     c = _CANVAS.Canvas(buffer, pagesize=_LETTER)  # type: ignore
@@ -237,7 +251,23 @@ async def export_scope_analysis(
     draw_wrapped_text(text)
     y -= 12
     _ensure_space()
-    
+
+    draw_wrapped_text(
+        "Claim proximity: 100% = identical claim language; 0% = no closer than a "
+        "randomly chosen claim in the corpus.",
+        font_name="Helvetica-Oblique",
+        font_size=8,
+    )
+    draw_wrapped_text(
+        "Claims searched: issued patents only"
+        if req.patents_only
+        else "Claims searched: patents and published applications",
+        font_name="Helvetica-Oblique",
+        font_size=8,
+    )
+    y -= 8
+    _ensure_space()
+
     c.setLineWidth(1)
     c.line(margin, y, width - margin, y)
     y -= 20
@@ -255,8 +285,13 @@ async def export_scope_analysis(
         # Meta
         assignee = m.assignee_name or "Unknown"
         pub_date = _int_date(m.pub_date) or "-"
-        sim = f"{m.similarity:.1%}"
-        meta = f"Assignee: {assignee} | Grant Date: {pub_date} | Similarity: {sim}"
+        sim = f"{m.calibrated_score:.1%}"
+        band = m.risk_band.title()
+        kind = f" ({m.kind_code})" if m.kind_code else ""
+        meta = (
+            f"Assignee: {assignee} | Pub. Date: {pub_date}{kind} "
+            f"| Claim proximity: {sim} ({band})"
+        )
         
         c.setFont("Helvetica", 9)
         c.drawString(margin, y, meta)

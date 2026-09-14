@@ -245,7 +245,7 @@ export default function HelpIndexPage() {
           </p>
           <ul style={{ marginLeft: 20, marginTop: 12, fontSize: 14, lineHeight: 1.5, listStyleType: "disc", listStylePosition: "outside", color: TEXT_COLOR }}>
             <li><strong>Search & Trends</strong>: Discover patents and publications through hybrid keyword and semantic search, visualize filing trends over time, by CPC code, or by assignee, and set up proactive alerts for new filings that match configurable criteria;</li>
-            <li><strong>Scope Analysis</strong>: Input a product description, invention disclosure, or draft claim set to run a semantic comparison against independent claims in the SynapseIP database. The closest matching independent claims are returned with similarity scoring for preliminary FTO and infringement-risk analysis.;</li>
+            <li><strong>Scope Analysis</strong>: Input a product description, invention disclosure, or draft claim set to run a semantic comparison against independent claims of patents and published applications in the SynapseIP database. The closest matching independent claims are returned with similarity scoring for preliminary FTO and infringement-risk analysis.;</li>
             <li><strong>IP Overview</strong>: Investigate the AI/ML IP landscape through information and insights on subject matter saturation, activity rates, momentum, and CPC distribution of AI/ML-related patents and publications. Option to focus on specific assignees.</li>
             <li><strong>Citation Tracker</strong>: Analyze forward-citation impact, cross-assignee dependencies, competitor risk signals, and encroachment trends using the patent/publication citations dataset with portfolio-aware filters.</li>
           </ul>
@@ -497,17 +497,17 @@ export default function HelpIndexPage() {
           </div>
 
           <p style={{ marginTop: 20, fontSize: 14, lineHeight: 1.5, color: TEXT_COLOR, marginBottom: 8 }}>
-            The Scope Analysis page supplements AI/ML IP search, trends, and IP overview by providing freedom-to-operate (FTO) and infringement-risk screening. Input a natural language description of subject matter of interest (e.g., product features, invention disclosures, draft claims, etc.) to run a semantic comparison against independent claims across patents in the SynapseIP database. The closest matches are returned with context-rich analysis.
+            The Scope Analysis page supplements AI/ML IP search, trends, and IP overview by providing freedom-to-operate (FTO) and infringement-risk screening. Input a natural language description of subject matter of interest (e.g., product features, invention disclosures, draft claims, etc.) to run a semantic comparison against independent claims across patents and published applications in the SynapseIP database. The closest matches are returned with context-rich analysis.
           </p>
           <p style={{ fontSize: 14, lineHeight: 1.5, color: TEXT_COLOR, marginBottom: 16 }}>
-            Results are graphically represented in an interactive node map that positions the user input at the center with claim nodes radially arranged by similarity. A synchronized results table lists the associated patents, assignees, grant dates, and full claim language.
+            Results are graphically represented in an interactive node map that positions the user input at the center with claim nodes radially arranged by calibrated proximity. A synchronized results table lists the associated patents, assignees, grant dates, and full claim language.
           </p>
 
           <div style={{ display: "grid", gap: 12 }}>
             <DetailItem icon="⬩" title="Independent Claim Embeddings" text="Every independent claim in the database is embedded and indexed, allowing high-fidelity semantic comparisons against inputs." />
             <DetailItem icon="⬩" title="Interactive Similarity Graph" text="Hover to preview claim snippets, click nodes to sync with the results table, and quickly see which patents crowd closest to input subject matter." />
             <DetailItem icon="⬩" title="Results Table" text="The claim cells are expandable to reveal the full independent claim text. The patent numbers are linked to the full patent documents." />
-            <DetailItem icon="⬩" title="Risk Snapshot Tiles" text="Clustering and counts highlight the number of high-similarity claims, lower-risk matches, and the overall scope sampled during each run." />
+            <DetailItem icon="⬩" title="Risk Snapshot Tiles" text="Clustering and counts highlight the number of near-duplicate claims, lower-risk matches, and the overall scope sampled during each run." />
             <DetailItem icon="⬩" title="Pre-FTO/Clearance Review" text="Scope Analysis provides an immediate, data-driven starting point for preliminary freedom-to-operate analysis, infringement-risk reviews, and design-around brainstorming." />
           </div>
 

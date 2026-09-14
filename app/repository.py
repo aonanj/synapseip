@@ -16,6 +16,7 @@ from .schemas import (
     SearchFilters,
     SearchSortOption,
 )
+from .scope_scoring import calibrated_score, risk_band
 
 _VEC_CAST: Final[str] = (
     "::halfvec" if os.environ.get("VECTOR_TYPE", "vector").lower().startswith("half") else "::vector"
@@ -627,15 +628,24 @@ async def scope_claim_knn(
     *,
     query_vec: Iterable[float],
     limit: int = 20,
+    patents_only: bool = False,
 ) -> list[ScopeClaimMatch]:
     """
     Find the nearest independent claims to the provided vector embedding.
+
+    With ``patents_only``, published applications (kind codes starting with
+    "A") are excluded. That filter is applied after the HNSW index scan, so
+    ``hnsw.iterative_scan`` is enabled to keep scanning until ``limit`` rows
+    survive; otherwise the scan stops at ``hnsw.ef_search`` candidates and can
+    return far fewer rows. ``SET LOCAL`` only takes effect inside a transaction,
+    which ``get_conn`` provides.
     """
     vector_list = list(query_vec)
     if not vector_list:
         return []
 
     limit = max(1, min(limit, 100))
+    kind_filter = "AND p.kind_code NOT LIKE 'A%%'" if patents_only else ""
 
     sql = f"""
         SELECT
@@ -646,18 +656,21 @@ async def scope_claim_knn(
             p.title,
             COALESCE(can.canonical_assignee_name, p.assignee_name) AS assignee_name,
             p.pub_date,
+            p.kind_code,
             (emb.embedding <=> %s{_VEC_CAST}) AS dist
         FROM patent_claim_embeddings emb
         JOIN patent_claim pc
           ON pc.pub_id = emb.pub_id AND pc.claim_number = emb.claim_number
         JOIN patent p ON p.pub_id = emb.pub_id
         {CANONICAL_ASSIGNEE_LATERAL}
-        WHERE COALESCE(pc.is_independent, TRUE)
+        WHERE COALESCE(pc.is_independent, TRUE) {kind_filter}
         ORDER BY dist ASC
         LIMIT %s
     """
 
     async with conn.cursor(row_factory=dict_row) as cur:
+        if patents_only:
+            await cur.execute("SET LOCAL hnsw.iterative_scan = strict_order")
         await cur.execute(_sql.SQL(sql), [vector_list, limit])  # type: ignore
         rows = await cur.fetchall()
 
@@ -666,6 +679,7 @@ async def scope_claim_knn(
         dist_raw = row.get("dist")
         dist = float(dist_raw) if dist_raw is not None else 0.0
         similarity = max(0.0, 1.0 - dist)
+        score = calibrated_score(dist)
         matches.append(
             ScopeClaimMatch(
                 pub_id=row["pub_id"],
@@ -674,9 +688,12 @@ async def scope_claim_knn(
                 title=str(row.get("title")).title() if row.get("title") else "(none)",
                 assignee_name=row.get("assignee_name"),
                 pub_date=row.get("pub_date"),
+                kind_code=row.get("kind_code"),
                 is_independent=row.get("is_independent"),
                 distance=dist,
                 similarity=similarity,
+                calibrated_score=score,
+                risk_band=risk_band(score),
             )
         )
     return matches

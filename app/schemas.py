@@ -81,6 +81,8 @@ class PatentDetail(BaseModel):
 class ScopeAnalysisRequest(BaseModel):
     text: str = Field(..., min_length=1, max_length=20000)
     top_k: int = Field(20, ge=1, le=100)
+    # Exclude published applications (kind codes starting with "A").
+    patents_only: bool = False
 
 
 class ScopeClaimMatch(BaseModel):
@@ -90,12 +92,18 @@ class ScopeClaimMatch(BaseModel):
     title: str | None = None
     assignee_name: str | None = None
     pub_date: int | None = None
+    kind_code: str | None = None
     is_independent: bool | None = None
     distance: float
     similarity: float
+    # Background-calibrated score and its band. See app/scope_scoring.py.
+    # `similarity` (raw 1 - distance) is retained for backward compatibility.
+    calibrated_score: float = 0.0
+    risk_band: str = "low"
 
 
 class ScopeAnalysisResponse(BaseModel):
     query_text: str
     top_k: int
+    patents_only: bool = False
     matches: list[ScopeClaimMatch]

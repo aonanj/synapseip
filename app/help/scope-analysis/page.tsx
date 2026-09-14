@@ -77,7 +77,7 @@ export default function ScopeAnalysisHelpPage() {
             </a>
           </div>
           <p style={{ marginTop: 16, fontSize: 16, lineHeight: 1.5, color: TEXT_COLOR, marginBottom: 0 }}>
-            The Scope Analysis page supplements AI/ML IP search, trends, and IP overview by providing freedom-to-operate (FTO) and infringement-risk screening. Input a natural language description of subject matter of interest (e.g., product features, invention disclosures, draft claims, etc.) and run a semantic comparison against independent claims across patents in the SynapseIP database. The closest matches are returned with context-rich analyses.
+            The Scope Analysis page supplements AI/ML IP search, trends, and IP overview by providing freedom-to-operate (FTO) and infringement-risk screening. Input a natural language description of subject matter of interest (e.g., product features, invention disclosures, draft claims, etc.) and run a semantic comparison against independent claims across patents and published patent applications in the SynapseIP database. Application claims are shown as published and may change before grant. The closest matches are returned with context-rich analyses.
           </p>
         </div>
 
@@ -89,7 +89,7 @@ export default function ScopeAnalysisHelpPage() {
           </p>
           <ul style={{ marginLeft: 20, marginTop: 12, fontSize: 14, lineHeight: 1.5, listStyleType: "disc", listStylePosition: "outside", color: TEXT_COLOR }}>
             <li>Returns patents with claim scopes semantically closest to the input subject matter.</li>
-            <li>Quantifies proximity using cosine distance and similarity percentage.</li>
+            <li>Quantifies proximity using cosine distance, calibrated against the corpus baseline.</li>
             <li>Presents quickly and easily comprehensible visual indicators of risk, including assignee information.</li>
             <li>Full text of semantically similar claims. Direct links to complete patents.</li>
             <li>Export capability for all results in PDF format.</li>
@@ -105,7 +105,7 @@ export default function ScopeAnalysisHelpPage() {
           <ol style={{ marginLeft: 20, marginTop: 12, fontSize: 14, lineHeight: 1.7, color: TEXT_COLOR }}>
             <li><strong>User input</strong>: Provide up to ~20k characters describing the feature(s) or claim(s) to semantically search. Embedding quality improves with richer technical detail.</li>
             <li><strong>Embedding generation</strong>: SynapseIP generates an embedding vector for the input text (no data is stored beyond what is required to fulfill the request).</li>
-            <li><strong>KNN search</strong>: Generated embedding vector is semantically compared against those generated from independent claims of the patents in the SynapseIP database. Closest matches (top-k configurable) are returned.</li>
+            <li><strong>KNN search</strong>: Generated embedding vector is semantically compared against those generated from independent claims of the patents and published applications in the SynapseIP database. Closest matches (top-k configurable) are returned.</li>
             <li><strong>Visualization + evidence</strong>: Results populate both the similarity map and the results table to concurrently provide both macro and micro views.</li>
           </ol>
           <p style={{ fontSize: 13, lineHeight: 1.5, color: "#627D98", marginTop: 12 }}>
@@ -125,12 +125,12 @@ export default function ScopeAnalysisHelpPage() {
             <WorkflowStep
               step="2"
               title="Choose sampling depth"
-              description="Use the '# of claim comparisons' input to specify the number independent claims to be returned. Default is 15; expanding to 40-50 can be useful where an initial scope analysis run shows high risk."
+              description="Use the '# of claim comparisons' input to specify the number independent claims to be returned. Default is 15; expanding to 40-50 can be useful where an initial scope analysis run shows high risk. Check 'Issued patents only' to exclude published applications, whose claims may still change before grant."
             />
             <WorkflowStep
               step="3"
               title="Run the analysis"
-              description="Click 'Run scope analysis' to execute embeddings search + KNN graphing operations. Results are returned with similarity scores, graph positioning, and risk tiles tailored to that query."
+              description="Click 'Run scope analysis' to execute embeddings search + KNN graphing operations. Results are returned with calibrated proximity scores, graph positioning, and risk tiles tailored to that query."
             />
             <WorkflowStep
               step="4"
@@ -154,10 +154,10 @@ export default function ScopeAnalysisHelpPage() {
         <div className="glass-card" style={{ ...cardBaseStyle }}>
           <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: TEXT_COLOR, marginBottom: 16 }}>Interpreting the graph & table</h2>
           <div style={{ display: "grid", gap: 14 }}>
-            <DetailItem title="Radial layout" description="The input text sits in the center. Nodes closer to the center represent higher similarity (lower cosine distance). The updated radius scaling exaggerates separation so critical risks pop immediately." />
+            <DetailItem title="Radial layout" description="The input text sits in the center. Nodes closer to the center represent higher proximity (lower cosine distance). Radius is linear in the calibrated proximity score, so a node halfway out is halfway between identical claim language and the corpus baseline." />
             <DetailItem title="Tooltip previews" description="Hover any node to see the patent title and first 200 characters of the matched claim." />
             <DetailItem title="Selection sync" description="Graph, summary tiles, and claim text are synchronized. Clicking a node or claim row highlights both views." />
-            <DetailItem title="Similarity column" description="Percent values are derived from 1 − distance. Scores ≥ 70% may indicate high overlap risks; 55–69% indicates moderate overlap; &lt;50% is generally lower risk but may be relevant." />
+            <DetailItem title="Proximity column" description="Proximity is calibrated against the corpus: 100% means claim language identical to the input, and 0% means no closer than a claim picked at random from the database. Because every claim in the corpus is an AI/ML claim, all claims share heavy boilerplate, so a raw cosine similarity would read high even for unrelated claims; calibration removes that floor. Scores ≥ 85% indicate near-duplicate claim language (high risk); 65–84% indicates a claim substantially closer than a typical one (moderate); below 65% is near the corpus baseline and generally lower risk, though still worth reading." />
             <DetailItem title="Expandable claim text" description="Click the claim snippet to read the entire independent claim text inline." />
           </div>
         </div>

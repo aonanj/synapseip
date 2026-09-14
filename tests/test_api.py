@@ -253,3 +253,56 @@ def test_update_saved_query_requires_field(monkeypatch: pytest.MonkeyPatch, fake
         assert resp.status_code == 400
     finally:
         _cleanup_client(client)
+
+
+def test_scope_analysis_embeds_whitespace_collapsed_text(
+    monkeypatch: pytest.MonkeyPatch, fake_user: dict[str, str]
+) -> None:
+    embedded: list[str] = []
+
+    async def fake_embed(text: str):
+        embedded.append(text)
+        return [0.1, 0.2]
+
+    async def fake_knn(conn, **kwargs):
+        assert kwargs["query_vec"] == [0.1, 0.2]
+        return []
+
+    monkeypatch.setattr(api_module, "embed_text", fake_embed)
+    monkeypatch.setattr(api_module, "scope_claim_knn", fake_knn)
+    client = _make_client(monkeypatch, FakeAsyncConnection([make_subscription_cursor()]), fake_user)
+
+    raw = "1. A method comprising:\n   receiving data;\n\n   and  training a model."
+    try:
+        resp = client.post("/scope_analysis", json={"text": raw, "top_k": 5})
+        assert resp.status_code == 200
+        # Corpus claim vectors were built from whitespace-collapsed text.
+        assert embedded == ["1. A method comprising: receiving data; and training a model."]
+        # The user's original text is still echoed back.
+        assert resp.json()["query_text"] == raw
+    finally:
+        _cleanup_client(client)
+
+
+def test_scope_analysis_passes_patents_only(
+    monkeypatch: pytest.MonkeyPatch, fake_user: dict[str, str]
+) -> None:
+    async def fake_embed(text: str):
+        return [0.1, 0.2]
+
+    async def fake_knn(conn, **kwargs):
+        assert kwargs["patents_only"] is True
+        return []
+
+    monkeypatch.setattr(api_module, "embed_text", fake_embed)
+    monkeypatch.setattr(api_module, "scope_claim_knn", fake_knn)
+    client = _make_client(monkeypatch, FakeAsyncConnection([make_subscription_cursor()]), fake_user)
+
+    try:
+        resp = client.post(
+            "/scope_analysis", json={"text": "A method comprising x.", "top_k": 5, "patents_only": True}
+        )
+        assert resp.status_code == 200
+        assert resp.json()["patents_only"] is True
+    finally:
+        _cleanup_client(client)

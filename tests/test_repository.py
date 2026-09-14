@@ -345,3 +345,66 @@ def test_get_patent_detail_returns_model() -> None:
     detail = asyncio.run(repository.get_patent_detail(conn, "US999"))
     assert isinstance(detail, PatentDetail)
     assert detail.title == "Test Patent"
+
+
+def test_scope_claim_knn_calibrates_and_preserves_distance_order() -> None:
+    cursor = FakeAsyncCursor(
+        fetchall=[
+            {
+                "pub_id": "US111",
+                "claim_number": 1,
+                "claim_text": "A method comprising receiving data.",
+                "is_independent": True,
+                "title": "near duplicate",
+                "assignee_name": "OpenAI",
+                "pub_date": 20240101,
+                "dist": 0.02,
+            },
+            {
+                "pub_id": "US222",
+                "claim_number": 3,
+                "claim_text": "A system comprising a processor.",
+                "is_independent": True,
+                "title": "background noise",
+                "assignee_name": "Acme",
+                "pub_date": 20240102,
+                "dist": 0.9,
+            },
+        ]
+    )
+    conn = cast(Any, FakeAsyncConnection([cursor]))
+
+    matches = asyncio.run(repository.scope_claim_knn(conn, query_vec=[0.1, 0.2], limit=5))
+
+    assert [m.pub_id for m in matches] == ["US111", "US222"]
+    # Near-duplicate scores high; a match beyond the corpus background clamps to 0.
+    assert matches[0].calibrated_score > 0.9
+    assert matches[0].risk_band == "high"
+    assert matches[1].calibrated_score == 0.0
+    assert matches[1].risk_band == "low"
+    # Raw similarity is retained unchanged for backward compatibility.
+    assert matches[0].similarity == pytest.approx(0.98)
+
+
+def test_scope_claim_knn_patents_only_filters_applications() -> None:
+    def run(patents_only: bool) -> list[tuple[Any, Any]]:
+        cursor = FakeAsyncCursor(fetchall=[])
+        conn = cast(Any, FakeAsyncConnection([cursor]))
+        asyncio.run(
+            repository.scope_claim_knn(
+                conn, query_vec=[0.1, 0.2], limit=5, patents_only=patents_only
+            )
+        )
+        return cursor.queries
+
+    def text(query: Any) -> str:
+        return query if isinstance(query, str) else query.as_string(None)
+
+    filtered = run(True)
+    # Iterative scan keeps the HNSW index scanning until `limit` patent claims survive.
+    assert text(filtered[0][0]) == "SET LOCAL hnsw.iterative_scan = strict_order"
+    assert "p.kind_code NOT LIKE 'A%%'" in text(filtered[1][0])
+
+    default = run(False)
+    assert len(default) == 1
+    assert "kind_code NOT LIKE" not in text(default[0][0])

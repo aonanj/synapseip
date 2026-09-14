@@ -206,6 +206,7 @@ Unit and integration tests cover search repository queries, API endpoints, Auth0
 - `OPENAI_API_KEY` – Enables semantic queries, PDF export enrichment, and ETL embeddings.
 - `EMBEDDING_MODEL` / `SEMANTIC_TOPK` / `SEMANTIC_JUMP` / `VECTOR_TYPE` – Hybrid search tuning knobs.
 - `EXPORT_MAX_ROWS` / `EXPORT_SEMANTIC_TOPK` – Export limits shared by CSV/PDF generators.
+- `SCOPE_BACKGROUND_DISTANCE` – Median cosine distance between two random claims, used to calibrate Scope Analysis proximity scores (defaults to 0.604). Re-measure if the embedding model or corpus mix changes; see [app/scope_scoring.py](app/scope_scoring.py).
 - `OVERVIEW_EMBEDDING_MODEL` – Preferred embedding suffix for IP Overview analytics (falls back to `WS_EMBEDDING_MODEL` for legacy deployments).
 - `OVERVIEW_SEMANTIC_DIST_CAP` – Absolute cosine-distance ceiling (set ≤ 0 to disable) for overview semantic neighbors; defaults to 0.9.
 - `OVERVIEW_SEMANTIC_SPREAD` – Maximum delta from the closest semantic result before pruning (defaults to 0.35).
@@ -326,6 +327,15 @@ python scripts/backfill_assignee_names.py \
   --dsn "postgresql://user:pass@host/db?sslmode=require"
 ```
 
+### Patent Claim Backfill Utility (`scripts/backfill/backfill_patent_claims.py`)
+Rebuilds `patent_claim` rows from each patent's current `claims_text` with the shared extractor in `scripts/backfill/claim_extraction.py` (the same one `scripts/big-query-etl/etl.py` uses). Patents without claim rows get them inserted; patents whose stored claims no longer match `claims_text` are rebuilt delete-first; unchanged patents are left alone, and stored claims are never deleted when extraction finds nothing. Idempotent — run it after any script that rewrites `claims_text` without rebuilding claims (e.g. `scripts/utilities/migrate_staged_patents.py`, `scripts/utilities/update_applications_to_patents.py`). It does not embed: run `scripts/generate-embeddings/independent_claims_embeddings.py` afterwards, because claims are invisible to Scope Analysis until embedded. Use `--dry-run` to review counts and sample diffs first, and `--start-after <pub_id>` to resume.
+```bash
+python scripts/backfill/backfill_patent_claims.py --dry-run
+python scripts/backfill/backfill_patent_claims.py
+python scripts/generate-embeddings/independent_claims_embeddings.py \
+  --dsn "postgresql://user:pass@host/db?sslmode=require"
+```
+
 ### Update Applications Issued as Patents  (`scripts/issued_patent_checker.py`)
 Maintain current data in `patent` table by replacing applications that issue as patents. Process: (1) Fetch granted/issued patents from the USPTO ODP API for applications
 stored in the `patent` table (fetched patents are staged in `issued_patent_staging`). Requires env var `USPTO_ODP_API_KEY` to avoid rate limiting.
@@ -359,8 +369,9 @@ The React UI ([app/citation/page.tsx](app/citation/page.tsx)) provides an intera
 ### Scope Analysis
 [app/scope-analysis/page.tsx](app/scope-analysis/page.tsx) adds an effective tool to the platform through quick and accurate semantic searches applicable to prior art search, FTO, clearance, and infringement-risk analyses: 
 - Input subject matter of interest (e.g., a product description or draft claim set).
-- KNN search is run against every embedded independent claim to get a similarity node graph and results table with patent information and similarity-scored claims displayed inline. 
-- Results table and similarity scoring information is exportable in PDF format. ([app/api.py](app/api.py#L147), [app/repository.py](app/repository.py#L593))
+- KNN search is run against every embedded independent claim to get a proximity node graph and results table with patent information and proximity-scored claims displayed inline. 
+- Proximity is calibrated against the corpus baseline rather than reported as a raw cosine similarity: 100% is identical claim language and 0% is no closer than a randomly chosen claim. Because every claim in the corpus is an AI/ML claim, raw cosine similarity reads high even between unrelated claims; calibration removes that floor. ([app/scope_scoring.py](app/scope_scoring.py))
+- Results table and proximity scoring information is exportable in PDF format. ([app/api.py](app/api.py#L147), [app/repository.py](app/repository.py#L593))
 
 ---
 

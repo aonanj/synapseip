@@ -23,7 +23,10 @@ import os
 import sys
 import time
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any, Literal, Sequence
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 import psycopg
 import requests

@@ -26,10 +26,14 @@ import hashlib
 import json
 import os
 import re
+import sys
 from collections.abc import Iterable, Iterator, Mapping, Sequence
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
+from pathlib import Path
 from typing import Any
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 import psycopg
 import requests

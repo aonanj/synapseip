@@ -11,14 +11,19 @@ type ScopeClaimMatch = {
   title?: string | null;
   assignee_name?: string | null;
   pub_date?: number | null;
+  kind_code?: string | null;
   is_independent?: boolean | null;
   distance: number;
   similarity: number;
+  /** Background-calibrated proximity in [0,1]. See app/scope_scoring.py. */
+  calibrated_score?: number | null;
+  risk_band?: "high" | "moderate" | "low" | null;
 };
 
 type ScopeAnalysisResponse = {
   query_text: string;
   top_k: number;
+  patents_only?: boolean;
   matches: ScopeClaimMatch[];
 };
 
@@ -38,10 +43,25 @@ function formatPubDate(pubDate?: number | null): string {
   return `${s.slice(0, 4)}-${s.slice(4, 6)}-${s.slice(6, 8)}`;
 }
 
+/** Kind codes A1/A2/A9 are published applications; B1/B2/E1 are issued patents. */
+function publicationLabel(kindCode: string): string {
+  const kind = kindCode.toUpperCase();
+  return `${kind.startsWith("A") ? "Application" : "Patent"} (${kind})`;
+}
+
 function formatSimilarity(sim: number | null | undefined): string {
   if (sim == null) return "—";
   const pct = Math.max(0, Math.min(1, sim)) * 100;
   return `${pct.toFixed(1)}%`;
+}
+
+/**
+ * Calibrated proximity for a match: 1.0 = identical claim language, 0 = no
+ * closer than a randomly chosen claim. Falls back to raw similarity only for
+ * responses from a backend predating the calibrated fields.
+ */
+function proximityOf(match: ScopeClaimMatch): number {
+  return match.calibrated_score ?? match.similarity ?? 0;
 }
 
 function googlePatentsUrl(pubId: string): string {
@@ -96,11 +116,13 @@ const ScopeGraph = ({ matches, selectedId, onSelect }: GraphProps) => {
     return matches.slice(0, limit).map((match, idx) => {
       const proportion = idx / limit;
       const angle = proportion * Math.PI * 2;
-      const sim = Math.max(0, Math.min(1, match.similarity ?? 0));
+      const sim = Math.max(0, Math.min(1, proximityOf(match)));
       const minRadius = 70;
       const maxRadius = 220;
-      const emphasis = Math.pow(sim, 1.35); // push high-sim nodes closer to center
-      const radius = maxRadius - emphasis * (maxRadius - minRadius);
+      // The calibrated scale already spreads the useful range across 0-1, so
+      // no emphasis curve is needed (the old raw-cosine scale was compressed
+      // into its top slice and needed one).
+      const radius = maxRadius - sim * (maxRadius - minRadius);
       const x = cx + Math.cos(angle) * radius;
       const y = cy + Math.sin(angle) * radius;
       const rowId = `${match.pub_id}#${match.claim_number}`;
@@ -235,6 +257,9 @@ export default function ScopeAnalysisPage() {
   const { isAuthenticated, isLoading, loginWithRedirect, getAccessTokenSilently } = useAuth0();
   const [text, setText] = useState("");
   const [topK, setTopK] = useState(15);
+  const [patentsOnly, setPatentsOnly] = useState(false);
+  // Value used for the results on screen, so exports match what is displayed.
+  const [lastPatentsOnly, setLastPatentsOnly] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [results, setResults] = useState<ScopeClaimMatch[]>([]);
@@ -251,14 +276,14 @@ export default function ScopeAnalysisPage() {
     if (!results.length) return null;
     const top = results[0];
     if (!top) return null;
-    const sim = top.similarity ?? 0;
-    if (sim >= 0.75) {
-      return { label: "High Risk", level: "high", message: "Top claim vector is very close to input. Very high risk of infringement or overlap." };
+    const band = top.risk_band ?? "low";
+    if (band === "high") {
+      return { label: "High Risk", level: "high", message: "Top claim is near-duplicate claim language. Very high risk of infringement or overlap." };
     }
-    if (sim >= 0.55) {
-      return { label: "Moderate Risk", level: "medium", message: "One or more existing claims are directionally similar to input. Formal review is recommended." };
+    if (band === "moderate") {
+      return { label: "Moderate Risk", level: "medium", message: "One or more existing claims are substantially closer to the input than a typical claim. Formal review is recommended." };
     }
-    return { label: "Low Risk", level: "low", message: "Closest independent claims are relatively distant from input. Lower risk of infringement or overlap." };
+    return { label: "Low Risk", level: "low", message: "No claim is close to the input relative to the corpus baseline. Lower risk of infringement or overlap." };
   }, [results]);
 
   const runAnalysis = useCallback(async () => {
@@ -274,7 +299,7 @@ export default function ScopeAnalysisPage() {
     setError(null);
     try {
       const token = await getAccessTokenSilently();
-      const payload = { text, top_k: topK };
+      const payload = { text, top_k: topK, patents_only: patentsOnly };
       const resp = await fetch("/api/scope-analysis", {
         method: "POST",
         headers: {
@@ -291,20 +316,21 @@ export default function ScopeAnalysisPage() {
       const matches = Array.isArray(data.matches) ? data.matches : [];
       setResults(matches);
       setLastQuery(data.query_text || text);
+      setLastPatentsOnly(Boolean(data.patents_only));
       setSelectedId(matches.length ? `${matches[0].pub_id}#${matches[0].claim_number}` : null);
     } catch (err: any) {
       setError(err?.message ?? "Scope analysis failed");
     } finally {
       setLoading(false);
     }
-  }, [text, topK, isAuthenticated, loginWithRedirect, getAccessTokenSilently]);
+  }, [text, topK, patentsOnly, isAuthenticated, loginWithRedirect, getAccessTokenSilently]);
 
   const highRiskCount = useMemo(() => {
-    return results.filter((r) => (r.similarity ?? 0) >= 0.7).length;
+    return results.filter((r) => (r.risk_band ?? "low") === "high").length;
   }, [results]);
 
   const lowRiskCount = useMemo(() => {
-    return results.filter((r) => (r.similarity ?? 0) < 0.5).length;
+    return results.filter((r) => (r.risk_band ?? "low") === "low").length;
   }, [results]);
 
   const sortedResults = useMemo(() => {
@@ -321,7 +347,10 @@ export default function ScopeAnalysisPage() {
         case "claim_text":
           return (match.claim_text || "").toLowerCase();
         default:
-          return match.similarity ?? -Infinity;
+          // Sort on raw distance, not the calibrated score: the score clamps
+          // at 0, so background-level matches would otherwise all tie.
+          // Negated so that "descending proximity" stays the default.
+          return -(match.distance ?? Infinity);
       }
     };
 
@@ -337,9 +366,9 @@ export default function ScopeAnalysisPage() {
         return (Number(valA) - Number(valB)) * dir;
       }
 
-      const aSim = a.similarity ?? -Infinity;
-      const bSim = b.similarity ?? -Infinity;
-      if (aSim !== bSim) return bSim - aSim;
+      const aDist = a.distance ?? Infinity;
+      const bDist = b.distance ?? Infinity;
+      if (aDist !== bDist) return aDist - bDist;
 
       const aDate = a.pub_date ?? 0;
       const bDate = b.pub_date ?? 0;
@@ -384,6 +413,7 @@ export default function ScopeAnalysisPage() {
       const payload = {
         text: lastQuery,
         top_k: topK,
+        patents_only: lastPatentsOnly,
       };
 
       const res = await fetch("/api/scope-analysis/export", {
@@ -415,7 +445,7 @@ export default function ScopeAnalysisPage() {
     } finally {
       setExporting(false);
     }
-  }, [lastQuery, topK, exporting, getAccessTokenSilently]);
+  }, [lastQuery, topK, lastPatentsOnly, exporting, getAccessTokenSilently]);
 
   return (
     <div style={pageWrapperStyle}>
@@ -426,8 +456,8 @@ export default function ScopeAnalysisPage() {
             </p>
             <h1 style={{ color: TEXT_COLOR, fontSize: 22, fontWeight: 700 }}>Preliminary FTO / Infringement Radar</h1>
             <p style={{ margin: 0, fontSize: 14, color: "#475569" }}>
-              Input subject matter to search (e.g., product description, invention disclosure, draft claim(s), etc.) for comparison against independent claims of patents in the SynapseIP database. 
-              A semantic search is executed over the available independent claims, and semantically similar claims are returned with similarity scores and risk analyses.
+              Input subject matter to search (e.g., product description, invention disclosure, draft claim(s), etc.) for comparison against independent claims of patents and published applications in the SynapseIP database. 
+              A semantic search is executed over the available independent claims, and semantically similar claims are returned with proximity scores and risk analyses. Proximity is calibrated against the corpus: 100% is identical claim language, 0% is no closer than a randomly chosen claim.
             </p>
           </header>
 
@@ -464,6 +494,14 @@ export default function ScopeAnalysisPage() {
                   style={inputStyle}
                 />
               </div>
+              <label className="inline-flex items-center gap-2 text-sm font-medium" style={{ color: TEXT_COLOR }}>
+                <input
+                  type="checkbox"
+                  checked={patentsOnly}
+                  onChange={(e) => setPatentsOnly(e.target.checked)}
+                />
+                Issued patents only (exclude applications)
+              </label>
               <div className="flex-1" />
               <button
                 type="button"
@@ -520,9 +558,9 @@ export default function ScopeAnalysisPage() {
                 <h2 className="text-lg font-semibold" style={{ color: TEXT_COLOR }}>Claim proximity breakdown</h2>
                 <div className="grid grid-cols-2 gap-4 mt-6">
                   <div className="rounded-xl border border-slate-100 bg-slate-50/60 p-4">
-                    <p className="text-sm text-[#47617e]">Top match similarity</p>
+                    <p className="text-sm text-[#47617e]">Top match proximity</p>
                     <p className="text-2xl font-bold text-[#102a43]">
-                      {formatSimilarity(results[0]?.similarity)}
+                      {results[0] ? formatSimilarity(proximityOf(results[0])) : "—"}
                     </p>
                     <p className="text-xs text-[#47617e] mt-1">
                       Pub {results[0]?.pub_id} / Claim {results[0]?.claim_number}
@@ -531,17 +569,19 @@ export default function ScopeAnalysisPage() {
                   <div className="rounded-xl border border-slate-100 bg-slate-50/60 p-4">
                     <p className="text-sm text-[#47617e]">High-risk cluster</p>
                     <p className="text-2xl font-bold text-[#102a43]">{highRiskCount}</p>
-                    <p className="text-xs text-[#47617e] mt-1">claims ≥ 0.70 similarity</p>
+                    <p className="text-xs text-[#47617e] mt-1">near-duplicate claim language</p>
                   </div>
                   <div className="rounded-xl border border-slate-100 bg-slate-50/60 p-4">
                     <p className="text-sm text-[#47617e]">Lower-risk set</p>
                     <p className="text-2xl font-bold text-[#102a43]">{lowRiskCount}</p>
-                    <p className="text-xs text-[#47617e] mt-1">claims &lt; 0.50 similarity</p>
+                    <p className="text-xs text-[#47617e] mt-1">near corpus baseline</p>
                   </div>
                   <div className="rounded-xl border border-slate-100 bg-slate-50/60 p-4">
                     <p className="text-sm text-[#47617e]">Scope sampled</p>
                     <p className="text-2xl font-bold text-[#102a43]">{results.length}</p>
-                    <p className="text-xs text-[#47617e] mt-1">independent claims inspected</p>
+                    <p className="text-xs text-[#47617e] mt-1">
+                      {lastPatentsOnly ? "independent patent claims inspected" : "independent claims inspected"}
+                    </p>
                   </div>
                 </div>
                 {lastQuery && (
@@ -593,7 +633,7 @@ export default function ScopeAnalysisPage() {
                       onClick={() => handleSort("claim_number")}
                     />
                     <SortableHeader
-                      label="Similarity"
+                      label="Proximity"
                       active={sortState.key === "similarity"}
                       direction={sortState.direction}
                       onClick={() => handleSort("similarity")}
@@ -644,11 +684,12 @@ export default function ScopeAnalysisPage() {
                                 {match.pub_id}
                               </a>{" "}
                               · {formatPubDate(match.pub_date)}
+                              {match.kind_code ? ` · ${publicationLabel(match.kind_code)}` : ""}
                             </div>
                           </td>
                           <td className="py-3 pr-4">{match.claim_number}</td>
                           <td className="py-3 pr-4 font-semibold text-[#102a43]">
-                            {formatSimilarity(match.similarity)}
+                            {formatSimilarity(proximityOf(match))}
                           </td>
                           <td className="py-3 pr-4 text-[#39506B]">
                             {match.assignee_name || "Unknown assignee"}

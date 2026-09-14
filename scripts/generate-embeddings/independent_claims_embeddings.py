@@ -2,10 +2,14 @@ from __future__ import annotations
 
 import argparse
 import os
+import sys
 import time
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any, TypeVar
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 from dotenv import load_dotenv
 from openai import OpenAI
@@ -27,6 +31,10 @@ load_dotenv()
 EMB_MODEL = "text-embedding-3-small"
 EMB_BATCH_SIZE = int(os.getenv("EMB_BATCH_SIZE", "150"))
 EMB_MAX_CHARS = int(os.getenv("EMB_MAX_CHARS", "25000"))
+# Rows per executemany flush. Each row carries a ~17 KB vector literal, and
+# 50-row flushes intermittently failed against Neon with "SSL error: bad length"
+# (the failure etl.py's executemany_chunked works around), so keep them small.
+DB_WRITE_CHUNK = int(os.getenv("DB_WRITE_CHUNK", "10"))
 DB_RETRY_DEFAULT = int(os.getenv("DB_RETRIES", "3"))
 QUERY_TIMEOUT_RETRY_DEFAULT = int(os.getenv("DB_TIMEOUT_RETRIES", "3"))
 T = TypeVar("T")
@@ -55,13 +63,6 @@ WHERE pe.pub_id IS NULL
 ORDER BY pc.id
 """
 
-
-SELECT_EXISTING_EMB_SQL = """
-SELECT pub_id
-FROM patent_claim_embeddings
-WHERE pub_id = %(pub_id)s
-AND claim_number = %(claim_number)s
-"""
 
 UPSERT_EMBEDDINGS_SQL = """
 INSERT INTO patent_claim_embeddings (pub_id, claim_number,dim, created_at, embedding)
@@ -350,30 +351,6 @@ def query_patents(
     return records
 
 
-def select_existing_embeddings(
-    pool: ConnectionPool[PgConn], pub_ids_cn: Sequence[tuple[str, int]]
-) -> set[tuple[str, int]]:
-    """
-    Query existing embeddings for given pub_ids and models.
-
-    Args:
-        pool: Database connection pool.
-        pub_ids: Sequence of publication IDs.
-        models: Sequence of model names.
-
-    Returns:
-        Set of (pub_id, model) tuples that already exist.
-    """
-    rows: list[tuple[str, int]] = []
-    with pool.connection() as conn, conn.cursor() as cur:
-        for (pub_id, claim_number) in pub_ids_cn:
-            cur.execute(SELECT_EXISTING_EMB_SQL, {"pub_id": pub_id, "claim_number": claim_number})
-            row = cur.fetchone()
-            if row:
-                rows.append((pub_id, claim_number))
-    return {(r[0], r[1]) for r in rows}
-
-
 def upsert_embeddings(pool: ConnectionPool[PgConn], rows: Sequence[dict]) -> None:
     """
     Upsert embedding records into patent_embeddings table.
@@ -391,8 +368,9 @@ def upsert_embeddings(pool: ConnectionPool[PgConn], rows: Sequence[dict]) -> Non
     try:
         with pool.connection() as conn:
             with conn.cursor() as cur:
-                for row in rows:
-                    cur.execute(UPSERT_EMBEDDINGS_SQL, row)
+                # Batched writes: executing one row at a time took ~0.16 s/row.
+                for chunk in chunked(rows, DB_WRITE_CHUNK):
+                    cur.executemany(UPSERT_EMBEDDINGS_SQL, chunk)
             conn.commit()
     except Exception as e:
         logger.error(f"Error upserting embeddings: {e}")
@@ -439,21 +417,14 @@ def ensure_embeddings_for_batch(
     if not batch:
         return (0, 0)
 
-    pub_ids_cn = [(r.pub_id, r.claim_number) for r in batch]
-
-    existing = db.run(
-        lambda pool: select_existing_embeddings(pool, pub_ids_cn),
-        "select_existing_embeddings",
-    )
-
+    # query_patents already selects only claims without an embedding, so no
+    # per-row existence check is needed here (it cost ~0.1 s/row).
     rows: list[dict] = []
     total_targets = 0
 
     # Claims embeddings (average of chunk vectors to fit schema)
     claims_pub_chunks: list[tuple[str, list[str]]] = []
     for r in batch:
-        if (r.pub_id, r.claim_number) in existing:
-            continue
         chunks = build_claims_inputs(r)
         if chunks:
             claims_pub_chunks.append((f"{r.pub_id}+{r.claim_number}", chunks))
@@ -590,16 +561,8 @@ def main() -> int:
 
         if args.dry_run:
             logger.info("Dry run mode: skipping embedding generation")
-            # Still check what's missing
-            pub_ids_cn = [(r.pub_id, r.claim_number) for r in patent_claims]
-            existing = db.run(
-                lambda pool: select_existing_embeddings(pool, pub_ids_cn),
-                "select_existing_embeddings",
-            )
-            missing_count = 0
-            for r in patent_claims:
-                if (r.pub_id, r.claim_number) not in existing and build_claims_inputs(r):
-                    missing_count += 1
+            # query_patents returns only claims without an embedding.
+            missing_count = sum(1 for r in patent_claims if build_claims_inputs(r))
             logger.info(f"Would generate {missing_count} missing embeddings")
             return 0
 

@@ -50,20 +50,6 @@ jobs:
           BQ_PROJECT_ID: ${{ vars.BQ_PROJECT_ID }}
           PG_DSN: ${{ secrets.PG_DSN }}
         run: python scripts/backfill/add_canon_name.py
-      - name: Run Patent Citation Loader
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          BQ_PROJECT_ID: ${{ vars.BQ_PROJECT_ID }}
-          PG_DSN: ${{ secrets.PG_DSN }}
-        run: python scripts/utilities/load_patent_citations.py
-      - name: Assignee Name Backfill USPTO ODP Utility
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          BQ_PROJECT_ID: ${{ vars.BQ_PROJECT_ID }}
-          PG_DSN: ${{ secrets.PG_DSN }}
-        run: python scripts/backfill/backfill_assignee_names.py
       - name: Update Applications Issued as Patents
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}

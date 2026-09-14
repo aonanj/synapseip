@@ -28,6 +28,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Literal
 
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
+
 import psycopg
 import requests
 from dotenv import load_dotenv
@@ -39,7 +41,7 @@ from infrastructure.logger import setup_logger
 
 API_URL = "https://api.uspto.gov/api/v1/patent/applications/search"
 REQUEST_TEMPLATE_PATH = (
-    Path(__file__).resolve().parent.parent
+    Path(__file__).resolve().parent.parent.parent
     / "docs"
     / "uspto_odp_api"
     / "uspto-odp-query-on-application-number.json"
