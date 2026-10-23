@@ -6,6 +6,8 @@ __pycache__
 .env*
 __pycache__/
 copilot-instructions.md
+handoff/
+handoff.md
 .instructions/
 us_patents.csv
 node_modules/

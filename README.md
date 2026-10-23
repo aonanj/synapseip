@@ -1,10 +1,4 @@
-      - name: Run ETL
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          BQ_PROJECT_ID: ${{ vars.BQ_PROJECT_ID }}
-          PG_DSN: ${{ secrets.PG_DSN }}
-        run: python scripts/big-query-etl/etl.py# SynapseIP
+# SynapseIP
 
 > SynapseIP is a data and analytics platform for artificial intelligence (AI) and machine learning (ML) IP. The platform blends hybrid semantic search, trend analytics, IP overview graphing, and proactive alerts on top of a pgvector-powered corpus that is refreshed by automated ETL pipelines. Current corpus includes 57k+ AI/ML-related patents and publications dating back to 2023, with support for multiple data sources including BigQuery, USPTO ODP API, and bulk XML feeds.
 
@@ -371,6 +365,7 @@ The React UI ([app/citation/page.tsx](app/citation/page.tsx)) provides an intera
 - Input subject matter of interest (e.g., a product description or draft claim set).
 - KNN search is run against every embedded independent claim to get a proximity node graph and results table with patent information and proximity-scored claims displayed inline. 
 - Proximity is calibrated against the corpus baseline rather than reported as a raw cosine similarity: 100% is identical claim language and 0% is no closer than a randomly chosen claim. Because every claim in the corpus is an AI/ML claim, raw cosine similarity reads high even between unrelated claims; calibration removes that floor. ([app/scope_scoring.py](app/scope_scoring.py))
+- Independent claims of both issued patents and published applications are searched, and each result is labelled "Patent (B2)" or "Application (A1)". The "Issued patents only" checkbox excludes applications (kind codes starting with `A`), whose claims may still change before grant. ([app/repository.py](app/repository.py))
 - Results table and proximity scoring information is exportable in PDF format. ([app/api.py](app/api.py#L147), [app/repository.py](app/repository.py#L593))
 
 ---
