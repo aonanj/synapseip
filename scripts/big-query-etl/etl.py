@@ -59,7 +59,8 @@ publication_date available in BigQuery (i.e. everything available).
 
 Environment: PG_DSN (or --dsn), BQ_PROJECT (or --project), OPENAI_API_KEY,
 optional EMBEDDING_MODEL / EMB_BATCH_SIZE / EMB_MAX_CHARS / EMB_SLEEP_SECS /
-CPC_REGEX / BQ_LOCATION, and Google application-default credentials.
+CPC_REGEX / BQ_LOCATION / DB_LOCK_TIMEOUT, and Google application-default
+credentials.
 """
 
 from __future__ import annotations
@@ -87,6 +88,7 @@ from psycopg import Connection
 from psycopg.rows import TupleRow
 from psycopg_pool import ConnectionPool
 from tenacity import (
+    RetryCallState,
     retry,
     retry_if_exception_type,
     stop_after_attempt,
@@ -137,8 +139,15 @@ CITATION_PUBS_PER_QUERY = 50_000
 # Rows per executemany pipeline flush. Large flushes (e.g. 500 records with
 # full claims text ≈ tens of MB) can fail mid-send over SSL with
 # "SSL error: bad length", so writes are split into small chunks.
+# FIXED at the root in libpq 17.6 (PostgreSQL BUG #18907), which ships with
+# psycopg-binary >= 3.2.13; chunking is kept to bound each flush.
 DB_WRITE_CHUNK = int(os.getenv("DB_WRITE_CHUNK", "50"))
 DB_BATCH_RETRIES = int(os.getenv("DB_BATCH_RETRIES", "3"))
+# The database-level lock_timeout (3s) is tuned for the web app. After a
+# dropped connection the server keeps the orphaned transaction (and its
+# uncommitted unique-index tuples) until client_connection_check_interval
+# (60s) reaps it, so ETL retries of the same keys must be able to outwait it.
+DB_LOCK_TIMEOUT = os.getenv("DB_LOCK_TIMEOUT", "90s")
 
 EMB_MODEL = os.getenv("EMBEDDING_MODEL", "text-embedding-3-small")
 EMB_BATCH_SIZE = int(os.getenv("EMB_BATCH_SIZE", "150"))
@@ -558,6 +567,12 @@ def _safe_rollback(conn: PgConn) -> None:
         logger.warning("Rollback skipped; connection already lost: %s", exc)
 
 
+def _set_txn_lock_timeout(conn: PgConn) -> None:
+    """Transaction-local lock_timeout (SET LOCAL semantics), so it is safe
+    through the PgBouncer transaction pooler and never leaks to other clients."""
+    conn.execute("SELECT set_config('lock_timeout', %s, true)", (DB_LOCK_TIMEOUT,))
+
+
 def executemany_chunked(
     cur: psycopg.Cursor[TupleRow],
     sql: LiteralString,
@@ -565,8 +580,9 @@ def executemany_chunked(
     chunk_size: int = DB_WRITE_CHUNK,
 ) -> int:
     """executemany in small chunks so one pipeline flush never grows into a
-    multi-MB SSL write (which fails with 'SSL error: bad length' on some
-    stacks). Returns the total affected-row count."""
+    multi-MB SSL write (which failed with 'SSL error: bad length' under
+    libpq < 17.6; FIXED with psycopg-binary >= 3.2.13). Returns the total
+    affected-row count."""
     total = 0
     for chunk in chunked(params, chunk_size):
         cur.executemany(sql, chunk)
@@ -814,6 +830,7 @@ def _ingest_records(conn: PgConn, batch: Sequence[PatentRecord]) -> BatchIngestR
 
     Runs entirely inside the caller's transaction.
     """
+    _set_txn_lock_timeout(conn)
     result = BatchIngestResult()
     chosen = choose_assignee_names(conn, batch)
 
@@ -1000,10 +1017,20 @@ def _embed_chunked[K](
     return out
 
 
+def _log_upsert_retry(retry_state: RetryCallState) -> None:
+    logger.warning(
+        "Upsert hit a connection error (attempt %d/%d): %s",
+        retry_state.attempt_number,
+        DB_BATCH_RETRIES,
+        retry_state.outcome.exception() if retry_state.outcome else None,
+    )
+
+
 @retry(
     retry=retry_if_exception_type(psycopg.OperationalError),
     wait=wait_random_exponential(min=1, max=30),
     stop=stop_after_attempt(DB_BATCH_RETRIES),
+    before_sleep=_log_upsert_retry,
     reraise=True,
 )
 def upsert_rows(pool: ConnectionPool[PgConn], sql: LiteralString, rows: Sequence[dict]) -> None:
@@ -1011,6 +1038,7 @@ def upsert_rows(pool: ConnectionPool[PgConn], sql: LiteralString, rows: Sequence
         return
     with pool.connection() as conn:
         try:
+            _set_txn_lock_timeout(conn)
             with conn.cursor() as cur:
                 executemany_chunked(cur, sql, rows)
             conn.commit()
@@ -1230,6 +1258,7 @@ def process_citations(
                 attempt_resolved = set(resolved_cited)
                 with pool.connection() as conn:
                     try:
+                        _set_txn_lock_timeout(conn)
                         inserted = _insert_citations(conn, batch)
                         assignees = _resolve_cited_assignees(conn, batch, attempt_resolved)
                         with conn.cursor() as cur:

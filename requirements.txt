@@ -192,9 +192,9 @@ protobuf==6.32.1
     #   googleapis-common-protos
     #   grpcio-status
     #   proto-plus
-psycopg==3.2.10
+psycopg==3.2.13
     # via -r requirements.in
-psycopg-binary==3.2.10
+psycopg-binary==3.2.13
     # via -r requirements.in
 psycopg-pool==3.2.6
     # via -r requirements.in

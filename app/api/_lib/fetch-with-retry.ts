@@ -4,9 +4,12 @@ type FetchWithRetryOptions = {
   retries?: number;
   retryDelayMs?: number;
   retryStatusCodes?: number[];
+  maxRetryableAttemptMs?: number;
 };
 
 const DEFAULT_RETRYABLE_STATUS = [500];
+// Transient failures (dropped connections) come back fast; a slow failure is likely deterministic, e.g. a timeout.
+const DEFAULT_MAX_RETRYABLE_ATTEMPT_MS = 5_000;
 
 export async function fetchWithRetry(
   requestFn: () => Promise<Response>,
@@ -14,19 +17,23 @@ export async function fetchWithRetry(
     retries = 2,
     retryDelayMs = 0,
     retryStatusCodes = DEFAULT_RETRYABLE_STATUS,
+    maxRetryableAttemptMs = DEFAULT_MAX_RETRYABLE_ATTEMPT_MS,
   }: FetchWithRetryOptions = {}
 ): Promise<Response> {
   let lastError: unknown = undefined;
 
   for (let attempt = 0; attempt <= retries; attempt += 1) {
+    const startedAt = Date.now();
     try {
       const response = await requestFn();
-      if (!retryStatusCodes.includes(response.status) || attempt === retries) {
+      const retryable =
+        retryStatusCodes.includes(response.status) && Date.now() - startedAt < maxRetryableAttemptMs;
+      if (!retryable || attempt === retries) {
         return response;
       }
     } catch (err) {
       lastError = err;
-      if (attempt === retries) {
+      if (attempt === retries || Date.now() - startedAt >= maxRetryableAttemptMs) {
         throw err;
       }
     }

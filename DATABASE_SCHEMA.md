@@ -154,6 +154,7 @@ Links patents in the `patent` table to the patents and publications they cite vi
 * `patent_citation_pkey` PRIMARY KEY, btree `(id)`
 * `patent_citation_cited_application_number_idx` btree `(cited_application_number)`
 * `patent_citation_citing_pub_id_idx` btree `(citing_pub_id)`
+* `patent_citation_cited_pub_id_idx` btree `(cited_pub_id)`
 
 #### Foreign Key Constraints
 

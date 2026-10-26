@@ -138,11 +138,11 @@ async def get_forward_citation_timeline(
         return []
     bucket: BucketGranularity = scope.bucket or "month"
     bucket_expr = f"date_trunc('{bucket}', to_date(citing.pub_date::text, 'YYYYMMDD'))::date"
-    args: list[Any] = [portfolio_pub_ids]
+    args: list[Any] = [portfolio_pub_ids, portfolio_pub_ids]
     date_from = _dtint(scope.citing_pub_date_from)
     date_to = _dtint(scope.citing_pub_date_to)
 
-    where: list[str] = ["r.cited_pub_id = ANY(%s)", "citing.pub_date IS NOT NULL"]
+    where: list[str] = ["citing.pub_date IS NOT NULL"]
     if date_from:
         where.append("citing.pub_date >= %s")
         args.append(date_from)
@@ -152,11 +152,20 @@ async def get_forward_citation_timeline(
 
     query = f"""
     WITH resolved AS (
+        -- Split so pc.cited_pub_id can use its index; the second branch covers citations stored by application number only
         SELECT
             pc.citing_pub_id,
-            COALESCE(pc.cited_pub_id, cited_app.pub_id) AS cited_pub_id
+            pc.cited_pub_id
         FROM patent_citation pc
-        LEFT JOIN patent cited_app ON cited_app.application_number = pc.cited_application_number AND pc.cited_pub_id IS NULL
+        WHERE pc.cited_pub_id = ANY(%s)
+        UNION ALL
+        SELECT
+            pc.citing_pub_id,
+            cited_app.pub_id AS cited_pub_id
+        FROM patent_citation pc
+        JOIN patent cited_app ON cited_app.application_number = pc.cited_application_number
+        WHERE pc.cited_pub_id IS NULL
+          AND cited_app.pub_id = ANY(%s)
     ),
     bucketed AS (
         SELECT
@@ -208,15 +217,23 @@ async def get_forward_citation_summary(
 ) -> list[dict[str, Any]]:
     if not portfolio_pub_ids:
         return []
-    args: list[Any] = [portfolio_pub_ids, portfolio_pub_ids, max(1, top_n)]
+    args: list[Any] = [portfolio_pub_ids, portfolio_pub_ids, portfolio_pub_ids, max(1, top_n)]
     query = """
     WITH resolved AS (
+        -- Split so pc.cited_pub_id can use its index; the second branch covers citations stored by application number only
         SELECT
-            COALESCE(pc.cited_pub_id, cited_app.pub_id) AS cited_pub_id,
+            pc.cited_pub_id,
             pc.citing_pub_id
         FROM patent_citation pc
-        LEFT JOIN patent cited_app ON cited_app.application_number = pc.cited_application_number AND pc.cited_pub_id IS NULL
-        WHERE COALESCE(pc.cited_pub_id, cited_app.pub_id) = ANY(%s)
+        WHERE pc.cited_pub_id = ANY(%s)
+        UNION ALL
+        SELECT
+            cited_app.pub_id AS cited_pub_id,
+            pc.citing_pub_id
+        FROM patent_citation pc
+        JOIN patent cited_app ON cited_app.application_number = pc.cited_application_number
+        WHERE pc.cited_pub_id IS NULL
+          AND cited_app.pub_id = ANY(%s)
     ),
     agg AS (
         SELECT
@@ -259,7 +276,7 @@ async def get_cross_assignee_dependency_matrix(
 ) -> list[dict[str, Any]]:
     if not portfolio_pub_ids:
         return []
-    args: list[Any] = [portfolio_pub_ids, portfolio_pub_ids, normalize, min_citations]
+    args: list[Any] = [portfolio_pub_ids, portfolio_pub_ids, portfolio_pub_ids, normalize, min_citations]
     query = """
     WITH resolved AS (
         SELECT
@@ -270,11 +287,26 @@ async def get_cross_assignee_dependency_matrix(
         LEFT JOIN patent cited_app
           ON cited_app.application_number = pc.cited_application_number
          AND pc.cited_pub_id IS NULL
-        LEFT JOIN citation_assignee_resolved cited_resolved
-          ON cited_resolved.pub_id = pc.cited_pub_id
-          OR cited_resolved.application_number = pc.cited_application_number
-        WHERE pc.citing_pub_id = ANY(%s)
-           OR COALESCE(pc.cited_pub_id, cited_app.pub_id) = ANY(%s)
+        LEFT JOIN LATERAL (
+            -- OFFSET 0 keeps this a per-row index lookup; a plain OR join scans the whole view
+            SELECT car.canonical_assignee_name_id
+            FROM citation_assignee_resolved car
+            WHERE car.pub_id = pc.cited_pub_id
+               OR car.application_number = pc.cited_application_number
+            OFFSET 0
+        ) cited_resolved ON TRUE
+        WHERE pc.id IN (
+            -- Each branch is index-driven; IN dedups citations with the portfolio on both sides
+            SELECT c.id FROM patent_citation c WHERE c.citing_pub_id = ANY(%s)
+            UNION ALL
+            SELECT c.id FROM patent_citation c WHERE c.cited_pub_id = ANY(%s)
+            UNION ALL
+            SELECT c.id
+            FROM patent_citation c
+            JOIN patent a ON a.application_number = c.cited_application_number
+            WHERE c.cited_pub_id IS NULL
+              AND a.pub_id = ANY(%s)
+        )
     ),
     edges_base AS (
         SELECT
@@ -349,15 +381,23 @@ async def get_risk_raw_metrics(
         return []
     competitor_ids = competitor_assignee_ids or []
     limit = max(1, limit)
-    args: list[Any] = [portfolio_pub_ids, competitor_ids, portfolio_pub_ids, portfolio_pub_ids, limit]
+    args: list[Any] = [portfolio_pub_ids, portfolio_pub_ids, competitor_ids, portfolio_pub_ids, portfolio_pub_ids, limit]
     query = """
     WITH resolved_fwd AS (
+        -- Split so pc.cited_pub_id can use its index; the second branch covers citations stored by application number only
         SELECT
-            COALESCE(pc.cited_pub_id, cited_app.pub_id) AS target_pub_id,
+            pc.cited_pub_id AS target_pub_id,
             pc.citing_pub_id
         FROM patent_citation pc
-        LEFT JOIN patent cited_app ON cited_app.application_number = pc.cited_application_number AND pc.cited_pub_id IS NULL
-        WHERE COALESCE(pc.cited_pub_id, cited_app.pub_id) = ANY(%s)
+        WHERE pc.cited_pub_id = ANY(%s)
+        UNION ALL
+        SELECT
+            cited_app.pub_id AS target_pub_id,
+            pc.citing_pub_id
+        FROM patent_citation pc
+        JOIN patent cited_app ON cited_app.application_number = pc.cited_application_number
+        WHERE pc.cited_pub_id IS NULL
+          AND cited_app.pub_id = ANY(%s)
     ),
     fwd AS (
         SELECT
@@ -378,9 +418,14 @@ async def get_risk_raw_metrics(
         LEFT JOIN patent cited_app
           ON cited_app.application_number = pc.cited_application_number
          AND pc.cited_pub_id IS NULL
-        LEFT JOIN citation_assignee_resolved cited_resolved
-          ON cited_resolved.pub_id = pc.cited_pub_id
-          OR cited_resolved.application_number = pc.cited_application_number
+        LEFT JOIN LATERAL (
+            -- OFFSET 0 keeps this a per-row index lookup; a plain OR join scans the whole view
+            SELECT car.canonical_assignee_name_id
+            FROM citation_assignee_resolved car
+            WHERE car.pub_id = pc.cited_pub_id
+               OR car.application_number = pc.cited_application_number
+            OFFSET 0
+        ) cited_resolved ON TRUE
         WHERE pc.citing_pub_id = ANY(%s)
     ),
     bwd_totals AS (
@@ -468,10 +513,7 @@ async def get_encroachment_timeline(
     date_to_int = _dtint(to_date)
     competitor_ids = competitor_assignee_ids or []
 
-    where: list[str] = [
-        "r.cited_canonical_assignee_id = ANY(%s)",
-        "citing.pub_date IS NOT NULL",
-    ]
+    where: list[str] = ["citing.pub_date IS NOT NULL"]
     if competitor_ids:
         where.append("citing.canonical_assignee_name_id = ANY(%s)")
         args.append(competitor_ids)
@@ -486,18 +528,25 @@ async def get_encroachment_timeline(
         args.append(date_to_int)
 
     query = f"""
-    WITH resolved AS (
+    WITH target_docs AS (
+        SELECT pub_id, application_number, canonical_assignee_name_id
+        FROM citation_assignee_resolved
+        WHERE canonical_assignee_name_id = ANY(%s)
+    ),
+    resolved AS (
+        -- Equivalent to joining ON pub_id match OR application_number match, split so each side can hash join
         SELECT
-            COALESCE(pc.cited_pub_id, cited_app.pub_id) AS cited_pub_id,
             pc.citing_pub_id,
-            cited_resolved.canonical_assignee_name_id AS cited_canonical_assignee_id
+            td.canonical_assignee_name_id AS cited_canonical_assignee_id
         FROM patent_citation pc
-        LEFT JOIN patent cited_app
-          ON cited_app.application_number = pc.cited_application_number
-         AND pc.cited_pub_id IS NULL
-        LEFT JOIN citation_assignee_resolved cited_resolved
-          ON cited_resolved.pub_id = pc.cited_pub_id
-          OR cited_resolved.application_number = pc.cited_application_number
+        JOIN target_docs td ON td.pub_id = pc.cited_pub_id
+        UNION ALL
+        SELECT
+            pc.citing_pub_id,
+            td.canonical_assignee_name_id AS cited_canonical_assignee_id
+        FROM patent_citation pc
+        JOIN target_docs td ON td.application_number = pc.cited_application_number
+        WHERE (td.pub_id = pc.cited_pub_id) IS NOT TRUE
     )
     SELECT
         {bucket_expr} AS bucket_start,

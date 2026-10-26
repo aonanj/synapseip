@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections.abc import AsyncIterator
 
+import psycopg
 import pytest
 from fastapi.testclient import TestClient
 
@@ -101,6 +102,22 @@ def test_patent_detail_not_found(monkeypatch: pytest.MonkeyPatch) -> None:
     try:
         resp = client.get("/patent/US404")
         assert resp.status_code == 404
+    finally:
+        _cleanup_client(client)
+
+
+def test_statement_timeout_returns_504(monkeypatch: pytest.MonkeyPatch) -> None:
+    async def fake_detail(conn, pub_id: str):
+        raise psycopg.errors.QueryCanceled("canceling statement due to statement timeout")
+
+    monkeypatch.setattr(api_module, "get_patent_detail", fake_detail)
+    conn = FakeAsyncConnection([])
+    client = _make_client(monkeypatch, conn, None)
+
+    try:
+        resp = client.get("/patent/US1")
+        assert resp.status_code == 504
+        assert resp.json() == {"detail": "The database query took too long. Try narrowing the scope and retrying."}
     finally:
         _cleanup_client(client)
 

@@ -81,7 +81,8 @@ ON CONFLICT (pub_id, claim_number) DO UPDATE SET
 """
 
 # Keep each executemany flush small; etl.py's executemany_chunked explains why
-# (large pipeline flushes fail with "SSL error: bad length" on some stacks).
+# (large pipeline flushes fail with "SSL error: bad length" on some stacks;
+# FIXED in libpq 17.6, shipped with psycopg-binary >= 3.2.13).
 WRITE_CHUNK = 100
 SAMPLE_DIFFS = 20
 

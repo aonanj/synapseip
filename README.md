@@ -220,6 +220,7 @@ Unit and integration tests cover search repository queries, API endpoints, Auth0
 - `AI_CPC_REGEX` – Optional override of CPC filter regex applied in the ETL.
 - `MAILGUN_DOMAIN` / `MAILGUN_API_KEY` / `MAILGUN_FROM_NAME` / `MAILGUN_FROM_EMAIL` / `MAILGUN_BASE_URL` – Alert delivery configuration (falls back to console logging when unset).
 - `EMB_BATCH_SIZE` / `EMB_MAX_CHARS` – Embedding throughput guards used by `etl.py`.
+- `DB_LOCK_TIMEOUT` – Transaction-local `lock_timeout` for `etl.py` writes (default `90s`); the `neondb` database default of `3s` is tuned for the web app.
 
 ### Observability (FastAPI)
 - `GLITCHTIP_DSN` – Optional: enable GlitchTip for backend exceptions.
@@ -246,6 +247,8 @@ python etl.py \
   --date-to 2024-02-01 \
   --embed --claims
 ```
+
+BigQuery cost: `patents-public-data.patents.publications` is not partitioned, so every records query bills ~389 GB (~$2.21 on-demand) regardless of the date window, and `--dry-run` runs that same query. Prefer one wide run over date-chunked runs, and never query the public table once per batch.
 
 ## Alerts Runner (`alerts_runner.py`)
 The alert runner replays saved queries, diffing against the last `alert_event` timestamp per query. Matching patents and publications are emailed through Mailgun (or printed to stdout when Mailgun is not configured). Run locally with:

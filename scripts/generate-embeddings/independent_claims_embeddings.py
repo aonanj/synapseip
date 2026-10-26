@@ -34,6 +34,7 @@ EMB_MAX_CHARS = int(os.getenv("EMB_MAX_CHARS", "25000"))
 # Rows per executemany flush. Each row carries a ~17 KB vector literal, and
 # 50-row flushes intermittently failed against Neon with "SSL error: bad length"
 # (the failure etl.py's executemany_chunked works around), so keep them small.
+# FIXED in libpq 17.6, shipped with psycopg-binary >= 3.2.13.
 DB_WRITE_CHUNK = int(os.getenv("DB_WRITE_CHUNK", "10"))
 DB_RETRY_DEFAULT = int(os.getenv("DB_RETRIES", "3"))
 QUERY_TIMEOUT_RETRY_DEFAULT = int(os.getenv("DB_TIMEOUT_RETRIES", "3"))

@@ -17,7 +17,7 @@ import psycopg
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, StreamingResponse
+from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from psycopg.rows import dict_row
 from psycopg.types.json import Json
 from pydantic import BaseModel
@@ -118,6 +118,16 @@ app.add_middleware(
 app.include_router(overview_router)
 app.include_router(citation_router)
 app.include_router(payment_router)
+
+
+@app.exception_handler(psycopg.errors.QueryCanceled)
+async def _query_canceled_handler(request: Request, exc: psycopg.errors.QueryCanceled) -> JSONResponse:
+    # A canceled statement (statement_timeout) fails the same way on retry, so answer 504 instead of a retryable 500
+    logger.error("Database statement canceled on %s %s: %s", request.method, request.url.path, exc, exc_info=exc)
+    return JSONResponse(
+        status_code=504,
+        content={"detail": "The database query took too long. Try narrowing the scope and retrying."},
+    )
 
 class DateRangeReponse(BaseModel):
     min_date: int | None  # YYYYMMDD
