@@ -2,7 +2,7 @@
 
 ```
 SPDX-License-Identifier: LicenseRef-PhaethonOrder-Proprietary
-Copyright © 2025 Phaethon Order LLC. All rights reserved.
+Copyright © 2026 Phaethon Order LLC. All rights reserved.
 ```
 
 ### Commercial Service Notice
@@ -32,4 +32,4 @@ Copyright © 2025 Phaethon Order LLC. All rights reserved.
 
 ### Contact
 
-For licensing, client registration, or commercial use inquiries, please contact: [support@phaethon.llc](mailto:support@phaethon.llc).
+For licensing, client registration, or commercial use inquiries, please contact: [admin@phaethonorder.com](mailto:admin@phaethonorder.com).

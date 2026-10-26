@@ -48,7 +48,7 @@ export default function TermsOfServicePage() {
           <h1 style={{ margin: 0, fontSize: 32, fontWeight: 700, color: TEXT_COLOR }}>SynapseIP Terms of Service</h1>
           <div style={{ marginTop: 12, fontSize: 14, color: TEXT_COLOR }}>
             <strong>Effective Date</strong>: October 17, 2025<br />
-            <strong>Last Updated</strong>: October 17, 2025
+            <strong>Last Updated</strong>: October 17, 2026
           </div>
           <p style={{ marginTop: 8, fontSize: 14, color: "#627D98", marginBottom: 0 }}>
             <a href="/docs" style={{ color: LINK_COLOR, textDecoration: "none" }}>← Back to Legal</a>
@@ -329,7 +329,7 @@ export default function TermsOfServicePage() {
               <ul style={{ marginLeft: 20, listStyleType: "disc", listStylePosition: "outside", color: TEXT_COLOR }}>
                 <li><strong>Account Data</strong>: Retained while your account is active and for a reasonable period after termination;</li>
                 <li><strong>Usage Data</strong>: May be retained in anonymized form for analytics;</li>
-                <li><strong>Deletion Requests</strong>: You may request account deletion by contacting <a href="mailto:support@phaethon.llc" className="hover:underline" style={{ color: LINK_COLOR }}>support@phaethon.llc</a>.</li>
+                <li><strong>Deletion Requests</strong>: You may request account deletion by contacting <a href="mailto:admin@phaethonorder.com" className="hover:underline" style={{ color: LINK_COLOR }}>admin@phaethonorder.com</a>.</li>
               </ul>
             </Subsection>
 
@@ -458,7 +458,7 @@ export default function TermsOfServicePage() {
               <p>You may terminate your account at any time by:</p>
               <ul style={{ marginLeft: 20, marginTop: 8, listStyleType: "disc", listStylePosition: "outside", color: TEXT_COLOR }}>
                 <li>Canceling your subscription through your account settings</li>
-                <li>Contacting <a href="mailto:support@phaethon.llc" className="hover:underline" style={{ color: LINK_COLOR }}>support@phaethon.llc</a></li>
+                <li>Contacting <a href="mailto:admin@phaethonorder.com" className="hover:underline" style={{ color: LINK_COLOR }}>admin@phaethonorder.com</a></li>
                 <li>Ceasing to use the Service</li>
               </ul>
               <p style={{ marginTop: 12 }}>
@@ -525,7 +525,7 @@ export default function TermsOfServicePage() {
 
             <Subsection title="14.2 Informal Resolution">
               <p>
-                Before filing a claim, you agree to contact Us at <a href="mailto:support@phaethon.llc" className="hover:underline" style={{ color: LINK_COLOR }}>support@phaethon.llc</a> to attempt to resolve the dispute informally. We will make reasonable efforts to resolve disputes within ninety days.
+                Before filing a claim, you agree to contact Us at <a href="mailto:admin@phaethonorder.com" className="hover:underline" style={{ color: LINK_COLOR }}>admin@phaethonorder.com</a> to attempt to resolve the dispute informally. We will make reasonable efforts to resolve disputes within ninety days.
               </p>
             </Subsection>
 
@@ -598,7 +598,7 @@ export default function TermsOfServicePage() {
               <p style={{ marginTop: 12 }}>You may contact Us at:</p>
               <p style={{ marginTop: 8, marginLeft: 20 }}>
                 <strong>Phaethon Order LLC</strong><br />
-                Email: <a href="mailto:support@phaethon.llc" className="hover:underline" style={{ color: LINK_COLOR }}>support@phaethon.llc</a><br />
+                Email: <a href="mailto:admin@phaethonorder.com" className="hover:underline" style={{ color: LINK_COLOR }}>admin@phaethonorder.com</a><br />
                 Website: <a href="https://phaethonorder.com" target="_blank" rel="noopener noreferrer" className="hover:underline" style={{ color: LINK_COLOR }}>https://phaethonorder.com</a>
               </p>
             </Subsection>
@@ -624,7 +624,7 @@ export default function TermsOfServicePage() {
             <p>For questions, concerns, or notices regarding these Terms, please contact:</p>
             <p style={{ marginTop: 12, marginLeft: 20 }}>
               <strong>Phaethon Order LLC</strong><br />
-              Email: <a href="mailto:support@phaethon.llc" className="hover:underline" style={{ color: LINK_COLOR }}>support@phaethon.llc</a><br />
+              Email: <a href="mailto:admin@phaethonorder.com" className="hover:underline" style={{ color: LINK_COLOR }}>admin@phaethonorder.com</a><br />
               Website: <a href="https://phaethonorder.com" target="_blank" rel="noopener noreferrer" className="hover:underline" style={{ color: LINK_COLOR }}>https://phaethonorder.com</a>
             </p>
           </Section>
@@ -656,7 +656,7 @@ export default function TermsOfServicePage() {
       <div className="glass-surface" style={surfaceStyle}>
         {/* Footer */}
         <footer style={footerStyle}>
-          2025 © Phaethon Order LLC | <a href="mailto:support@phaethon.llc" target="_blank" rel="noopener noreferrer" className="text-[#312f2f] hover:underline hover:text-blue-400">support@phaethon.llc</a> | <a href="https://phaethonorder.com" target="_blank" rel="noopener noreferrer" className="text-[#312f2f] hover:underline hover:text-blue-400">phaethonorder.com</a> | <a href="/help" className="text-[#312f2f] hover:underline hover:text-blue-400">Help</a> | <a href="/docs" className="text-[#312f2f] hover:underline hover:text-blue-400">Legal</a>
+          2026 © Phaethon Order LLC | <a href="mailto:admin@phaethonorder.com" target="_blank" rel="noopener noreferrer" className="text-[#312f2f] hover:underline hover:text-blue-400">admin@phaethonorder.com</a> | <a href="https://phaethonorder.com" target="_blank" rel="noopener noreferrer" className="text-[#312f2f] hover:underline hover:text-blue-400">phaethonorder.com</a> | <a href="/help" className="text-[#312f2f] hover:underline hover:text-blue-400">Help</a> | <a href="/docs" className="text-[#312f2f] hover:underline hover:text-blue-400">Legal</a>
         </footer>
       </div>
     </div>

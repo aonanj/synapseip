@@ -393,4 +393,4 @@ Copyright © 2026 Phaethon Order LLC. All rights reserved.
 See [LICENSE](LICENSE.md) for terms.
 
 ## Contact
-Questions or support: [support@phaethon.llc](mailto:support@phaethon.llc).
+Questions or support: [admin@phaethonorder.com](mailto:admin@phaethonorder.com).

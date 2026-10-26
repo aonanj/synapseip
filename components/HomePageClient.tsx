@@ -562,7 +562,7 @@ export default function HomePageClient() {
         <div style={overlayStyle}>
           <div style={overlayContentStyle}>
             <h2 style={{ marginTop: 0, fontSize: 20, fontWeight: 600 }}>SynapseIP™</h2>
-            <h3 style={{ margin: 0, fontSize: 16, fontWeight: 500 }}>Data and analytics platform for AI/ML IP.  2025 © Phaethon Order LLC</h3>
+            <h3 style={{ margin: 0, fontSize: 16, fontWeight: 500 }}>Data and analytics platform for AI/ML IP.  2026 © Phaethon Order LLC</h3>
             <p style={{ color: '#475569', marginBottom: 24 }}>Please log in or sign up to continue.</p>
             <PrimaryButton
               onClick={() => loginWithRedirect()}
@@ -818,7 +818,7 @@ export default function HomePageClient() {
       <div className="glass-surface" style={pageSurfaceStyle}>
         {/* Footer */}
         <footer style={footerStyle}>
-          2025 © Phaethon Order LLC | <a href="mailto:support@phaethon.llc" target="_blank" rel="noopener noreferrer" className="text-[#312f2f] hover:underline hover:text-blue-400">support@phaethon.llc</a> | <a href="https://phaethonorder.com" target="_blank" rel="noopener noreferrer" className="text-[#312f2f] hover:underline hover:text-blue-400">phaethonorder.com</a> | <a href="/help" className="text-[#312f2f] hover:underline hover:text-blue-400">Help</a> | <a href="/docs" className="text-[#312f2f] hover:underline hover:text-blue-400">Legal</a>
+          2026 © Phaethon Order LLC | <a href="mailto:admin@phaethonorder.com" target="_blank" rel="noopener noreferrer" className="text-[#312f2f] hover:underline hover:text-blue-400">admin@phaethonorder.com</a> | <a href="https://phaethonorder.com" target="_blank" rel="noopener noreferrer" className="text-[#312f2f] hover:underline hover:text-blue-400">phaethonorder.com</a> | <a href="/help" className="text-[#312f2f] hover:underline hover:text-blue-400">Help</a> | <a href="/docs" className="text-[#312f2f] hover:underline hover:text-blue-400">Legal</a>
         </footer>
       </div>
     </div>

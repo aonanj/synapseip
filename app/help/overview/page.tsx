@@ -124,7 +124,7 @@ export default function OverviewHelpPage() {
             <InputDescription
               label="Date Range"
               description="Restrict the results set to a specific time range corresponding to patent grant date or publication date. Empty fields fall back to the full data set in SynapseIP's database. When only an end date is provided the start defaults to 23 months earlier."
-              example="Example: From 2023-07-01, To 2025-06-30"
+              example="Example: From 2023-07-01, To 2026-06-30"
               tips={[
                 "Shorter ranges can highlight current activity (e.g., competitors' R&D and investment areas); longer ranges provide more stable density and percentile signals.",
                 "Momentum uses the monthly series inside the selected window."
@@ -280,7 +280,7 @@ export default function OverviewHelpPage() {
       <div className="glass-surface" style={surfaceStyle}>
         {/* Footer */}
         <footer style={footerStyle}>
-          2025 © Phaethon Order LLC | <a href="mailto:support@phaethon.llc" target="_blank" rel="noopener noreferrer" className="text-[#312f2f] hover:underline hover:text-blue-400">support@phaethon.llc</a> | <a href="https://phaethonorder.com" target="_blank" rel="noopener noreferrer" className="text-[#312f2f] hover:underline hover:text-blue-400">phaethonorder.com</a> | <a href="/help" className="text-[#312f2f] hover:underline hover:text-blue-400">Help</a> | <a href="/docs" className="text-[#312f2f] hover:underline hover:text-blue-400">Legal</a>
+          2026 © Phaethon Order LLC | <a href="mailto:admin@phaethonorder.com" target="_blank" rel="noopener noreferrer" className="text-[#312f2f] hover:underline hover:text-blue-400">admin@phaethonorder.com</a> | <a href="https://phaethonorder.com" target="_blank" rel="noopener noreferrer" className="text-[#312f2f] hover:underline hover:text-blue-400">phaethonorder.com</a> | <a href="/help" className="text-[#312f2f] hover:underline hover:text-blue-400">Help</a> | <a href="/docs" className="text-[#312f2f] hover:underline hover:text-blue-400">Legal</a>
         </footer>
       </div>
     </div>

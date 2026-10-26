@@ -373,7 +373,7 @@ export default function PricingPlans({ plans, onSubscribe }: PricingPlansProps) 
           <div>
             <h4 className="font-semibold mb-2" style={{ color: '#102A43' }}>Do you offer refunds?</h4>
             <p className="text-sm text-slate-600">
-              Please contact us at support@phaethon.llc if you have concerns about your subscription.
+              Please contact us at admin@phaethonorder.com if you have concerns about your subscription.
             </p>
           </div>
           <div>

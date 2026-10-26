@@ -48,7 +48,7 @@ export default function DataProcessingAgreementPage() {
           <h1 style={{ margin: 0, fontSize: 32, fontWeight: 700, color: TEXT_COLOR }}>SynapseIP Data Processing Agreement</h1>
           <div style={{ marginTop: 12, fontSize: 14, color: TEXT_COLOR }}>
             <strong>Effective Date</strong>: October 17, 2025<br />
-            <strong>Last Updated</strong>: October 17, 2025
+            <strong>Last Updated</strong>: October 17, 2026
           </div>
           <p style={{ marginTop: 8, fontSize: 14, color: "#627D98", marginBottom: 0 }}>
             <a href="/docs" style={{ color: LINK_COLOR, textDecoration: "none" }}>← Back to Legal</a>
@@ -165,7 +165,7 @@ export default function DataProcessingAgreementPage() {
                 <li><strong>Duration</strong>: For the term of the Terms of Service and as required for data retention obligations;</li>
                 <li><strong>Types of Personal Data</strong>: As specified in Annex A (Details of Processing);</li>
                 <li><strong>Categories of Data Subjects</strong>: Customer's employees, contractors, consultants, and Authorized Users;</li>
-                <li><strong>Additional Instructions</strong>: Customer may issue additional written instructions through the Service interface (e.g., data export requests, deletion requests) or by contacting <a href="mailto:support@phaethon.llc" className="hover:underline" style={{ color: LINK_COLOR }}>support@phaethon.llc</a>.</li>
+                <li><strong>Additional Instructions</strong>: Customer may issue additional written instructions through the Service interface (e.g., data export requests, deletion requests) or by contacting <a href="mailto:admin@phaethonorder.com" className="hover:underline" style={{ color: LINK_COLOR }}>admin@phaethonorder.com</a>.</li>
               </ul>
               <p style={{ marginTop: 12 }}>
                 If the Company believes that an instruction from Customer infringes applicable Data Protection Laws, it shall promptly inform Customer and may suspend performance of the instruction until Customer confirms or modifies it.
@@ -670,7 +670,7 @@ export default function DataProcessingAgreementPage() {
               <p style={{ marginTop: 12, marginLeft: 20 }}>
                 <strong>For Company</strong>:<br />
                 Phaethon Order LLC<br />
-                Email: <a href="mailto:support@phaethon.llc" className="hover:underline" style={{ color: LINK_COLOR }}>support@phaethon.llc</a><br />
+                Email: <a href="mailto:admin@phaethonorder.com" className="hover:underline" style={{ color: LINK_COLOR }}>admin@phaethonorder.com</a><br />
                 Subject: DPA Notice
               </p>
               <p style={{ marginTop: 12, marginLeft: 20 }}>
@@ -699,7 +699,7 @@ export default function DataProcessingAgreementPage() {
             <p>For questions, concerns, or notices regarding this DPA, please contact:</p>
             <p style={{ marginTop: 12, marginLeft: 20 }}>
               <strong>Phaethon Order LLC</strong><br />
-              <strong>Data Protection Officer</strong>: <a href="mailto:support@phaethon.llc" className="hover:underline" style={{ color: LINK_COLOR }}>support@phaethon.llc</a><br />
+              <strong>Data Protection Officer</strong>: <a href="mailto:admin@phaethonorder.com" className="hover:underline" style={{ color: LINK_COLOR }}>admin@phaethonorder.com</a><br />
               <strong>Subject Line</strong>: DPA Inquiry<br />
               <strong>Website</strong>: <a href="https://phaethonorder.com" target="_blank" rel="noopener noreferrer" className="hover:underline" style={{ color: LINK_COLOR }}>https://phaethonorder.com</a>
             </p>
@@ -1082,7 +1082,7 @@ export default function DataProcessingAgreementPage() {
             </div>
 
             <div style={{ marginTop: 20 }}>
-              <p style={{ fontSize: 13, fontWeight: 600, color: TEXT_COLOR }}>Last Updated: October 17, 2025</p>
+              <p style={{ fontSize: 13, fontWeight: 600, color: TEXT_COLOR }}>Last Updated: October 17, 2026</p>
             </div>
           </div>
 
@@ -1207,7 +1207,7 @@ export default function DataProcessingAgreementPage() {
             </div>
 
             <div style={{ marginTop: 20 }}>
-              <p style={{ fontSize: 13, fontWeight: 600, color: TEXT_COLOR }}>Last Updated: October 17, 2025</p>
+              <p style={{ fontSize: 13, fontWeight: 600, color: TEXT_COLOR }}>Last Updated: October 17, 2026</p>
             </div>
           </div>
 
@@ -1241,7 +1241,7 @@ export default function DataProcessingAgreementPage() {
       <div className="glass-surface" style={surfaceStyle}>
         {/* Footer */}
         <footer style={footerStyle}>
-          2025 © Phaethon Order LLC | <a href="mailto:support@phaethon.llc" target="_blank" rel="noopener noreferrer" className="text-[#312f2f] hover:underline hover:text-blue-400">support@phaethon.llc</a> | <a href="https://phaethonorder.com" target="_blank" rel="noopener noreferrer" className="text-[#312f2f] hover:underline hover:text-blue-400">phaethonorder.com</a> | <a href="/help" className="text-[#312f2f] hover:underline hover:text-blue-400">Help</a> | <a href="/docs" className="text-[#312f2f] hover:underline hover:text-blue-400">Legal</a>
+          2026 © Phaethon Order LLC | <a href="mailto:admin@phaethonorder.com" target="_blank" rel="noopener noreferrer" className="text-[#312f2f] hover:underline hover:text-blue-400">admin@phaethonorder.com</a> | <a href="https://phaethonorder.com" target="_blank" rel="noopener noreferrer" className="text-[#312f2f] hover:underline hover:text-blue-400">phaethonorder.com</a> | <a href="/help" className="text-[#312f2f] hover:underline hover:text-blue-400">Help</a> | <a href="/docs" className="text-[#312f2f] hover:underline hover:text-blue-400">Legal</a>
         </footer>
       </div>
     </div>

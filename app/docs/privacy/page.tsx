@@ -48,7 +48,7 @@ export default function PrivacyPolicyPage() {
           <h1 style={{ margin: 0, fontSize: 32, fontWeight: 700, color: TEXT_COLOR }}>SynapseIP Privacy Policy</h1>
           <div style={{ marginTop: 12, fontSize: 14, color: TEXT_COLOR }}>
             <strong>Effective Date</strong>: October 17, 2025<br />
-            <strong>Last Updated</strong>: October 17, 2025
+            <strong>Last Updated</strong>: October 17, 2026
           </div>
           <p style={{ marginTop: 8, fontSize: 14, color: "#627D98", marginBottom: 0 }}>
             <a href="/docs" style={{ color: LINK_COLOR, textDecoration: "none" }}>← Back to Legal</a>
@@ -103,7 +103,7 @@ export default function PrivacyPolicyPage() {
 
               <p style={{ marginTop: 12 }}><strong>Communications</strong>:</p>
               <ul style={{ marginLeft: 20, marginTop: 8, listStyleType: "disc", listStylePosition: "outside", color: TEXT_COLOR }}>
-                <li>Messages sent to support@phaethon.llc;</li>
+                <li>Messages sent to admin@phaethonorder.com;</li>
                 <li>Survey responses or feedback submissions;</li>
                 <li>Any other correspondence with Us.</li>
               </ul>
@@ -593,7 +593,7 @@ export default function PrivacyPolicyPage() {
             <Subsection title="9.5 How to Exercise Your Rights">
               <p>To exercise any of these rights, please:</p>
               <ul style={{ marginLeft: 20, marginTop: 8, listStyleType: "disc", listStylePosition: "outside", color: TEXT_COLOR }}>
-                <li><strong>Email</strong>: <a href="mailto:support@phaethon.llc" className="hover:underline" style={{ color: TEXT_COLOR }}>support@phaethon.llc</a> with "Privacy Request" in the subject line;</li>
+                <li><strong>Email</strong>: <a href="mailto:admin@phaethonorder.com" className="hover:underline" style={{ color: TEXT_COLOR }}>admin@phaethonorder.com</a> with "Privacy Request" in the subject line;</li>
                 <li><strong>Account Settings</strong>: Some rights can be exercised directly through your account dashboard (e.g., update information, download data, delete account, etc.);</li>
                 <li><strong>Required Information</strong>: To verify your identity, We may request:
                   <ul style={{ marginLeft: 20, marginTop: 4, listStyleType: "circle" }}>
@@ -654,7 +654,7 @@ export default function PrivacyPolicyPage() {
               <ul style={{ marginLeft: 20, listStyleType: "disc", listStylePosition: "outside", color: TEXT_COLOR }}>
                 <li><strong>Unsubscribe Link</strong>: Click the "unsubscribe" link at the bottom of any marketing email;</li>
                 <li><strong>Account Settings</strong>: Manage email preferences in your account dashboard;</li>
-                <li><strong>Email Us</strong>: Send opt-out request to <a href="mailto:support@phaethon.llc" className="hover:underline" style={{ color: LINK_COLOR }}>support@phaethon.llc</a>;</li>
+                <li><strong>Email Us</strong>: Send opt-out request to <a href="mailto:admin@phaethonorder.com" className="hover:underline" style={{ color: LINK_COLOR }}>admin@phaethonorder.com</a>;</li>
                 <li><strong>Timeframe</strong>: We will process opt-out requests within 10 business days;</li>
                 <li><strong>Note</strong>: Opting out of marketing does not affect transactional emails necessary for the Service.</li>
               </ul>
@@ -666,7 +666,7 @@ export default function PrivacyPolicyPage() {
               SynapseIP is not intended for use by individuals under the age of 18. We do not knowingly collect personal information from children under 18.
             </p>
             <p>
-              If you are a parent or guardian and believe your child has provided us with personal information, please contact us at <a href="mailto:support@phaethon.llc" className="hover:underline" style={{ color: LINK_COLOR }}>support@phaethon.llc</a>. We will delete such information promptly upon verification.
+              If you are a parent or guardian and believe your child has provided us with personal information, please contact us at <a href="mailto:admin@phaethonorder.com" className="hover:underline" style={{ color: LINK_COLOR }}>admin@phaethonorder.com</a>. We will delete such information promptly upon verification.
             </p>
             <p>
               In accordance with the Children's Online Privacy Protection Act (COPPA), We do not knowingly collect information from children under 13.
@@ -711,7 +711,7 @@ export default function PrivacyPolicyPage() {
               We do not share personal information with third parties for their direct marketing purposes without your explicit consent.
             </p>
             <p>
-              If you are a California resident and have questions, contact <a href="mailto:support@phaethon.llc" className="hover:underline" style={{ color: LINK_COLOR }}>support@phaethon.llc</a> with "California Shine the Light Request" in the subject line.
+              If you are a California resident and have questions, contact <a href="mailto:admin@phaethonorder.com" className="hover:underline" style={{ color: LINK_COLOR }}>admin@phaethonorder.com</a> with "California Shine the Light Request" in the subject line.
             </p>
           </Section>
 
@@ -751,14 +751,14 @@ export default function PrivacyPolicyPage() {
             <p style={{ marginTop: 12, marginLeft: 20 }}>
               <strong>Data Controller</strong>:<br />
               Phaethon Order LLC<br />
-              Email: <a href="mailto:support@phaethon.llc" className="hover:underline" style={{ color: LINK_COLOR }}>support@phaethon.llc</a><br />
+              Email: <a href="mailto:admin@phaethonorder.com" className="hover:underline" style={{ color: LINK_COLOR }}>admin@phaethonorder.com</a><br />
               Website: <a href="https://phaethonorder.com" target="_blank" rel="noopener noreferrer" className="hover:underline" style={{ color: LINK_COLOR }}>https://phaethonorder.com</a>
             </p>
             <p style={{ marginTop: 12 }}>
               <strong>Privacy Questions</strong>: For any questions, concerns, or requests regarding this Privacy Policy or Our data practices, please contact:
             </p>
             <p style={{ marginTop: 8, marginLeft: 20 }}>
-              <strong>Email</strong>: <a href="mailto:support@phaethon.llc" className="hover:underline" style={{ color: LINK_COLOR }}>support@phaethon.llc</a><br />
+              <strong>Email</strong>: <a href="mailto:admin@phaethonorder.com" className="hover:underline" style={{ color: LINK_COLOR }}>admin@phaethonorder.com</a><br />
               <strong>Subject Line</strong>: Privacy Inquiry<br />
               <strong>Response Time</strong>: We aim to respond within 5 business days
             </p>
@@ -798,7 +798,7 @@ export default function PrivacyPolicyPage() {
 
           <Section title="18. Dispute Resolution">
             <ul style={{ marginLeft: 20, listStyleType: "disc", listStylePosition: "outside", color: TEXT_COLOR }}>
-              <li><strong>Informal Resolution</strong>: Contact <a href="mailto:support@phaethon.llc" className="hover:underline" style={{ color: LINK_COLOR }}>support@phaethon.llc</a> to attempt to resolve concerns;</li>
+              <li><strong>Informal Resolution</strong>: Contact <a href="mailto:admin@phaethonorder.com" className="hover:underline" style={{ color: LINK_COLOR }}>admin@phaethonorder.com</a> to attempt to resolve concerns;</li>
               <li><strong>Arbitration/Jurisdiction</strong>: Subject to the dispute resolution provisions in Our <a href="/docs" className="hover:underline" style={{ color: LINK_COLOR }}>Terms of Service</a>;</li>
               <li><strong>Regulatory Complaints</strong>: You may file complaints with applicable data protection authorities (see Section 9.7).</li>
             </ul>
@@ -845,7 +845,7 @@ export default function PrivacyPolicyPage() {
                 </tr>
                 <tr style={{ borderBottom: "1px solid #e5e7eb" }}>
                   <td style={{ padding: "8px 0", fontWeight: 600, verticalAlign: "top" }}>Contact</td>
-                  <td style={{ padding: "8px 0" }}>support@phaethon.llc</td>
+                  <td style={{ padding: "8px 0" }}>admin@phaethonorder.com</td>
                 </tr>
                 <tr>
                   <td style={{ padding: "8px 0", fontWeight: 600, verticalAlign: "top" }}>We Do NOT</td>
@@ -882,7 +882,7 @@ export default function PrivacyPolicyPage() {
       <div className="glass-surface" style={surfaceStyle}>
         {/* Footer */}
         <footer style={footerStyle}>
-          2025 © Phaethon Order LLC | <a href="mailto:support@phaethon.llc" target="_blank" rel="noopener noreferrer" className="text-[#312f2f] hover:underline hover:text-blue-400">support@phaethon.llc</a> | <a href="https://phaethonorder.com" target="_blank" rel="noopener noreferrer" className="text-[#312f2f] hover:underline hover:text-blue-400">phaethonorder.com</a> | <a href="/help" className="text-[#312f2f] hover:underline hover:text-blue-400">Help</a> | <a href="/docs" className="text-[#312f2f] hover:underline hover:text-blue-400">Legal</a>
+          2026 © Phaethon Order LLC | <a href="mailto:admin@phaethonorder.com" target="_blank" rel="noopener noreferrer" className="text-[#312f2f] hover:underline hover:text-blue-400">admin@phaethonorder.com</a> | <a href="https://phaethonorder.com" target="_blank" rel="noopener noreferrer" className="text-[#312f2f] hover:underline hover:text-blue-400">phaethonorder.com</a> | <a href="/help" className="text-[#312f2f] hover:underline hover:text-blue-400">Help</a> | <a href="/docs" className="text-[#312f2f] hover:underline hover:text-blue-400">Legal</a>
         </footer>
       </div>
     </div>

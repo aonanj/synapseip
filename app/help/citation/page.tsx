@@ -115,7 +115,7 @@ export default function CitationHelpPage() {
             <InputDescription
               label="Time Window"
               description="Constrain analysis to citations within a specific date range. The date filters apply to the citing patent's publication date, not the cited patent."
-              example="Example: From 2023-01-01, To 2025-06-30"
+              example="Example: From 2023-01-01, To 2026-06-30"
               tips={[
                 "Narrower windows highlight recent competitive activity and emerging trends.",
                 "Wider windows provide more stable metrics and historical context.",
@@ -417,7 +417,7 @@ export default function CitationHelpPage() {
             
             <ResourceLink
               title="Note: Terms of Service"
-              description="Please note that citation data for the patents and publications available in the SynapseIP database may be incomplete. For clarity and relevancy, cited patents and publications filed prior to 2007 (approximately) may be absent. Backward citations are currently available only for patents. Contact support@phaethon.llc to request extension of this feature to publications. Additionally, foreign references and non-patent literature are excluded at this time. As set forth in the SynapseIP Terms of Service, no express or implied warranties are made regarding the completeness of the available dataset."
+              description="Please note that citation data for the patents and publications available in the SynapseIP database may be incomplete. For clarity and relevancy, cited patents and publications filed prior to 2007 (approximately) may be absent. Backward citations are currently available only for patents. Contact admin@phaethonorder.com to request extension of this feature to publications. Additionally, foreign references and non-patent literature are excluded at this time. As set forth in the SynapseIP Terms of Service, no express or implied warranties are made regarding the completeness of the available dataset."
               href="/docs/tos"
               external={false}
             />
@@ -427,7 +427,7 @@ export default function CitationHelpPage() {
       <div className="glass-surface" style={surfaceStyle}>
         {/* Footer */}
         <footer style={footerStyle}>
-          2025 © Phaethon Order LLC | <a href="mailto:support@phaethon.llc" target="_blank" rel="noopener noreferrer" className="text-[#312f2f] hover:underline hover:text-blue-400">support@phaethon.llc</a> | <a href="https://phaethonorder.com" target="_blank" rel="noopener noreferrer" className="text-[#312f2f] hover:underline hover:text-blue-400">phaethonorder.com</a> | <a href="/help" className="text-[#312f2f] hover:underline hover:text-blue-400">Help</a> | <a href="/docs" className="text-[#312f2f] hover:underline hover:text-blue-400">Legal</a>
+          2026 © Phaethon Order LLC | <a href="mailto:admin@phaethonorder.com" target="_blank" rel="noopener noreferrer" className="text-[#312f2f] hover:underline hover:text-blue-400">admin@phaethonorder.com</a> | <a href="https://phaethonorder.com" target="_blank" rel="noopener noreferrer" className="text-[#312f2f] hover:underline hover:text-blue-400">phaethonorder.com</a> | <a href="/help" className="text-[#312f2f] hover:underline hover:text-blue-400">Help</a> | <a href="/docs" className="text-[#312f2f] hover:underline hover:text-blue-400">Legal</a>
         </footer>
       </div>
     </div>

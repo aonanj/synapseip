@@ -353,7 +353,7 @@ function BillingContent() {
         <div className="glass-card" style={{ ...cardBaseStyle }}>
           <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: TEXT_COLOR }}>Billing & Technical Support</h2>
           <p style={{ marginTop: 12, fontSize: 14, lineHeight: 1.6, color: TEXT_COLOR }}>
-            For subscription, billing, and technical issues, contact <strong><a href="mailto:support@phaethon.llc" style={{ color: LINK_COLOR, textDecoration: "none" }}>support@phaethon.llc</a></strong>.
+            For subscription, billing, and technical issues, contact <strong><a href="mailto:admin@phaethonorder.com" style={{ color: LINK_COLOR, textDecoration: "none" }}>admin@phaethonorder.com</a></strong>.
           </p>
           <p style={{ marginTop: 12, fontSize: 14, lineHeight: 1.6, color: TEXT_COLOR }}>
             For urgent issues, phone and text support are available at <strong>(949) 326-0878</strong>. Please include your account email so we can assist quickly.
@@ -365,7 +365,7 @@ function BillingContent() {
       </div>
       <div className="glass-surface" style={surfaceStyle}>
         <footer style={footerStyle}>
-          2025 © Phaethon Order LLC | <a href="mailto:support@phaethon.llc" target="_blank" rel="noopener noreferrer" className="text-[#312f2f] hover:underline hover:text-blue-400">support@phaethon.llc</a> | <a href="https://phaethonorder.com" target="_blank" rel="noopener noreferrer" className="text-[#312f2f] hover:underline hover:text-blue-400">phaethonorder.com</a> | <a href="/help" className="text-[#312f2f] hover:underline hover:text-blue-400">Help</a> | <a href="/docs" className="text-[#312f2f] hover:underline hover:text-blue-400">Legal</a>
+          2026 © Phaethon Order LLC | <a href="mailto:admin@phaethonorder.com" target="_blank" rel="noopener noreferrer" className="text-[#312f2f] hover:underline hover:text-blue-400">admin@phaethonorder.com</a> | <a href="https://phaethonorder.com" target="_blank" rel="noopener noreferrer" className="text-[#312f2f] hover:underline hover:text-blue-400">phaethonorder.com</a> | <a href="/help" className="text-[#312f2f] hover:underline hover:text-blue-400">Help</a> | <a href="/docs" className="text-[#312f2f] hover:underline hover:text-blue-400">Legal</a>
         </footer>
       </div>
     </div>

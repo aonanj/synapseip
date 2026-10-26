@@ -100,7 +100,7 @@ export default function LegalIndexPage() {
               <div style={{ flex: 1, minWidth: 250 }}>
                 <h3 style={{ margin: 0, fontSize: 24, fontWeight: 700, color: TEXT_COLOR }}>Terms of Service</h3>
                 <p style={{ marginTop: 8, fontSize: 13, color: "#627D98", marginBottom: 0 }}>
-                  <strong>Last Updated</strong>: October 17, 2025
+                  <strong>Last Updated</strong>: October 17, 2026
                 </p>
               </div>
               <a
@@ -158,7 +158,7 @@ export default function LegalIndexPage() {
               <div style={{ flex: 1, minWidth: 250 }}>
                 <h3 style={{ margin: 0, fontSize: 24, fontWeight: 700, color: TEXT_COLOR }}>Privacy Policy</h3>
                 <p style={{ marginTop: 8, fontSize: 13, color: "#627D98", marginBottom: 0 }}>
-                  <strong>Last Updated</strong>: October 17, 2025
+                  <strong>Last Updated</strong>: October 17, 2026
                 </p>
               </div>
               <a
@@ -216,7 +216,7 @@ export default function LegalIndexPage() {
               <div style={{ flex: 1, minWidth: 250 }}>
                 <h3 style={{ margin: 0, fontSize: 24, fontWeight: 700, color: TEXT_COLOR }}>Data Processing Agreement (DPA)</h3>
                 <p style={{ marginTop: 8, fontSize: 13, color: "#627D98", marginBottom: 0 }}>
-                  <strong>Last Updated</strong>: October 17, 2025
+                  <strong>Last Updated</strong>: October 17, 2026
                 </p>
               </div>
               <a
@@ -294,7 +294,7 @@ export default function LegalIndexPage() {
               content={
                 <>
                   For questions, concerns, or requests regarding these legal documents, please contact:<br />
-                  <strong>Email</strong>: <a href="mailto:support@phaethon.llc" className="hover:underline" style={{ color: LINK_COLOR }}>support@phaethon.llc</a><br />
+                  <strong>Email</strong>: <a href="mailto:admin@phaethonorder.com" className="hover:underline" style={{ color: LINK_COLOR }}>admin@phaethonorder.com</a><br />
                   <strong>Subject Line</strong>: Legal Inquiry<br />
                   <strong>Website</strong>: <a href="https://phaethonorder.com" target="_blank" rel="noopener noreferrer" className="hover:underline" style={{ color: LINK_COLOR }}>https://phaethonorder.com</a>
                 </>
@@ -310,7 +310,7 @@ export default function LegalIndexPage() {
               title="✧ Document Versions"
               content={
                 <>
-                  We maintain an archive of prior versions of these documents. To request a previous version for reference or compliance purposes, please contact: <a href="mailto:support@phaethon.llc" className="hover:underline" style={{ color: LINK_COLOR }}>support@phaethon.llc</a>.
+                  We maintain an archive of prior versions of these documents. To request a previous version for reference or compliance purposes, please contact: <a href="mailto:admin@phaethonorder.com" className="hover:underline" style={{ color: LINK_COLOR }}>admin@phaethonorder.com</a>.
                 </>
               }
             />
@@ -377,7 +377,7 @@ export default function LegalIndexPage() {
         </div>
 
         <footer style={footerStyle}>
-          2025 © Phaethon Order LLC | <a href="mailto:support@phaethon.llc" target="_blank" rel="noopener noreferrer" className="text-[#312f2f] hover:underline hover:text-blue-400">support@phaethon.llc</a> | <a href="https://phaethonorder.com" target="_blank" rel="noopener noreferrer" className="text-[#312f2f] hover:underline hover:text-blue-400">phaethonorder.com</a> | <a href="/help" className="text-[#312f2f] hover:underline hover:text-blue-400">Help</a> | <a href="/docs" className="text-[#312f2f] hover:underline hover:text-blue-400">Legal</a>
+          2026 © Phaethon Order LLC | <a href="mailto:admin@phaethonorder.com" target="_blank" rel="noopener noreferrer" className="text-[#312f2f] hover:underline hover:text-blue-400">admin@phaethonorder.com</a> | <a href="https://phaethonorder.com" target="_blank" rel="noopener noreferrer" className="text-[#312f2f] hover:underline hover:text-blue-400">phaethonorder.com</a> | <a href="/help" className="text-[#312f2f] hover:underline hover:text-blue-400">Help</a> | <a href="/docs" className="text-[#312f2f] hover:underline hover:text-blue-400">Legal</a>
         </footer>
       </div>
     </div>
