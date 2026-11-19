@@ -22,8 +22,8 @@ const cardClass = "glass-card p-5 rounded-xl shadow-xl border border-white/50";
 
 export default function SubscriptionStatus({ subscription, onManage, accountEmail }: SubscriptionStatusProps) {
   const tierDisplay = useMemo(() => {
-    if (subscription.tier === "beta_tester") return "Beta Tester";
-    if (subscription.tier === "user") return "User";
+    if (subscription.tier === "beta_tester") return "Early Adopter";
+    if (subscription.tier === "user") return "Standard";
     return subscription.tier || "Unknown";
   }, [subscription.tier]);
 
@@ -138,7 +138,7 @@ export default function SubscriptionStatus({ subscription, onManage, accountEmai
           {/* Days in Tier (for beta testers) */}
           {subscription.tier === "beta_tester" && subscription.days_in_tier !== null && (
             <div>
-              <div className="text-sm text-slate-500 mb-1 font-semibold" style={{ textDecoration: "underline" }}>Beta Period</div>
+              <div className="text-sm text-slate-500 mb-1 font-semibold" style={{ textDecoration: "underline" }}>Plan Status</div>
               <div className="text-base font-medium" style={{ color: '#102A43' }}>
                 {subscription.days_in_tier} days elapsed
               </div>
@@ -163,11 +163,11 @@ export default function SubscriptionStatus({ subscription, onManage, accountEmai
               </svg>
               <div className="flex-1">
                 <h4 className="text-sm font-semibold text-orange-900 mb-1">
-                  Beta Period Ending Soon
+                  Early Adopter Period Ending Soon
                 </h4>
                 <p className="text-sm text-orange-800">
-                  Your 90-day beta period has ended. Your subscription will automatically migrate to
-                  the User tier ($189/month) at your next renewal. Update your subscription below
+                  Your 90-day early adopter period has ended. Your subscription will automatically migrate to
+                  the Standard tier ($189/month) at your next renewal. Update your subscription below
                   if you'd like to make changes.
                 </p>
               </div>
@@ -175,7 +175,7 @@ export default function SubscriptionStatus({ subscription, onManage, accountEmai
           </div>
         )}
 
-        {/* Beta Days Remaining Warning */}
+        {/* Early Adopter Days Remaining Warning */}
         {betaDaysRemaining !== null && betaDaysRemaining <= 14 && betaDaysRemaining > 0 && (
           <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
             <div className="flex items-start gap-3">
@@ -192,11 +192,11 @@ export default function SubscriptionStatus({ subscription, onManage, accountEmai
               </svg>
               <div className="flex-1">
                 <h4 className="text-sm font-semibold text-yellow-900 mb-1">
-                  Beta Period Expiring Soon
+                  Early Adopter Period Expiring Soon
                 </h4>
                 <p className="text-sm text-yellow-800">
-                  You have {betaDaysRemaining} days remaining in your beta period. After that, your
-                  subscription will transition to the User tier at $189/month.
+                  You have {betaDaysRemaining} days remaining in your early adopter period. After that, your
+                  subscription will transition to the Standard tier at $189/month.
                 </p>
               </div>
             </div>
