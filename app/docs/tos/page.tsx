@@ -189,7 +189,7 @@ export default function TermsOfServicePage() {
 
             <Subsection title="4.3 Payment Terms">
               <ul style={{ marginLeft: 20, listStyleType: "disc", listStylePosition: "outside", color: TEXT_COLOR }}>
-                <li><strong>Billing Cycle</strong>: Subscriptions are billed monthly or annually based on your selected plan;</li>
+                <li><strong>Billing Cycle</strong>: Subscriptions are billed monthly, annually, or quarterly (if available) based on your selected plan;</li>
                 <li><strong>Payment Method</strong>: You authorize Us to charge your designated payment method (processed via Stripe or other payment processors) or previously used payment method;</li>
                 <li><strong>Automatic Renewal</strong>: Subscriptions automatically renew unless canceled three business days before the renewal date;</li>
                 <li><strong>Price Changes</strong>: We may modify subscription prices with at least ten days' notice. Notice will be deemed sufficient if provided via at least one of email notification or notification via the Service. Changes take effect on your next renewal date;</li>

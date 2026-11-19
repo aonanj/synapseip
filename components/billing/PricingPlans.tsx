@@ -28,10 +28,10 @@ function PricingCard({ plan, onSubscribe }: { plan: PricePlan; onSubscribe: (pri
   }, [plan.amount_cents]);
 
   const periodDisplay = useMemo(() => {
-    if (plan.interval === "year") return "year";
+    if (plan.interval === "year") return "year (billed annually)";
     if (plan.interval === "month") {
-      if (plan.interval_count === 1) return "month";
-      if (plan.interval_count === 3) return "3 months";
+      if (plan.interval_count === 1) return "month (billed monthly)";
+      if (plan.interval_count === 3) return "3 months (billed quarterly)";
       return `${plan.interval_count} months`;
     }
     return plan.interval;
@@ -42,6 +42,20 @@ function PricingCard({ plan, onSubscribe }: { plan: PricePlan; onSubscribe: (pri
     if (plan.tier === "user" && plan.interval === "year") {
       const monthlyEquivalent = 189 * 12; // $189/month * 12
       const yearlyCost = plan.amount_cents / 100;
+      const saved = monthlyEquivalent - yearlyCost;
+      const percentSaved = (saved / monthlyEquivalent) * 100;
+      return { amount: saved, percent: percentSaved.toFixed(0) };
+    }
+    else if (plan.tier === "beta_tester" && plan.interval_count === 3) {
+      const monthlyEquivalent = 189 * 12; // $189/month * 12
+      const yearlyCost = (plan.amount_cents / 100) * 4;
+      const saved = monthlyEquivalent - yearlyCost;
+      const percentSaved = (saved / monthlyEquivalent) * 100;
+      return { amount: saved, percent: percentSaved.toFixed(0) };
+    }
+    else if (plan.tier === "beta_tester" && plan.interval_count === 1) {
+      const monthlyEquivalent = 189 * 12; // $189/month * 12
+      const yearlyCost = (plan.amount_cents / 100) * 12;
       const saved = monthlyEquivalent - yearlyCost;
       const percentSaved = (saved / monthlyEquivalent) * 100;
       return { amount: saved, percent: percentSaved.toFixed(0) };
@@ -195,12 +209,6 @@ function PricingCard({ plan, onSubscribe }: { plan: PricePlan; onSubscribe: (pri
         >
           {isBeta ? "Get Early Adopter Plan" : "Subscribe Now"}
         </button>
-
-        {plan.interval === "year" && (
-          <p className="mt-3 text-xs text-center text-slate-500">
-            Billed ${price} annually
-          </p>
-        )}
       </div>
     </div>
   );
