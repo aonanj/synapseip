@@ -1486,7 +1486,7 @@ export default function OverviewPage() {
               </div>
               <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
                 <PrimaryButton onClick={runAnalysis} disabled={loading || authLoading}>
-                  {loading ? "Calculating…" : "Run Search"}
+                  {loading ? "Searching…" : "Run Search"}
                 </PrimaryButton>
                 <GhostButton onClick={handleReset}>Reset</GhostButton>
               </div>

@@ -232,13 +232,13 @@ export default function HelpIndexPage() {
         <div className="glass-card" style={{ ...cardBaseStyle }}>
           <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: TEXT_COLOR, marginBottom: 16 }}>Introduction to the SynapseIP Platform</h2>
           <p style={{ fontSize: 14, lineHeight: 1.5, color: TEXT_COLOR, marginBottom: 8 }}>
-            SynapseIP is an IP platform specific to AI/ML data and analytics. The platform combines hybrid semantic search, trend analysis, and IP overview information to provide an integrated and in-depth understanding of the IP landscape as it relates to AI/ML innovations and investments and the entities active in this space. The platform is built on a relational database system that includes 72,000+ AI/ML-related patents and publications dating back to 2023.
+            SynapseIP is an IP platform specific to AI/ML data and analytics. The platform combines hybrid semantic search, trend analysis, and IP overview information to provide an integrated and in-depth understanding of the IP landscape as it relates to AI/ML innovations and investments and the entities active in this space. The platform is built on a relational database system that includes 83,000+ AI/ML-related patents and publications dating back to 2023.
           </p>
           <p style={{ fontSize: 14, lineHeight: 1.5, color: TEXT_COLOR, marginBottom: 8 }}>
-            Each entry (i.e., patent or publication) in the database is enriched with metadata and context; specifically, each entry corresponds to a patent or publication with multiple associated AI embeddings. The multiple AI embeddings enable accurate and robust semantic searching over multiple fields and combinations of fields.
+            Each entry (i.e., patent or publication) in the database is enriched with metadata and context, including multiple associated semantic embeddings. The semantic embeddings enable accurate and robust semantic searching over multiple fields and combinations of fields.
           </p>
           <p style={{ fontSize: 14, lineHeight: 1.5, color: TEXT_COLOR, marginBottom: 12 }}>
-            Metadata and context for each entry further include the assignee name (i.e., owner). The SynapseIP platform normalizes each assignee name to ensure that the AI/ML IP assets held by different entities are accurately and comprehensively represented.
+            Metadata and context for each entry further include the name of the most recent assignee. The SynapseIP platform normalizes each assignee name to ensure that the AI/ML IP assets held by different entities are accurately and comprehensively represented.
           </p>
           <p style={{ fontSize: 14, lineHeight: 1.5, color: TEXT_COLOR, marginBottom: 12 }}>
             SynapseIP is designed with a streamlined user interface divided between three primary web service pages:

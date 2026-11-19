@@ -52,15 +52,32 @@ window regenerates embeddings for those records (OpenAI cost). Use
 Usage:
     python scripts/etl_complete_July_2026.py \
         [--date-from YYYY-MM-DD] [--date-to YYYY-MM-DD] \
-        [--batch-size 500] [--dry-run] [--skip-embeddings] [--skip-citations]
+        [--batch-size 500] [--dry-run] [--skip-embeddings] [--skip-citations] \
+        [--stage-table NAME [--refresh-applications] [--stage-only] [--restage]] \
+        [--max-cost-per-1k 1.00]
 
 Defaults: date_from = max(patent.pub_date); date_to = day after the latest
 publication_date available in BigQuery (i.e. everything available).
 
+Staged mode (--stage-table NAME): the public table is unpartitioned, so every
+records query bills its full ~389 GB scan whatever the filter. Staged mode
+pays that scan once, into `<BQ_PROJECT>.<BQ_STAGE_DATASET>.<NAME>` (expires
+after 7 days); with --refresh-applications it also stages the grant of every
+pending kind-A application in `patent`, which then replaces it (step 2).
+Each run reads the small staged table, so after a failure the identical
+command resumes: records embedded (or inserted, with --skip-embeddings) since
+the table was created are skipped, and citations load for every staged
+pub_id still lacking them. --stage-only creates/reuses the table, logs a
+summary and exits; --restage rebuilds it.
+
+Every BigQuery query carries a maximum_bytes_billed cap, and the run ends
+with a cost line (list prices, per 1,000 records) that warns above
+--max-cost-per-1k.
+
 Environment: PG_DSN (or --dsn), BQ_PROJECT (or --project), OPENAI_API_KEY,
 optional EMBEDDING_MODEL / EMB_BATCH_SIZE / EMB_MAX_CHARS / EMB_SLEEP_SECS /
-CPC_REGEX / BQ_LOCATION / DB_LOCK_TIMEOUT, and Google application-default
-credentials.
+CPC_REGEX / BQ_LOCATION / DB_LOCK_TIMEOUT / BQ_STAGE_DATASET / BQ_USD_PER_TIB /
+EMB_USD_PER_1M / MAX_COST_PER_1K, and Google application-default credentials.
 """
 
 from __future__ import annotations
@@ -72,9 +89,9 @@ import os
 import re
 import sys
 import time
-from collections.abc import Iterable, Iterator, Mapping, Sequence
+from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
 from dataclasses import dataclass, field
-from datetime import date, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from typing import LiteralString
 
@@ -82,6 +99,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 import psycopg
 from dotenv import load_dotenv
+from google.api_core.exceptions import NotFound
 from google.cloud import bigquery
 from openai import OpenAI
 from psycopg import Connection
@@ -160,6 +178,28 @@ CLAIM_WORDS_PER_CHUNK = 2000
 MODEL_TA = f"{EMB_MODEL}|ta"
 MODEL_CLAIMS = f"{EMB_MODEL}|claims"
 
+# Staged mode: dataset in the ETL project holding short-lived staging tables.
+BQ_STAGE_DATASET = os.getenv("BQ_STAGE_DATASET", "synapseip_etl")
+STAGE_TABLE_TTL_DAYS = 7
+
+# Per-query maximum_bytes_billed caps. `patents-public-data.patents.publications`
+# is unpartitioned: a records scan bills ~389 GB and a citations query ~27 GB
+# regardless of filters. BigQuery refuses an over-cap query at no charge.
+GB = 10**9
+TIB = 1024**4
+BQ_MAX_BYTES_SCAN = 450 * GB
+BQ_MAX_BYTES_CITATIONS = 40 * GB
+BQ_MAX_BYTES_STAGE_READ = 20 * GB
+BQ_MAX_BYTES_LATEST_DATE = 5 * GB
+
+# List prices for the cost ledger (BigQuery on-demand; the first 1 TiB per
+# month per billing account is free, which the ledger does not subtract).
+BQ_USD_PER_TIB = float(os.getenv("BQ_USD_PER_TIB", "6.25"))
+EMB_USD_PER_1M = float(os.getenv("EMB_USD_PER_1M", "0.02"))
+# Average |ta + |claims + per-claim embedding tokens per record (measured on
+# the 2026 corpus); used only to project OpenAI cost in the staging summary.
+EST_EMB_TOKENS_PER_RECORD = 3480
+
 # psycopg generics
 type PgConn = Connection[TupleRow]
 
@@ -167,12 +207,9 @@ type PgConn = Connection[TupleRow]
 # BigQuery templates
 # ------------------
 
-RECORDS_BQ_SQL = """
-DECLARE start_date INT64 DEFAULT CAST(REPLACE(@date_from, '-', '') AS INT64);
-DECLARE end_date   INT64 DEFAULT CAST(REPLACE(@date_to, '-', '') AS INT64);
-
-WITH base AS (
-  SELECT
+# Shared by RECORDS_BQ_SQL and STAGE_BQ_SQL so both select and filter
+# records identically.
+_BQ_RECORD_COLUMNS = """
     p.publication_number                          AS pub_id,
     NULLIF(p.application_number_formatted, '')    AS application_number,
     NULLIF(p.priority_date, 0)                    AS priority_date,
@@ -195,15 +232,20 @@ WITH base AS (
       SELECT DISTINCT REPLACE(cx.code, ' ', '')
       FROM UNNEST(p.cpc) AS cx
       WHERE cx.code IS NOT NULL
-    ) AS cpc_codes
-  FROM `patents-public-data.patents.publications` AS p
-  WHERE p.country_code = 'US'
+    ) AS cpc_codes"""
+
+# US utility publications (design and plant excluded). The publication-date
+# window is not part of this fragment: each query applies its own
+# (RECORDS_BQ_SQL: [start_date, end_date); STAGE_BQ_SQL: the same window OR a
+# refresh grant).
+_BQ_US_UTILITY_FILTER = """p.country_code = 'US'
     AND p.publication_date IS NOT NULL
-    AND p.publication_date >= start_date
-    AND p.publication_date <  end_date
     AND NOT (p.publication_number LIKE 'USD%'  OR p.publication_number LIKE 'US-D%')   -- exclude design
-    AND NOT (p.publication_number LIKE 'USPP%' OR p.publication_number LIKE 'US-PP%')  -- exclude plant
-    AND EXISTS (
+    AND NOT (p.publication_number LIKE 'USPP%' OR p.publication_number LIKE 'US-PP%')  -- exclude plant"""
+
+# AI/ML filter: an AI CPC code (@cpc_regex) AND an AI keyword in
+# title/abstract/claims.
+_BQ_AI_FILTER = """EXISTS (
       SELECT 1
       FROM UNNEST(p.cpc) AS cx
       WHERE cx.code IS NOT NULL AND REGEXP_CONTAINS(REPLACE(cx.code, ' ', ''), @cpc_regex)
@@ -215,17 +257,58 @@ WITH base AS (
                          r'(language model|artificial intelligence|machine learning|machine-learning|neural network|neural-network)')
       OR REGEXP_CONTAINS(LOWER(COALESCE(p.claims_localized[SAFE_OFFSET(0)].text, '')),
                          r'(language model|artificial intelligence|machine learning|machine-learning|neural network|neural-network)')
+    )"""
+
+# One row per application: keep the most recent publication so a grant
+# supersedes its pre-grant publication.
+_BQ_LATEST_PER_APPLICATION = """QUALIFY ROW_NUMBER() OVER (
+  PARTITION BY COALESCE(application_number, pub_id)
+  ORDER BY pub_date DESC, pub_id DESC
+) = 1"""
+
+RECORDS_BQ_SQL = f"""
+DECLARE start_date INT64 DEFAULT CAST(REPLACE(@date_from, '-', '') AS INT64);
+DECLARE end_date   INT64 DEFAULT CAST(REPLACE(@date_to, '-', '') AS INT64);
+
+WITH base AS (
+  SELECT{_BQ_RECORD_COLUMNS}
+  FROM `patents-public-data.patents.publications` AS p
+  WHERE {_BQ_US_UTILITY_FILTER}
+    AND p.publication_date >= start_date
+    AND p.publication_date <  end_date
+    AND {_BQ_AI_FILTER}
+)
+SELECT *
+FROM base
+{_BQ_LATEST_PER_APPLICATION}
+ORDER BY pub_date, pub_id
+"""
+
+# Staged mode (see module docstring): RECORDS_BQ_SQL's window without DECLARE
+# (so the query can write to a destination table, with INT64 @start_date /
+# @end_date), OR-ed in the same single scan with the grant (kind B*) of every
+# application in @refresh_app_numbers, whether or not the grant passes the AI
+# filter. The per-application dedupe makes a grant supersede its application.
+STAGE_BQ_SQL = f"""
+WITH base AS (
+  SELECT{_BQ_RECORD_COLUMNS}
+  FROM `patents-public-data.patents.publications` AS p
+  WHERE {_BQ_US_UTILITY_FILTER}
+    AND (
+      (
+        p.publication_date >= @start_date
+        AND p.publication_date <  @end_date
+        AND {_BQ_AI_FILTER}
+      )
+      OR (
+        p.kind_code LIKE 'B%'
+        AND p.application_number_formatted IN UNNEST(@refresh_app_numbers)
+      )
     )
 )
 SELECT *
 FROM base
--- One row per application: keep the most recent publication so a grant
--- supersedes its pre-grant publication within the same window.
-QUALIFY ROW_NUMBER() OVER (
-  PARTITION BY COALESCE(application_number, pub_id)
-  ORDER BY pub_date DESC, pub_id DESC
-) = 1
-ORDER BY pub_date, pub_id
+{_BQ_LATEST_PER_APPLICATION}
 """
 
 LATEST_BQ_DATE_SQL = (
@@ -462,6 +545,29 @@ VALUES (%(pub_id)s, %(application_number)s, %(canonical_id)s,
 
 WATERMARK_SQL = "SELECT max(pub_date) FROM patent;"
 
+# Staged mode (no params on the first query, so its '%' is literal).
+SELECT_PENDING_APPS_SQL = """
+SELECT DISTINCT application_number
+FROM patent
+WHERE kind_code LIKE 'A%' AND application_number IS NOT NULL;
+"""
+
+SELECT_LOGGED_SINCE_SQL = """
+SELECT pub_id FROM ingest_log
+WHERE stage = %(stage)s AND created_at >= %(since)s;
+"""
+
+SELECT_CITATIONS_PENDING_SQL = """
+SELECT p.pub_id
+FROM patent p
+WHERE p.pub_id = ANY(%(pub_ids)s)
+  AND NOT EXISTS (
+        SELECT 1 FROM ingest_log l
+        WHERE l.pub_id = p.pub_id AND l.stage = 'citations' AND l.created_at >= %(since)s
+  )
+ORDER BY p.pub_id;
+"""
+
 # ---------------
 # Data structures
 # ---------------
@@ -515,6 +621,52 @@ class RunStats:
     claim_embeddings: int = 0
     citations: int = 0
     cited_assignees: int = 0
+
+
+@dataclass(frozen=True)
+class StageParams:
+    date_from: str  # YYYY-MM-DD inclusive
+    date_to: str  # YYYY-MM-DD exclusive
+    cpc_regex: str
+    refresh_app_numbers: tuple[str, ...]
+
+    def summary(self) -> str:
+        """Stored as the staging table's description (max 16,384 chars), so the
+        refresh list is recorded as a count and digest, not in full."""
+        digest = hashlib.sha256("\n".join(sorted(self.refresh_app_numbers)).encode()).hexdigest()
+        return json.dumps(
+            {
+                "date_from": self.date_from,
+                "date_to": self.date_to,
+                "cpc_regex": self.cpc_regex,
+                "refresh_applications": len(self.refresh_app_numbers),
+                "refresh_sha256": digest[:16],
+            }
+        )
+
+
+@dataclass
+class CostLedger:
+    """BigQuery bytes billed and OpenAI tokens used by this run."""
+
+    bq_bytes_billed: int = 0
+    emb_tokens: int = 0
+
+    def add_job(self, job: bigquery.QueryJob, what: str) -> None:
+        billed = job.total_bytes_billed or 0
+        self.bq_bytes_billed += billed
+        logger.info("BigQuery %s billed %.2f GB (~$%.2f at list price)", what, billed / GB, billed / TIB * BQ_USD_PER_TIB)
+
+    @property
+    def bq_usd(self) -> float:
+        return self.bq_bytes_billed / TIB * BQ_USD_PER_TIB
+
+    @property
+    def emb_usd(self) -> float:
+        return self.emb_tokens / 1_000_000 * EMB_USD_PER_1M
+
+
+COSTS = CostLedger()
 
 
 # ---------
@@ -693,10 +845,13 @@ def query_records(
             bigquery.ScalarQueryParameter("date_from", "STRING", date_from),
             bigquery.ScalarQueryParameter("date_to", "STRING", date_to),
             bigquery.ScalarQueryParameter("cpc_regex", "STRING", cpc_regex),
-        ]
+        ],
+        maximum_bytes_billed=BQ_MAX_BYTES_SCAN,
     )
     job = client.query(RECORDS_BQ_SQL, job_config=job_config)
-    for row in job.result(page_size=BQ_PAGE_SIZE):
+    rows = job.result(page_size=BQ_PAGE_SIZE)
+    COSTS.add_job(job, "records scan")
+    for row in rows:
         yield _to_record(row)
 
 
@@ -705,10 +860,13 @@ def query_citations(client: bigquery.Client, citing_pub_ids: Sequence[str]) -> I
     job_config = bigquery.QueryJobConfig(
         query_parameters=[
             bigquery.ArrayQueryParameter("citing_pub_ids", "STRING", list(citing_pub_ids)),
-        ]
+        ],
+        maximum_bytes_billed=BQ_MAX_BYTES_CITATIONS,
     )
     job = client.query(CITATIONS_BQ_SQL, job_config=job_config)
-    for row in job.result(page_size=BQ_PAGE_SIZE):
+    rows = job.result(page_size=BQ_PAGE_SIZE)
+    COSTS.add_job(job, "citations query")
+    for row in rows:
         yield CitationRecord(
             citing_pub_id=row["citing_pub_id"],
             cited_pub_id=row["cited_pub_id"],
@@ -724,7 +882,12 @@ def query_citations(client: bigquery.Client, citing_pub_ids: Sequence[str]) -> I
 
 def latest_publication_date(client: bigquery.Client) -> date | None:
     """Most recent publication_date available in the public patents table."""
-    row = next(client.query(LATEST_BQ_DATE_SQL).result(), None)
+    job = client.query(
+        LATEST_BQ_DATE_SQL,
+        job_config=bigquery.QueryJobConfig(maximum_bytes_billed=BQ_MAX_BYTES_LATEST_DATE),
+    )
+    row = next(job.result(), None)
+    COSTS.add_job(job, "latest-date check")
     max_pub_date = row["max_pub_date"] if row else None
     logger.info("Latest publication_date in BigQuery: %s", max_pub_date)
     if max_pub_date is None:
@@ -741,6 +904,204 @@ def latest_watermark(dsn: str) -> date | None:
     if int_wm is None:
         return None
     return datetime.strptime(str(int_wm), "%Y%m%d").date()
+
+
+# ------------------------------------------
+# Staged mode (one public-table scan per run)
+# ------------------------------------------
+
+STAGE_SUMMARY_BQ_SQL = """
+SELECT
+  COUNT(*)                                             AS total,
+  COUNT(DISTINCT COALESCE(application_number, pub_id)) AS distinct_applications,
+  COUNTIF(kind_code LIKE 'B%'
+          AND application_number IN UNNEST(@refresh_app_numbers)) AS grant_replacements,
+  COUNTIF(kind_code LIKE 'A%')                         AS kind_a,
+  COUNTIF(kind_code LIKE 'B%')                         AS kind_b,
+  MIN(pub_date)                                        AS min_pub_date,
+  MAX(pub_date)                                        AS max_pub_date
+FROM `{table}`
+"""
+
+
+def stage_table_id(client: bigquery.Client, name: str) -> str:
+    return f"{client.project}.{BQ_STAGE_DATASET}.{name}"
+
+
+def _table_ref(table: bigquery.Table) -> str:
+    return f"{table.project}.{table.dataset_id}.{table.table_id}"
+
+
+def fetch_pending_application_numbers(pool: ConnectionPool[PgConn]) -> tuple[str, ...]:
+    with pool.connection() as conn, conn.cursor() as cur:
+        cur.execute(SELECT_PENDING_APPS_SQL)
+        apps = sorted(row[0] for row in cur.fetchall())
+    logger.info("Found %d pending (kind A*) applications in patent to check for grants", len(apps))
+    return tuple(apps)
+
+
+def ensure_stage_table(
+    client: bigquery.Client,
+    name: str,
+    restage: bool,
+    build_params: Callable[[], StageParams],
+) -> bigquery.Table:
+    """Return the staging table, running the one public-table scan only when
+    the table does not exist yet (or --restage). build_params is called only
+    then."""
+    table_id = stage_table_id(client, name)
+    if not restage:
+        try:
+            table = client.get_table(table_id)
+        except NotFound:
+            pass
+        else:
+            logger.info(
+                "Reusing staged table %s: %s rows, created %s, expires %s; staged with %s",
+                table_id,
+                table.num_rows,
+                table.created,
+                table.expires,
+                table.description,
+            )
+            return table
+
+    params = build_params()
+    dataset = bigquery.Dataset(f"{client.project}.{BQ_STAGE_DATASET}")
+    dataset.location = client.location or "US"
+    dataset.default_table_expiration_ms = STAGE_TABLE_TTL_DAYS * 24 * 60 * 60 * 1000
+    client.create_dataset(dataset, exists_ok=True)
+    # Drop any previous table so table.created (the resume cutoff) is this scan.
+    client.delete_table(table_id, not_found_ok=True)
+
+    query_parameters = [
+        bigquery.ScalarQueryParameter("start_date", "INT64", int(params.date_from.replace("-", ""))),
+        bigquery.ScalarQueryParameter("end_date", "INT64", int(params.date_to.replace("-", ""))),
+        bigquery.ScalarQueryParameter("cpc_regex", "STRING", params.cpc_regex),
+        bigquery.ArrayQueryParameter("refresh_app_numbers", "STRING", list(params.refresh_app_numbers)),
+    ]
+    dry = client.query(
+        STAGE_BQ_SQL,
+        job_config=bigquery.QueryJobConfig(query_parameters=query_parameters, dry_run=True, use_query_cache=False),
+    )
+    est = dry.total_bytes_processed or 0
+    logger.info(
+        "Staging %s: publications %s → %s plus grants for %d pending applications; "
+        "dry run estimates %.1f GB (~$%.2f at list price)",
+        table_id,
+        params.date_from,
+        params.date_to,
+        len(params.refresh_app_numbers),
+        est / GB,
+        est / TIB * BQ_USD_PER_TIB,
+    )
+    job = client.query(
+        STAGE_BQ_SQL,
+        job_config=bigquery.QueryJobConfig(
+            query_parameters=query_parameters,
+            destination=table_id,
+            write_disposition=bigquery.WriteDisposition.WRITE_TRUNCATE,
+            maximum_bytes_billed=BQ_MAX_BYTES_SCAN,
+        ),
+    )
+    job.result()
+    COSTS.add_job(job, "staging scan")
+
+    table = client.get_table(table_id)
+    table.description = params.summary()
+    table.expires = datetime.now(UTC) + timedelta(days=STAGE_TABLE_TTL_DAYS)
+    table = client.update_table(table, ["description", "expires"])
+    logger.info("Staged %s rows into %s (created %s, expires %s)", table.num_rows, table_id, table.created, table.expires)
+    return table
+
+
+def stage_summary(client: bigquery.Client, table: bigquery.Table, refresh_apps: Sequence[str]) -> int:
+    """Log what the staged table will ingest; reads only small columns.
+    Returns the staged row count."""
+    job = client.query(
+        STAGE_SUMMARY_BQ_SQL.format(table=_table_ref(table)),
+        job_config=bigquery.QueryJobConfig(
+            query_parameters=[bigquery.ArrayQueryParameter("refresh_app_numbers", "STRING", list(refresh_apps))],
+            maximum_bytes_billed=BQ_MAX_BYTES_STAGE_READ,
+        ),
+    )
+    row = next(job.result())
+    COSTS.add_job(job, "staged-table summary")
+
+    total = row["total"]
+    grants = row["grant_replacements"]
+    projected_emb = total * EST_EMB_TOKENS_PER_RECORD / 1_000_000 * EMB_USD_PER_1M
+    per_1k = (COSTS.bq_usd + projected_emb) / total * 1000 if total else 0.0
+    logger.info(
+        "Staged table %s: %d rows (%d distinct applications, %d duplicates); kind A %d, kind B %d; "
+        "pub_date %s → %s",
+        _table_ref(table),
+        total,
+        row["distinct_applications"],
+        total - row["distinct_applications"],
+        row["kind_a"],
+        row["kind_b"],
+        row["min_pub_date"],
+        row["max_pub_date"],
+    )
+    logger.info(
+        "Of these: %d grants replace pending applications now in patent (%d of %d pending have no grant "
+        "in BigQuery yet); %d other publications",
+        grants,
+        len(refresh_apps) - grants,
+        len(refresh_apps),
+        total - grants,
+    )
+    logger.info(
+        "Projected: OpenAI ~$%.2f (~%d tokens/record) + BigQuery this run $%.2f = ~$%.3f per 1,000 records "
+        "(list prices; Neon compute and later citation queries not included)",
+        projected_emb,
+        EST_EMB_TOKENS_PER_RECORD,
+        COSTS.bq_usd,
+        per_1k,
+    )
+    return total
+
+
+def query_stage(client: bigquery.Client, table: bigquery.Table) -> Iterator[PatentRecord]:
+    logger.info("Reading staged records from %s", _table_ref(table))
+    job = client.query(
+        f"SELECT * FROM `{_table_ref(table)}` ORDER BY pub_date, pub_id",
+        job_config=bigquery.QueryJobConfig(maximum_bytes_billed=BQ_MAX_BYTES_STAGE_READ),
+    )
+    rows = job.result(page_size=BQ_PAGE_SIZE)
+    COSTS.add_job(job, "staged-table read")
+    for row in rows:
+        yield _to_record(row)
+
+
+def fetch_logged_since(pool: ConnectionPool[PgConn], stage: str, since: datetime) -> set[str]:
+    with pool.connection() as conn, conn.cursor() as cur:
+        cur.execute(SELECT_LOGGED_SINCE_SQL, {"stage": stage, "since": since})
+        return {row[0] for row in cur.fetchall()}
+
+
+def skip_logged(stream: Iterable[PatentRecord], done: set[str], seen: list[str]) -> Iterator[PatentRecord]:
+    """Yield staged records not yet processed since the table was created.
+    Every staged pub_id (skipped or not) is appended to `seen`."""
+    skipped = 0
+    for rec in stream:
+        seen.append(rec.pub_id)
+        if rec.pub_id in done:
+            skipped += 1
+            continue
+        yield rec
+    logger.info("Resume: skipped %d staged records already processed since the table was created", skipped)
+
+
+def fetch_citations_pending(pool: ConnectionPool[PgConn], pub_ids: Sequence[str], since: datetime) -> list[str]:
+    """Staged pub_ids present in patent with no 'citations' ingest_log entry
+    since the staging table was created."""
+    if not pub_ids:
+        return []
+    with pool.connection() as conn, conn.cursor() as cur:
+        cur.execute(SELECT_CITATIONS_PENDING_SQL, {"pub_ids": list(pub_ids), "since": since})
+        return [row[0] for row in cur.fetchall()]
 
 
 # --------------------------------------
@@ -980,6 +1341,9 @@ def embed_texts(client: OpenAI, texts: Sequence[str], model: str) -> list[list[f
     for batch in chunked(texts, EMB_BATCH_SIZE):
         resp = client.embeddings.create(model=model, input=list(batch))
         out.extend([d.embedding for d in resp.data])
+        usage = getattr(resp, "usage", None)  # proxies may omit usage
+        if usage is not None:
+            COSTS.emb_tokens += usage.total_tokens or 0
         time.sleep(EMB_SLEEP_SECS)
     return out
 
@@ -1321,7 +1685,50 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--skip-embeddings", action="store_true", help="Skip embedding generation")
     p.add_argument("--skip-citations", action="store_true", help="Skip the citations stage")
     p.add_argument("--dry-run", action="store_true", help="Query BigQuery and count records; write nothing")
-    return p.parse_args()
+    p.add_argument(
+        "--stage-table",
+        help=f"staged mode: scan the public table once into {BQ_STAGE_DATASET}.<NAME> (7-day expiry) and "
+        "ingest from it; rerunning the same command resumes",
+    )
+    p.add_argument(
+        "--refresh-applications",
+        action="store_true",
+        help="also stage the grant of every pending kind-A application in patent (replaces it on ingest)",
+    )
+    p.add_argument("--stage-only", action="store_true", help="create or reuse the staged table, log a summary, exit")
+    p.add_argument("--restage", action="store_true", help="rebuild the staged table (one full public-table scan)")
+    p.add_argument(
+        "--max-cost-per-1k",
+        type=float,
+        default=float(os.getenv("MAX_COST_PER_1K", "1.00")),
+        help="warn when this run's BigQuery + OpenAI cost exceeds this many USD per 1,000 records",
+    )
+    args = p.parse_args()
+    if args.stage_table is None and (args.refresh_applications or args.stage_only or args.restage):
+        p.error("--refresh-applications, --stage-only and --restage require --stage-table")
+    if args.stage_table is not None:
+        if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]{0,1023}", args.stage_table):
+            p.error("--stage-table must be a plain table name (letters, digits, underscores)")
+        if args.dry_run:
+            p.error("--dry-run does not combine with --stage-table; use --stage-only for counts")
+    return args
+
+
+def log_costs(records: int, max_cost_per_1k: float) -> None:
+    total = COSTS.bq_usd + COSTS.emb_usd
+    per_1k = total / records * 1000 if records else None
+    logger.info(
+        "Run cost at list prices (BigQuery free tier not deducted; Neon excluded): BigQuery %.2f GB = $%.2f, "
+        "OpenAI %d tokens = $%.2f, total $%.2f%s",
+        COSTS.bq_bytes_billed / GB,
+        COSTS.bq_usd,
+        COSTS.emb_tokens,
+        COSTS.emb_usd,
+        total,
+        f" = ${per_1k:.3f} per 1,000 records ({records} records)" if per_1k is not None else " (no records)",
+    )
+    if per_1k is not None and per_1k > max_cost_per_1k:
+        logger.warning("Run cost $%.3f per 1,000 records exceeds --max-cost-per-1k $%.2f", per_1k, max_cost_per_1k)
 
 
 def resolve_date_range(
@@ -1359,21 +1766,28 @@ def main() -> int:
         else bigquery.Client(project=args.project)
     )
 
-    watermark = latest_watermark(args.dsn)
-    latest_bq = latest_publication_date(bq_client)
-    if watermark and latest_bq and watermark > latest_bq:
-        logger.info(
-            "Watermark %s is after latest BigQuery publication_date %s; nothing to do.",
-            watermark.isoformat(),
-            latest_bq.isoformat(),
-        )
-        return 0
+    if args.stage_table:
+        # The window is resolved only if the staged table has to be built
+        # (see build_stage_params below).
+        date_from = date_to = ""
+        scope = f"staged table {stage_table_id(bq_client, args.stage_table)}"
+    else:
+        watermark = latest_watermark(args.dsn)
+        latest_bq = latest_publication_date(bq_client)
+        if watermark and latest_bq and watermark > latest_bq:
+            logger.info(
+                "Watermark %s is after latest BigQuery publication_date %s; nothing to do.",
+                watermark.isoformat(),
+                latest_bq.isoformat(),
+            )
+            return 0
 
-    date_from, date_to = resolve_date_range(args, watermark, latest_bq)
-    if date.fromisoformat(date_from) >= date.fromisoformat(date_to):
-        logger.info("Empty date range %s → %s; nothing to do.", date_from, date_to)
-        return 0
-    logger.info("Loading publications from %s (inclusive) to %s (exclusive)", date_from, date_to)
+        date_from, date_to = resolve_date_range(args, watermark, latest_bq)
+        if date.fromisoformat(date_from) >= date.fromisoformat(date_to):
+            logger.info("Empty date range %s → %s; nothing to do.", date_from, date_to)
+            return 0
+        logger.info("Loading publications from %s (inclusive) to %s (exclusive)", date_from, date_to)
+        scope = f"{date_from} → {date_to}"
 
     pool = ConnectionPool[PgConn](
         conninfo=args.dsn,
@@ -1385,13 +1799,34 @@ def main() -> int:
             "channel_binding": "require",
         },
     )
-    oa_client = get_openai_client() if not (args.skip_embeddings or args.dry_run) else None
+    oa_client = get_openai_client() if not (args.skip_embeddings or args.dry_run or args.stage_only) else None
 
     stats = RunStats()
     ingested_pub_ids: list[str] = []
+    stage_cutoff: datetime | None = None  # staged mode: the staged table's creation time
+    staged_pub_ids: list[str] = []
 
     try:
-        stream = query_records(bq_client, date_from=date_from, date_to=date_to, cpc_regex=args.cpc_regex)
+        if args.stage_table:
+            refresh_apps = fetch_pending_application_numbers(pool) if args.refresh_applications else ()
+
+            def build_stage_params() -> StageParams:
+                window = resolve_date_range(args, latest_watermark(args.dsn), latest_publication_date(bq_client))
+                return StageParams(window[0], window[1], args.cpc_regex, refresh_apps)
+
+            table = ensure_stage_table(bq_client, args.stage_table, args.restage, build_stage_params)
+            if args.stage_only:
+                # Staged row count is the cost denominator for this run.
+                stats.records = stage_summary(bq_client, table, refresh_apps)
+                return 0
+            if table.created is None:
+                raise RuntimeError(f"Staged table {scope} has no creation time")
+            stage_cutoff = table.created
+            done = fetch_logged_since(pool, "inserted" if args.skip_embeddings else "embedded", stage_cutoff)
+            logger.info("%d pub_ids already processed since %s will be skipped", len(done), stage_cutoff)
+            stream = skip_logged(query_stage(bq_client, table), done, staged_pub_ids)
+        else:
+            stream = query_records(bq_client, date_from=date_from, date_to=date_to, cpc_regex=args.cpc_regex)
         for batch in chunked(stream, args.batch_size):
             if args.dry_run:
                 stats.records += len(batch)
@@ -1430,16 +1865,25 @@ def main() -> int:
             logger.info("Dry run: %d records matched between %s and %s.", stats.records, date_from, date_to)
             return 0
 
-        if not args.skip_citations and ingested_pub_ids:
-            process_citations(pool, bq_client, ingested_pub_ids, args.citation_batch_size, stats)
+        if not args.skip_citations:
+            # Staged mode: every staged pub_id in patent still lacking citations
+            # since the table was created, so a crash before this stage is
+            # recovered by the next run.
+            citing = (
+                fetch_citations_pending(pool, staged_pub_ids, stage_cutoff)
+                if stage_cutoff is not None
+                else ingested_pub_ids
+            )
+            if citing:
+                process_citations(pool, bq_client, citing, args.citation_batch_size, stats)
     finally:
         pool.close()
+        log_costs(stats.records, args.max_cost_per_1k)
 
     logger.info(
-        "ETL complete for %s → %s: %d records (%d replaced, %d failed), %d independent claims, "
+        "ETL complete for %s: %d records (%d replaced, %d failed), %d independent claims, "
         "%d doc embeddings, %d claim embeddings, %d citations, %d cited assignees.",
-        date_from,
-        date_to,
+        scope,
         stats.records,
         stats.replaced,
         stats.failed_records,
