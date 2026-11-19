@@ -51,7 +51,7 @@ export default function DataProcessingAgreementPage() {
             <strong>Last Updated</strong>: October 17, 2026
           </div>
           <p style={{ marginTop: 8, fontSize: 14, color: "#627D98", marginBottom: 0 }}>
-            <a href="/docs" style={{ color: LINK_COLOR, textDecoration: "none" }}>← Back to Legal</a>
+            <a href="/docs" className="text-[#5FA8D2] font-medium hover:underline hover:text-[#ffa400]">← Back to Legal</a>
           </p>
         </div>
 
@@ -60,7 +60,7 @@ export default function DataProcessingAgreementPage() {
           
           <Section title="Introduction and Agreement">
             <p>
-              This Data Processing Agreement ("<strong>DPA</strong>") forms part of the <a href="/docs" className="hover:underline" style={{ color: LINK_COLOR }}>Terms of Service</a> between you (the "<strong>Customer</strong>" or "<strong>Data Controller</strong>") and Phaethon Order LLC ("<strong>Company</strong>," "<strong>Processor</strong>," "<strong>We</strong>," "<strong>Us</strong>," or "<strong>Our</strong>") for the use of the SynapseIP service (the "<strong>Service</strong>").
+              This Data Processing Agreement ("<strong>DPA</strong>") forms part of the <a href="/docs" className="text-[#5FA8D2] font-medium hover:underline hover:text-[#ffa400]">Terms of Service</a> between you (the "<strong>Customer</strong>" or "<strong>Data Controller</strong>") and Phaethon Order LLC ("<strong>Company</strong>," "<strong>Processor</strong>," "<strong>We</strong>," "<strong>Us</strong>," or "<strong>Our</strong>") for the use of the SynapseIP service (the "<strong>Service</strong>").
             </p>
             <p style={{ marginTop: 16 }}>
               This DPA governs the processing of Personal Data (as defined below) by the Company on behalf of the Customer in connection with the Service. This DPA reflects the parties' agreement on the terms governing the processing of Personal Data in compliance with applicable Data Protection Laws.
@@ -165,7 +165,7 @@ export default function DataProcessingAgreementPage() {
                 <li><strong>Duration</strong>: For the term of the Terms of Service and as required for data retention obligations;</li>
                 <li><strong>Types of Personal Data</strong>: As specified in Annex A (Details of Processing);</li>
                 <li><strong>Categories of Data Subjects</strong>: Customer's employees, contractors, consultants, and Authorized Users;</li>
-                <li><strong>Additional Instructions</strong>: Customer may issue additional written instructions through the Service interface (e.g., data export requests, deletion requests) or by contacting <a href="mailto:admin@phaethonorder.com" className="hover:underline" style={{ color: LINK_COLOR }}>admin@phaethonorder.com</a>.</li>
+                <li><strong>Additional Instructions</strong>: Customer may issue additional written instructions through the Service interface (e.g., data export requests, deletion requests) or by contacting <a href="mailto:admin@phaethonorder.com" className="text-[#5FA8D2] font-medium hover:underline hover:text-[#ffa400]">admin@phaethonorder.com</a>.</li>
               </ul>
               <p style={{ marginTop: 12 }}>
                 If the Company believes that an instruction from Customer infringes applicable Data Protection Laws, it shall promptly inform Customer and may suspend performance of the instruction until Customer confirms or modifies it.
@@ -438,7 +438,7 @@ export default function DataProcessingAgreementPage() {
 
             <Subsection title="6.4 Sub-processor List">
               <p>
-                The current list of Authorized Sub-processors is available in <strong>Annex C</strong> and may be updated at <a href="https://www.synapse-ip.com/docs/dpa#annex-c" className="hover:underline" style={{ color: LINK_COLOR }}>https://www.synapse-ip.com/docs/dpa#annex-c</a>.
+                The current list of Authorized Sub-processors is available in <strong>Annex C</strong> and may be updated at <a href="https://www.synapse-ip.com/docs/dpa#annex-c" className="text-[#5FA8D2] font-medium hover:underline hover:text-[#ffa400]">https://www.synapse-ip.com/docs/dpa#annex-c</a>.
               </p>
             </Subsection>
           </Section>
@@ -670,7 +670,7 @@ export default function DataProcessingAgreementPage() {
               <p style={{ marginTop: 12, marginLeft: 20 }}>
                 <strong>For Company</strong>:<br />
                 Phaethon Order LLC<br />
-                Email: <a href="mailto:admin@phaethonorder.com" className="hover:underline" style={{ color: LINK_COLOR }}>admin@phaethonorder.com</a><br />
+                Email: <a href="mailto:admin@phaethonorder.com" className="text-[#5FA8D2] font-medium hover:underline hover:text-[#ffa400]">admin@phaethonorder.com</a><br />
                 Subject: DPA Notice
               </p>
               <p style={{ marginTop: 12, marginLeft: 20 }}>
@@ -699,9 +699,9 @@ export default function DataProcessingAgreementPage() {
             <p>For questions, concerns, or notices regarding this DPA, please contact:</p>
             <p style={{ marginTop: 12, marginLeft: 20 }}>
               <strong>Phaethon Order LLC</strong><br />
-              <strong>Data Protection Officer</strong>: <a href="mailto:admin@phaethonorder.com" className="hover:underline" style={{ color: LINK_COLOR }}>admin@phaethonorder.com</a><br />
+              <strong>Data Protection Officer</strong>: <a href="mailto:admin@phaethonorder.com" className="text-[#5FA8D2] font-medium hover:underline hover:text-[#ffa400]">admin@phaethonorder.com</a><br />
               <strong>Subject Line</strong>: DPA Inquiry<br />
-              <strong>Website</strong>: <a href="https://phaethonorder.com" target="_blank" rel="noopener noreferrer" className="hover:underline" style={{ color: LINK_COLOR }}>https://phaethonorder.com</a>
+              <strong>Website</strong>: <a href="https://www.phaethonorder.com" target="_blank" rel="noopener noreferrer" className="text-[#5FA8D2] font-medium hover:underline hover:text-[#ffa400]">https://www.phaethonorder.com</a>
             </p>
           </Section>
 
@@ -1014,7 +1014,7 @@ export default function DataProcessingAgreementPage() {
                     <td style={{ padding: 12, border: "1px solid #e5e7eb" }}>Web hosting, application deployment, CDN</td>
                     <td style={{ padding: 12, border: "1px solid #e5e7eb" }}>United States</td>
                     <td style={{ padding: 12, border: "1px solid #e5e7eb" }}>
-                      <a href="https://vercel.com/legal/privacy-policy" target="_blank" rel="noopener noreferrer" className="hover:underline" style={{ color: LINK_COLOR }}>Privacy Policy</a>
+                      <a href="https://vercel.com/legal/privacy-policy" target="_blank" rel="noopener noreferrer" className="text-[#5FA8D2] font-medium hover:underline hover:text-[#ffa400]">Privacy Policy</a>
                     </td>
                   </tr>
                   <tr style={{ borderBottom: "1px solid #e5e7eb" }}>
@@ -1022,7 +1022,7 @@ export default function DataProcessingAgreementPage() {
                     <td style={{ padding: 12, border: "1px solid #e5e7eb" }}>PostgreSQL database hosting, data storage</td>
                     <td style={{ padding: 12, border: "1px solid #e5e7eb" }}>United States</td>
                     <td style={{ padding: 12, border: "1px solid #e5e7eb" }}>
-                      <a href="https://neon.tech/privacy-policy" target="_blank" rel="noopener noreferrer" className="hover:underline" style={{ color: LINK_COLOR }}>Privacy Policy</a>
+                      <a href="https://neon.tech/privacy-policy" target="_blank" rel="noopener noreferrer" className="text-[#5FA8D2] font-medium hover:underline hover:text-[#ffa400]">Privacy Policy</a>
                     </td>
                   </tr>
                   <tr style={{ borderBottom: "1px solid #e5e7eb" }}>
@@ -1030,7 +1030,7 @@ export default function DataProcessingAgreementPage() {
                     <td style={{ padding: 12, border: "1px solid #e5e7eb" }}>Identity and access management, authentication</td>
                     <td style={{ padding: 12, border: "1px solid #e5e7eb" }}>United States</td>
                     <td style={{ padding: 12, border: "1px solid #e5e7eb" }}>
-                      <a href="https://auth0.com/privacy" target="_blank" rel="noopener noreferrer" className="hover:underline" style={{ color: LINK_COLOR }}>Privacy Policy</a>
+                      <a href="https://auth0.com/privacy" target="_blank" rel="noopener noreferrer" className="text-[#5FA8D2] font-medium hover:underline hover:text-[#ffa400]">Privacy Policy</a>
                     </td>
                   </tr>
                   <tr style={{ borderBottom: "1px solid #e5e7eb" }}>
@@ -1038,7 +1038,7 @@ export default function DataProcessingAgreementPage() {
                     <td style={{ padding: 12, border: "1px solid #e5e7eb" }}>Payment processing, subscription billing</td>
                     <td style={{ padding: 12, border: "1px solid #e5e7eb" }}>United States</td>
                     <td style={{ padding: 12, border: "1px solid #e5e7eb" }}>
-                      <a href="https://stripe.com/privacy" target="_blank" rel="noopener noreferrer" className="hover:underline" style={{ color: LINK_COLOR }}>Privacy Policy</a>
+                      <a href="https://stripe.com/privacy" target="_blank" rel="noopener noreferrer" className="text-[#5FA8D2] font-medium hover:underline hover:text-[#ffa400]">Privacy Policy</a>
                     </td>
                   </tr>
                   <tr style={{ borderBottom: "1px solid #e5e7eb" }}>
@@ -1046,7 +1046,7 @@ export default function DataProcessingAgreementPage() {
                     <td style={{ padding: 12, border: "1px solid #e5e7eb" }}>Transactional email delivery, alert notifications</td>
                     <td style={{ padding: 12, border: "1px solid #e5e7eb" }}>United States</td>
                     <td style={{ padding: 12, border: "1px solid #e5e7eb" }}>
-                      <a href="https://www.mailgun.com/legal/privacy-policy/" target="_blank" rel="noopener noreferrer" className="hover:underline" style={{ color: LINK_COLOR }}>Privacy Policy</a>
+                      <a href="https://www.mailgun.com/legal/privacy-policy/" target="_blank" rel="noopener noreferrer" className="text-[#5FA8D2] font-medium hover:underline hover:text-[#ffa400]">Privacy Policy</a>
                     </td>
                   </tr>
                   <tr style={{ borderBottom: "1px solid #e5e7eb" }}>
@@ -1054,7 +1054,7 @@ export default function DataProcessingAgreementPage() {
                     <td style={{ padding: 12, border: "1px solid #e5e7eb" }}>Text embeddings for semantic search (patent text only, no user data)</td>
                     <td style={{ padding: 12, border: "1px solid #e5e7eb" }}>United States</td>
                     <td style={{ padding: 12, border: "1px solid #e5e7eb" }}>
-                      <a href="https://openai.com/privacy/" target="_blank" rel="noopener noreferrer" className="hover:underline" style={{ color: LINK_COLOR }}>Privacy Policy</a>
+                      <a href="https://openai.com/privacy/" target="_blank" rel="noopener noreferrer" className="text-[#5FA8D2] font-medium hover:underline hover:text-[#ffa400]">Privacy Policy</a>
                     </td>
                   </tr>
                   <tr style={{ borderBottom: "1px solid #e5e7eb" }}>
@@ -1062,7 +1062,7 @@ export default function DataProcessingAgreementPage() {
                     <td style={{ padding: 12, border: "1px solid #e5e7eb" }}>Analytics (Google Analytics), patent data source (BigQuery)</td>
                     <td style={{ padding: 12, border: "1px solid #e5e7eb" }}>United States</td>
                     <td style={{ padding: 12, border: "1px solid #e5e7eb" }}>
-                      <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="hover:underline" style={{ color: LINK_COLOR }}>Privacy Policy</a>
+                      <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="text-[#5FA8D2] font-medium hover:underline hover:text-[#ffa400]">Privacy Policy</a>
                     </td>
                   </tr>
                 </tbody>
@@ -1116,7 +1116,7 @@ export default function DataProcessingAgreementPage() {
                 <li>The SCCs are incorporated by reference and form an integral part of this DPA.</li>
               </ul>
               <p style={{ marginTop: 12, fontSize: 14, lineHeight: 1.5, color: TEXT_COLOR }}>
-                <strong>Access to SCCs</strong>: The full text of the EU SCCs is available at: <a href="https://eur-lex.europa.eu/eli/dec_impl/2021/914/oj" target="_blank" rel="noopener noreferrer" className="hover:underline" style={{ color: LINK_COLOR }}>https://eur-lex.europa.eu/eli/dec_impl/2021/914/oj</a>
+                <strong>Access to SCCs</strong>: The full text of the EU SCCs is available at: <a href="https://eur-lex.europa.eu/eli/dec_impl/2021/914/oj" target="_blank" rel="noopener noreferrer" className="text-[#5FA8D2] font-medium hover:underline hover:text-[#ffa400]">https://eur-lex.europa.eu/eli/dec_impl/2021/914/oj</a>
               </p>
             </div>
 
@@ -1126,7 +1126,7 @@ export default function DataProcessingAgreementPage() {
                 For transfers of Personal Data from the United Kingdom, the parties agree to comply with the UK's International Data Transfer Agreement (IDTA) or the UK Addendum to the EU SCCs, as applicable, issued by the UK Information Commissioner's Office.
               </p>
               <p style={{ marginTop: 12, fontSize: 14, lineHeight: 1.5, color: TEXT_COLOR }}>
-                <strong>Access to UK IDTA/Addendum</strong>: <a href="https://ico.org.uk/for-organisations/uk-gdpr-guidance-and-resources/international-transfers/" target="_blank" rel="noopener noreferrer" className="hover:underline" style={{ color: LINK_COLOR }}>https://ico.org.uk/for-organisations/uk-gdpr-guidance-and-resources/international-transfers/</a>
+                <strong>Access to UK IDTA/Addendum</strong>: <a href="https://ico.org.uk/for-organisations/uk-gdpr-guidance-and-resources/international-transfers/" target="_blank" rel="noopener noreferrer" className="text-[#5FA8D2] font-medium hover:underline hover:text-[#ffa400]">https://ico.org.uk/for-organisations/uk-gdpr-guidance-and-resources/international-transfers/</a>
               </p>
             </div>
 
@@ -1136,7 +1136,7 @@ export default function DataProcessingAgreementPage() {
                 For transfers of Personal Data from Switzerland, the parties agree to comply with the Swiss Federal Data Protection and Information Commissioner's (FDPIC) approved standard contractual clauses or equivalent mechanisms as required by the Swiss Federal Act on Data Protection (FADP).
               </p>
               <p style={{ marginTop: 12, fontSize: 14, lineHeight: 1.5, color: TEXT_COLOR }}>
-                <strong>Access to Swiss SCCs</strong>: <a href="https://www.edoeb.admin.ch/" target="_blank" rel="noopener noreferrer" className="hover:underline" style={{ color: LINK_COLOR }}>https://www.edoeb.admin.ch/</a>
+                <strong>Access to Swiss SCCs</strong>: <a href="https://www.edoeb.admin.ch/" target="_blank" rel="noopener noreferrer" className="text-[#5FA8D2] font-medium hover:underline hover:text-[#ffa400]">https://www.edoeb.admin.ch/</a>
               </p>
             </div>
 
@@ -1241,7 +1241,7 @@ export default function DataProcessingAgreementPage() {
       <div className="glass-surface" style={surfaceStyle}>
         {/* Footer */}
         <footer style={footerStyle}>
-          2026 © Phaethon Order LLC | <a href="mailto:admin@phaethonorder.com" target="_blank" rel="noopener noreferrer" className="text-[#312f2f] hover:underline hover:text-blue-400">admin@phaethonorder.com</a> | <a href="https://phaethonorder.com" target="_blank" rel="noopener noreferrer" className="text-[#312f2f] hover:underline hover:text-blue-400">phaethonorder.com</a> | <a href="/help" className="text-[#312f2f] hover:underline hover:text-blue-400">Help</a> | <a href="/docs" className="text-[#312f2f] hover:underline hover:text-blue-400">Legal</a>
+          2026 © Phaethon Order LLC | <a href="mailto:admin@phaethonorder.com" target="_blank" rel="noopener noreferrer" className="text-[#312f2f] hover:underline hover:text-blue-400">admin@phaethonorder.com</a> | <a href="https://www.phaethonorder.com" target="_blank" rel="noopener noreferrer" className="text-[#312f2f] hover:underline hover:text-blue-400">phaethonorder.com</a> | <a href="/help" className="text-[#312f2f] hover:underline hover:text-blue-400">Help</a> | <a href="/docs" className="text-[#312f2f] hover:underline hover:text-blue-400">Legal</a>
         </footer>
       </div>
     </div>

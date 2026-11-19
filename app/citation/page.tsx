@@ -721,7 +721,7 @@ function ForwardImpactCard({ scope, scopeVersion, tokenGetter }: ForwardImpactCa
                 {pagedPatents.map((p) => (
                   <tr key={p.pub_id} className="odd:bg-white even:bg-slate-50/60">
                     <td className="px-3 py-2 align-top text-xs">
-                      <a href={googlePatentsUrl(p.pub_id)} target="_blank" rel="noreferrer" className="text-[#5FA8D2] font-medium text-xs hover:underline">
+                      <a href={googlePatentsUrl(p.pub_id)} target="_blank" rel="noreferrer" className="text-[#5FA8D2] text-xs font-medium hover:underline hover:text-[#ffa400]">
                         {p.pub_id}
                       </a>
                       <div className="text-[#102A43] text-xs">{p.title}</div>
@@ -1293,7 +1293,7 @@ function RiskRadarCard({ scope, scopeVersion, tokenGetter, competitorNames }: Ri
               {pagedRiskRows.map((p) => (
                 <tr key={p.pub_id} className="odd:bg-white even:bg-slate-50/60">
                   <td className="px-3 py-2 align-top">
-                    <a href={googlePatentsUrl(p.pub_id)} target="_blank" rel="noreferrer" className="text-[#5FA8D2] font-medium text-xs hover:underline">
+                    <a href={googlePatentsUrl(p.pub_id)} target="_blank" rel="noreferrer" className="text-[#5FA8D2] text-xs font-medium hover:underline hover:text-[#ffa400]">
                       {p.pub_id}
                     </a>
                     <div className="text-xs text-[#102A43]">{p.title}</div>
@@ -2058,7 +2058,7 @@ export default function CitationPage() {
       <div className="glass-surface" style={pageSurfaceStyle}>
         {/* Footer */}
         <footer style={footerStyle}>
-          2026 © Phaethon Order LLC | <a href="mailto:admin@phaethonorder.com" target="_blank" rel="noopener noreferrer" className="text-[#312f2f] hover:underline hover:text-blue-400">admin@phaethonorder.com</a> | <a href="https://phaethonorder.com" target="_blank" rel="noopener noreferrer" className="text-[#312f2f] hover:underline hover:text-blue-400">phaethonorder.com</a> | <a href="/help" className="text-[#312f2f] hover:underline hover:text-blue-400">Help</a> | <a href="/docs" className="text-[#312f2f] hover:underline hover:text-blue-400">Legal</a>
+          2026 © Phaethon Order LLC | <a href="mailto:admin@phaethonorder.com" target="_blank" rel="noopener noreferrer" className="text-[#312f2f] hover:underline hover:text-blue-400">admin@phaethonorder.com</a> | <a href="https://www.phaethonorder.com" target="_blank" rel="noopener noreferrer" className="text-[#312f2f] hover:underline hover:text-blue-400">phaethonorder.com</a> | <a href="/help" className="text-[#312f2f] hover:underline hover:text-blue-400">Help</a> | <a href="/docs" className="text-[#312f2f] hover:underline hover:text-blue-400">Legal</a>
         </footer>
       </div>
     </div>

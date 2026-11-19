@@ -294,9 +294,9 @@ export default function LegalIndexPage() {
               content={
                 <>
                   For questions, concerns, or requests regarding these legal documents, please contact:<br />
-                  <strong>Email</strong>: <a href="mailto:admin@phaethonorder.com" className="hover:underline" style={{ color: LINK_COLOR }}>admin@phaethonorder.com</a><br />
+                  <strong>Email</strong>: <a href="mailto:admin@phaethonorder.com" className="text-[#5FA8D2] font-medium hover:underline hover:text-[#ffa400]">admin@phaethonorder.com</a><br />
                   <strong>Subject Line</strong>: Legal Inquiry<br />
-                  <strong>Website</strong>: <a href="https://phaethonorder.com" target="_blank" rel="noopener noreferrer" className="hover:underline" style={{ color: LINK_COLOR }}>https://phaethonorder.com</a>
+                  <strong>Website</strong>: <a href="https://www.phaethonorder.com" target="_blank" rel="noopener noreferrer" className="text-[#5FA8D2] font-medium hover:underline hover:text-[#ffa400]">https://www.phaethonorder.com</a>
                 </>
               }
             />
@@ -310,7 +310,7 @@ export default function LegalIndexPage() {
               title="✧ Document Versions"
               content={
                 <>
-                  We maintain an archive of prior versions of these documents. To request a previous version for reference or compliance purposes, please contact: <a href="mailto:admin@phaethonorder.com" className="hover:underline" style={{ color: LINK_COLOR }}>admin@phaethonorder.com</a>.
+                  We maintain an archive of prior versions of these documents. To request a previous version for reference or compliance purposes, please contact: <a href="mailto:admin@phaethonorder.com" className="text-[#5FA8D2] font-medium hover:underline hover:text-[#ffa400]">admin@phaethonorder.com</a>.
                 </>
               }
             />
@@ -338,46 +338,46 @@ export default function LegalIndexPage() {
             <tbody>
               <tr style={{ borderBottom: "1px solid #e5e7eb" }}>
                 <td style={{ padding: 12 }}>Understand your rights and obligations as a user</td>
-                <td style={{ padding: 12 }}><a href="/docs/tos" className="hover:underline" style={{ color: LINK_COLOR, fontWeight: 600 }}>Terms of Service</a></td>
+                <td style={{ padding: 12 }}><a href="/docs/tos" className="text-[#5FA8D2] font-medium hover:underline hover:text-[#ffa400]">Terms of Service</a></td>
               </tr>
               <tr style={{ borderBottom: "1px solid #e5e7eb" }}>
                 <td style={{ padding: 12 }}>Know what personal data we collect and how we use it</td>
-                <td style={{ padding: 12 }}><a href="/docs/privacy" className="hover:underline" style={{ color: LINK_COLOR, fontWeight: 600 }}>Privacy Policy</a></td>
+                <td style={{ padding: 12 }}><a href="/docs/privacy" className="text-[#5FA8D2] font-medium hover:underline hover:text-[#ffa400]">Privacy Policy</a></td>
               </tr>
               <tr style={{ borderBottom: "1px solid #e5e7eb" }}>
                 <td style={{ padding: 12 }}>Understand pricing, billing, and refund policies</td>
-                <td style={{ padding: 12 }}><a href="/docs/tos" className="hover:underline" style={{ color: LINK_COLOR, fontWeight: 600 }}>Terms of Service (Section 4)</a></td>
+                <td style={{ padding: 12 }}><a href="/docs/tos" className="text-[#5FA8D2] font-medium hover:underline hover:text-[#ffa400]">Terms of Service (Section 4)</a></td>
               </tr>
               <tr style={{ borderBottom: "1px solid #e5e7eb" }}>
                 <td style={{ padding: 12 }}>Exercise your data privacy rights (access, deletion, etc.)</td>
-                <td style={{ padding: 12 }}><a href="/docs/privacy" className="hover:underline" style={{ color: LINK_COLOR, fontWeight: 600 }}>Privacy Policy (Section 9)</a></td>
+                <td style={{ padding: 12 }}><a href="/docs/privacy" className="text-[#5FA8D2] font-medium hover:underline hover:text-[#ffa400]">Privacy Policy (Section 9)</a></td>
               </tr>
               <tr style={{ borderBottom: "1px solid #e5e7eb" }}>
                 <td style={{ padding: 12 }}>Ensure GDPR/CCPA compliance for your organization</td>
-                <td style={{ padding: 12 }}><a href="/docs/dpa" className="hover:underline" style={{ color: LINK_COLOR, fontWeight: 600 }}>Data Processing Agreement</a></td>
+                <td style={{ padding: 12 }}><a href="/docs/dpa" className="text-[#5FA8D2] font-medium hover:underline hover:text-[#ffa400]">Data Processing Agreement</a></td>
               </tr>
               <tr style={{ borderBottom: "1px solid #e5e7eb" }}>
                 <td style={{ padding: 12 }}>See our list of third-party service providers (sub-processors)</td>
-                <td style={{ padding: 12 }}><a href="/docs/dpa#annex-c" className="hover:underline" style={{ color: LINK_COLOR, fontWeight: 600 }}>DPA Annex C (Sub-processors)</a></td>
+                <td style={{ padding: 12 }}><a href="/docs/dpa#annex-c" className="text-[#5FA8D2] font-medium hover:underline hover:text-[#ffa400]">DPA Annex C (Sub-processors)</a></td>
               </tr>
               <tr style={{ borderBottom: "1px solid #e5e7eb" }}>
                 <td style={{ padding: 12 }}>Review our security measures and practices</td>
-                <td style={{ padding: 12 }}><a href="/docs/dpa#annex-b" className="hover:underline" style={{ color: LINK_COLOR, fontWeight: 600 }}>DPA Annex B (Security Measures)</a></td>
+                <td style={{ padding: 12 }}><a href="/docs/dpa#annex-b" className="text-[#5FA8D2] font-medium hover:underline hover:text-[#ffa400]">DPA Annex B (Security Measures)</a></td>
               </tr>
               <tr style={{ borderBottom: "1px solid #e5e7eb" }}>
                 <td style={{ padding: 12 }}>Understand international data transfer safeguards</td>
-                <td style={{ padding: 12 }}><a href="/docs/dpa#annex-d" className="hover:underline" style={{ color: LINK_COLOR, fontWeight: 600 }}>DPA Annex D (Standard Contractual Clauses)</a></td>
+                <td style={{ padding: 12 }}><a href="/docs/dpa#annex-d" className="text-[#5FA8D2] font-medium hover:underline hover:text-[#ffa400]">DPA Annex D (Standard Contractual Clauses)</a></td>
               </tr>
               <tr>
                 <td style={{ padding: 12 }}>Find out what happens to your data when you cancel</td>
-                <td style={{ padding: 12 }}><a href="/docs/dpa" className="hover:underline" style={{ color: LINK_COLOR, fontWeight: 600 }}>DPA (Section 4.6) & <a href="/docs/privacy" className="hover:underline" style={{ color: LINK_COLOR, fontWeight: 600 }}>Privacy Policy (Section 5)</a></a></td>
+                <td style={{ padding: 12 }}><a href="/docs/dpa" className="text-[#5FA8D2] font-medium hover:underline hover:text-[#ffa400]">DPA (Section 4.6) & <a href="/docs/privacy" className="text-[#5FA8D2] font-medium hover:underline hover:text-[#ffa400]">Privacy Policy (Section 5)</a></a></td>
               </tr>
             </tbody>
           </table>
         </div>
 
         <footer style={footerStyle}>
-          2026 © Phaethon Order LLC | <a href="mailto:admin@phaethonorder.com" target="_blank" rel="noopener noreferrer" className="text-[#312f2f] hover:underline hover:text-blue-400">admin@phaethonorder.com</a> | <a href="https://phaethonorder.com" target="_blank" rel="noopener noreferrer" className="text-[#312f2f] hover:underline hover:text-blue-400">phaethonorder.com</a> | <a href="/help" className="text-[#312f2f] hover:underline hover:text-blue-400">Help</a> | <a href="/docs" className="text-[#312f2f] hover:underline hover:text-blue-400">Legal</a>
+          2026 © Phaethon Order LLC | <a href="mailto:admin@phaethonorder.com" target="_blank" rel="noopener noreferrer" className="text-[#312f2f] hover:underline hover:text-blue-400">admin@phaethonorder.com</a> | <a href="https://www.phaethonorder.com" target="_blank" rel="noopener noreferrer" className="text-[#312f2f] hover:underline hover:text-blue-400">phaethonorder.com</a> | <a href="/help" className="text-[#312f2f] hover:underline hover:text-blue-400">Help</a> | <a href="/docs" className="text-[#312f2f] hover:underline hover:text-blue-400">Legal</a>
         </footer>
       </div>
     </div>

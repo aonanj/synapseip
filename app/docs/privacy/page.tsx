@@ -51,7 +51,7 @@ export default function PrivacyPolicyPage() {
             <strong>Last Updated</strong>: October 17, 2026
           </div>
           <p style={{ marginTop: 8, fontSize: 14, color: "#627D98", marginBottom: 0 }}>
-            <a href="/docs" style={{ color: LINK_COLOR, textDecoration: "none" }}>← Back to Legal</a>
+            <a href="/docs" className="text-[#5FA8D2] font-medium hover:underline hover:text-[#ffa400]">← Back to Legal</a>
           </p>
         </div>
 
@@ -60,7 +60,7 @@ export default function PrivacyPolicyPage() {
           
           <Section title="Introduction">
             <p>
-              Phaethon Order LLC ("<strong>Company</strong>," "<strong>We</strong>," "<strong>Us</strong>," or "<strong>Our</strong>") operates the SynapseIP service (the "<strong>Service</strong>"), accessible at <a href="https://www.synapse-ip.com/" target="_blank" rel="noopener noreferrer" className="hover:underline" style={{ color: LINK_COLOR }}>https://www.synapse-ip.com/</a>. This Privacy Policy explains how We collect, use, disclose, and protect your personal information when you use the Service.
+              Phaethon Order LLC ("<strong>Company</strong>," "<strong>We</strong>," "<strong>Us</strong>," or "<strong>Our</strong>") operates the SynapseIP service (the "<strong>Service</strong>"), accessible at <a href="https://www.synapse-ip.com/" target="_blank" rel="noopener noreferrer" className="text-[#5FA8D2] font-medium hover:underline hover:text-[#ffa400]">https://www.synapse-ip.com/</a>. This Privacy Policy explains how We collect, use, disclose, and protect your personal information when you use the Service.
             </p>
             <p style={{ fontWeight: 600, marginTop: 16 }}>
               By using SynapseIP, you agree to the collection and use of information in accordance with this Privacy Policy.
@@ -69,7 +69,7 @@ export default function PrivacyPolicyPage() {
               If you do not agree with Our policies and practices, do not use the Service.
             </p>
             <p>
-              This Privacy Policy should be read in conjunction with Our <a href="/docs" className="hover:underline" style={{ color: LINK_COLOR }}>Terms of Service</a>. Capitalized terms not defined in this Privacy Policy have the meanings given in the Terms of Service.
+              This Privacy Policy should be read in conjunction with Our <a href="/docs" className="text-[#5FA8D2] font-medium hover:underline hover:text-[#ffa400]">Terms of Service</a>. Capitalized terms not defined in this Privacy Policy have the meanings given in the Terms of Service.
             </p>
           </Section>
 
@@ -286,28 +286,28 @@ export default function PrivacyPolicyPage() {
               
               <p style={{ marginTop: 12 }}><strong>Infrastructure and Hosting</strong>:</p>
               <ul style={{ marginLeft: 20, marginTop: 8, listStyleType: "disc", listStylePosition: "outside", color: TEXT_COLOR }}>
-                <li><strong>Vercel</strong> (web hosting and deployment): <a href="https://vercel.com/legal/privacy-policy" target="_blank" rel="noopener noreferrer" className="hover:underline" style={{ color: LINK_COLOR }}>https://vercel.com/legal/privacy-policy</a></li>
-                <li><strong>Neon.tech</strong> (PostgreSQL database hosting): <a href="https://neon.tech/privacy-policy" target="_blank" rel="noopener noreferrer" className="hover:underline" style={{ color: LINK_COLOR }}>https://neon.tech/privacy-policy</a></li>
+                <li><strong>Vercel</strong> (web hosting and deployment): <a href="https://vercel.com/legal/privacy-policy" target="_blank" rel="noopener noreferrer" className="text-[#5FA8D2] font-medium hover:underline hover:text-[#ffa400]">https://vercel.com/legal/privacy-policy</a></li>
+                <li><strong>Neon.tech</strong> (PostgreSQL database hosting): <a href="https://neon.tech/privacy-policy" target="_blank" rel="noopener noreferrer" className="text-[#5FA8D2] font-medium hover:underline hover:text-[#ffa400]">https://neon.tech/privacy-policy</a></li>
               </ul>
 
               <p style={{ marginTop: 12 }}><strong>Authentication</strong>:</p>
               <ul style={{ marginLeft: 20, marginTop: 8, listStyleType: "disc", listStylePosition: "outside", color: TEXT_COLOR }}>
-                <li><strong>Auth0</strong> (identity and access management): <a href="https://auth0.com/privacy" target="_blank" rel="noopener noreferrer" className="hover:underline" style={{ color: LINK_COLOR }}>https://auth0.com/privacy</a></li>
+                <li><strong>Auth0</strong> (identity and access management): <a href="https://auth0.com/privacy" target="_blank" rel="noopener noreferrer" className="text-[#5FA8D2] font-medium hover:underline hover:text-[#ffa400]">https://auth0.com/privacy</a></li>
               </ul>
 
               <p style={{ marginTop: 12 }}><strong>Payment Processing</strong>:</p>
               <ul style={{ marginLeft: 20, marginTop: 8, listStyleType: "disc", listStylePosition: "outside", color: TEXT_COLOR }}>
-                <li><strong>Stripe</strong> (payment gateway and billing): <a href="https://stripe.com/privacy" target="_blank" rel="noopener noreferrer" className="hover:underline" style={{ color: LINK_COLOR }}>https://stripe.com/privacy</a></li>
+                <li><strong>Stripe</strong> (payment gateway and billing): <a href="https://stripe.com/privacy" target="_blank" rel="noopener noreferrer" className="text-[#5FA8D2] font-medium hover:underline hover:text-[#ffa400]">https://stripe.com/privacy</a></li>
               </ul>
 
               <p style={{ marginTop: 12 }}><strong>Email Delivery</strong>:</p>
               <ul style={{ marginLeft: 20, marginTop: 8, listStyleType: "disc", listStylePosition: "outside", color: TEXT_COLOR }}>
-                <li><strong>Mailgun</strong> (transactional email and alert delivery): <a href="https://www.mailgun.com/legal/privacy-policy/" target="_blank" rel="noopener noreferrer" className="hover:underline" style={{ color: LINK_COLOR }}>https://www.mailgun.com/legal/privacy-policy/</a></li>
+                <li><strong>Mailgun</strong> (transactional email and alert delivery): <a href="https://www.mailgun.com/legal/privacy-policy/" target="_blank" rel="noopener noreferrer" className="text-[#5FA8D2] font-medium hover:underline hover:text-[#ffa400]">https://www.mailgun.com/legal/privacy-policy/</a></li>
               </ul>
 
               <p style={{ marginTop: 12 }}><strong>AI and Machine Learning</strong>:</p>
               <ul style={{ marginLeft: 20, marginTop: 8, listStyleType: "disc", listStylePosition: "outside", color: TEXT_COLOR }}>
-                <li><strong>AI embeddings generation</strong> (text embeddings for semantic search): <a href="https://openai.com/privacy/" target="_blank" rel="noopener noreferrer" className="hover:underline" style={{ color: LINK_COLOR }}>https://openai.com/privacy/</a></li>
+                <li><strong>AI embeddings generation</strong> (text embeddings for semantic search): <a href="https://openai.com/privacy/" target="_blank" rel="noopener noreferrer" className="text-[#5FA8D2] font-medium hover:underline hover:text-[#ffa400]">https://openai.com/privacy/</a></li>
               </ul>
               <p style={{ marginLeft: 40, marginTop: 4, fontSize: 13 }}>
                 Note: We send patent titles, abstracts, and claims text to a third-party API for embedding generation. No personal user data is sent to the API.
@@ -315,7 +315,7 @@ export default function PrivacyPolicyPage() {
 
               <p style={{ marginTop: 12 }}><strong>Analytics and Monitoring</strong>:</p>
               <ul style={{ marginLeft: 20, marginTop: 8, listStyleType: "disc", listStylePosition: "outside", color: TEXT_COLOR }}>
-                <li>Google Analytics (analytics and performance monitoring): <a href="https://policies.google.com/" target="_blank" rel="noopener noreferrer" className="hover:underline" style={{ color: LINK_COLOR }}>https://policies.google.com/</a></li>
+                <li>Google Analytics (analytics and performance monitoring): <a href="https://policies.google.com/" target="_blank" rel="noopener noreferrer" className="text-[#5FA8D2] font-medium hover:underline hover:text-[#ffa400]">https://policies.google.com/</a></li>
               </ul>
 
               <p style={{ marginTop: 12 }}>
@@ -523,8 +523,8 @@ export default function PrivacyPolicyPage() {
 
               <p style={{ marginTop: 12 }}><strong>Opt-Out Tools</strong>:</p>
               <ul style={{ marginLeft: 20, marginTop: 8, listStyleType: "disc", listStylePosition: "outside", color: TEXT_COLOR }}>
-                <li>Google Analytics Opt-out: <a href="https://tools.google.com/dlpage/gaoptout" target="_blank" rel="noopener noreferrer" className="hover:underline" style={{ color: LINK_COLOR }}>https://tools.google.com/dlpage/gaoptout/</a></li>
-                <li>Industry opt-out tools: <a href="http://optout.aboutads.info/" target="_blank" rel="noopener noreferrer" className="hover:underline" style={{ color: LINK_COLOR }}>http://optout.aboutads.info/</a> or <a href="http://www.youronlinechoices.eu/" target="_blank" rel="noopener noreferrer" className="hover:underline" style={{ color: LINK_COLOR }}>http://www.youronlinechoices.eu/</a></li>
+                <li>Google Analytics Opt-out: <a href="https://tools.google.com/dlpage/gaoptout" target="_blank" rel="noopener noreferrer" className="text-[#5FA8D2] font-medium hover:underline hover:text-[#ffa400]">https://tools.google.com/dlpage/gaoptout/</a></li>
+                <li>Industry opt-out tools: <a href="http://optout.aboutads.info/" target="_blank" rel="noopener noreferrer" className="text-[#5FA8D2] font-medium hover:underline hover:text-[#ffa400]">http://optout.aboutads.info/</a> or <a href="http://www.youronlinechoices.eu/" target="_blank" rel="noopener noreferrer" className="text-[#5FA8D2] font-medium hover:underline hover:text-[#ffa400]">http://www.youronlinechoices.eu/</a></li>
               </ul>
             </Subsection>
 
@@ -622,9 +622,9 @@ export default function PrivacyPolicyPage() {
                 If you are located in the EEA, UK, or Switzerland, you have the right to lodge a complaint with your local data protection authority:
               </p>
               <ul style={{ marginLeft: 20, marginTop: 8, listStyleType: "disc", listStylePosition: "outside", color: TEXT_COLOR }}>
-                <li><strong>EEA</strong>: Find your authority at <a href="https://edpb.europa.eu/about-edpb/board/members_en" target="_blank" rel="noopener noreferrer" className="hover:underline" style={{ color: LINK_COLOR }}>https://edpb.europa.eu/about-edpb/board/members_en/</a></li>
-                <li><strong>UK</strong>: Information Commissioner's Office (ICO) -- <a href="https://ico.org.uk/" target="_blank" rel="noopener noreferrer" className="hover:underline" style={{ color: LINK_COLOR }}>https://ico.org.uk/</a></li>
-                <li><strong>Switzerland</strong>: Federal Data Protection and Information Commissioner (FDPIC) -- <a href="https://www.edoeb.admin.ch/" target="_blank" rel="noopener noreferrer" className="hover:underline" style={{ color: LINK_COLOR }}>https://www.edoeb.admin.ch/</a></li>
+                <li><strong>EEA</strong>: Find your authority at <a href="https://edpb.europa.eu/about-edpb/board/members_en" target="_blank" rel="noopener noreferrer" className="text-[#5FA8D2] font-medium hover:underline hover:text-[#ffa400]">https://edpb.europa.eu/about-edpb/board/members_en/</a></li>
+                <li><strong>UK</strong>: Information Commissioner's Office (ICO) -- <a href="https://ico.org.uk/" target="_blank" rel="noopener noreferrer" className="text-[#5FA8D2] font-medium hover:underline hover:text-[#ffa400]">https://ico.org.uk/</a></li>
+                <li><strong>Switzerland</strong>: Federal Data Protection and Information Commissioner (FDPIC) -- <a href="https://www.edoeb.admin.ch/" target="_blank" rel="noopener noreferrer" className="text-[#5FA8D2] font-medium hover:underline hover:text-[#ffa400]">https://www.edoeb.admin.ch/</a></li>
               </ul>
             </Subsection>
           </Section>
@@ -654,7 +654,7 @@ export default function PrivacyPolicyPage() {
               <ul style={{ marginLeft: 20, listStyleType: "disc", listStylePosition: "outside", color: TEXT_COLOR }}>
                 <li><strong>Unsubscribe Link</strong>: Click the "unsubscribe" link at the bottom of any marketing email;</li>
                 <li><strong>Account Settings</strong>: Manage email preferences in your account dashboard;</li>
-                <li><strong>Email Us</strong>: Send opt-out request to <a href="mailto:admin@phaethonorder.com" className="hover:underline" style={{ color: LINK_COLOR }}>admin@phaethonorder.com</a>;</li>
+                <li><strong>Email Us</strong>: Send opt-out request to <a href="mailto:admin@phaethonorder.com" className="text-[#5FA8D2] font-medium hover:underline hover:text-[#ffa400]">admin@phaethonorder.com</a>;</li>
                 <li><strong>Timeframe</strong>: We will process opt-out requests within 10 business days;</li>
                 <li><strong>Note</strong>: Opting out of marketing does not affect transactional emails necessary for the Service.</li>
               </ul>
@@ -666,7 +666,7 @@ export default function PrivacyPolicyPage() {
               SynapseIP is not intended for use by individuals under the age of 18. We do not knowingly collect personal information from children under 18.
             </p>
             <p>
-              If you are a parent or guardian and believe your child has provided us with personal information, please contact us at <a href="mailto:admin@phaethonorder.com" className="hover:underline" style={{ color: LINK_COLOR }}>admin@phaethonorder.com</a>. We will delete such information promptly upon verification.
+              If you are a parent or guardian and believe your child has provided us with personal information, please contact us at <a href="mailto:admin@phaethonorder.com" className="text-[#5FA8D2] font-medium hover:underline hover:text-[#ffa400]">admin@phaethonorder.com</a>. We will delete such information promptly upon verification.
             </p>
             <p>
               In accordance with the Children's Online Privacy Protection Act (COPPA), We do not knowingly collect information from children under 13.
@@ -711,7 +711,7 @@ export default function PrivacyPolicyPage() {
               We do not share personal information with third parties for their direct marketing purposes without your explicit consent.
             </p>
             <p>
-              If you are a California resident and have questions, contact <a href="mailto:admin@phaethonorder.com" className="hover:underline" style={{ color: LINK_COLOR }}>admin@phaethonorder.com</a> with "California Shine the Light Request" in the subject line.
+              If you are a California resident and have questions, contact <a href="mailto:admin@phaethonorder.com" className="text-[#5FA8D2] font-medium hover:underline hover:text-[#ffa400]">admin@phaethonorder.com</a> with "California Shine the Light Request" in the subject line.
             </p>
           </Section>
 
@@ -730,9 +730,9 @@ export default function PrivacyPolicyPage() {
           <Section title="15. Third-Party Links and Services">
             <p>The Service may contain links to external websites, patent databases, or third-party services:</p>
             <ul style={{ marginLeft: 20, marginTop: 8, listStyleType: "disc", listStylePosition: "outside", color: TEXT_COLOR }}>
-              <li><strong>Google Patents</strong> (<a href="https://patents.google.com/" target="_blank" rel="noopener noreferrer" className="hover:underline" style={{ color: LINK_COLOR }}>https://patents.google.com/</a>)</li>
-              <li><strong>USPTO</strong> (<a href="https://www.uspto.gov/" target="_blank" rel="noopener noreferrer" className="hover:underline" style={{ color: LINK_COLOR }}>https://www.uspto.gov/</a>)</li>
-              <li><strong>Espacenet</strong> (<a href="https://worldwide.espacenet.com/" target="_blank" rel="noopener noreferrer" className="hover:underline" style={{ color: LINK_COLOR }}>https://worldwide.espacenet.com/</a>)</li>
+              <li><strong>Google Patents</strong> (<a href="https://patents.google.com/" target="_blank" rel="noopener noreferrer" className="text-[#5FA8D2] font-medium hover:underline hover:text-[#ffa400]">https://patents.google.com/</a>)</li>
+              <li><strong>USPTO</strong> (<a href="https://www.uspto.gov/" target="_blank" rel="noopener noreferrer" className="text-[#5FA8D2] font-medium hover:underline hover:text-[#ffa400]">https://www.uspto.gov/</a>)</li>
+              <li><strong>Espacenet</strong> (<a href="https://worldwide.espacenet.com/" target="_blank" rel="noopener noreferrer" className="text-[#5FA8D2] font-medium hover:underline hover:text-[#ffa400]">https://worldwide.espacenet.com/</a>)</li>
               <li>Other patent office databases</li>
             </ul>
             <p style={{ fontWeight: 600, marginTop: 12 }}>
@@ -751,14 +751,14 @@ export default function PrivacyPolicyPage() {
             <p style={{ marginTop: 12, marginLeft: 20 }}>
               <strong>Data Controller</strong>:<br />
               Phaethon Order LLC<br />
-              Email: <a href="mailto:admin@phaethonorder.com" className="hover:underline" style={{ color: LINK_COLOR }}>admin@phaethonorder.com</a><br />
-              Website: <a href="https://phaethonorder.com" target="_blank" rel="noopener noreferrer" className="hover:underline" style={{ color: LINK_COLOR }}>https://phaethonorder.com</a>
+              Email: <a href="mailto:admin@phaethonorder.com" className="text-[#5FA8D2] font-medium hover:underline hover:text-[#ffa400]">admin@phaethonorder.com</a><br />
+              Website: <a href="https://www.phaethonorder.com" target="_blank" rel="noopener noreferrer" className="text-[#5FA8D2] font-medium hover:underline hover:text-[#ffa400]">https://www.phaethonorder.com</a>
             </p>
             <p style={{ marginTop: 12 }}>
               <strong>Privacy Questions</strong>: For any questions, concerns, or requests regarding this Privacy Policy or Our data practices, please contact:
             </p>
             <p style={{ marginTop: 8, marginLeft: 20 }}>
-              <strong>Email</strong>: <a href="mailto:admin@phaethonorder.com" className="hover:underline" style={{ color: LINK_COLOR }}>admin@phaethonorder.com</a><br />
+              <strong>Email</strong>: <a href="mailto:admin@phaethonorder.com" className="text-[#5FA8D2] font-medium hover:underline hover:text-[#ffa400]">admin@phaethonorder.com</a><br />
               <strong>Subject Line</strong>: Privacy Inquiry<br />
               <strong>Response Time</strong>: We aim to respond within 5 business days
             </p>
@@ -798,8 +798,8 @@ export default function PrivacyPolicyPage() {
 
           <Section title="18. Dispute Resolution">
             <ul style={{ marginLeft: 20, listStyleType: "disc", listStylePosition: "outside", color: TEXT_COLOR }}>
-              <li><strong>Informal Resolution</strong>: Contact <a href="mailto:admin@phaethonorder.com" className="hover:underline" style={{ color: LINK_COLOR }}>admin@phaethonorder.com</a> to attempt to resolve concerns;</li>
-              <li><strong>Arbitration/Jurisdiction</strong>: Subject to the dispute resolution provisions in Our <a href="/docs" className="hover:underline" style={{ color: LINK_COLOR }}>Terms of Service</a>;</li>
+              <li><strong>Informal Resolution</strong>: Contact <a href="mailto:admin@phaethonorder.com" className="text-[#5FA8D2] font-medium hover:underline hover:text-[#ffa400]">admin@phaethonorder.com</a> to attempt to resolve concerns;</li>
+              <li><strong>Arbitration/Jurisdiction</strong>: Subject to the dispute resolution provisions in Our <a href="/docs" className="text-[#5FA8D2] font-medium hover:underline hover:text-[#ffa400]">Terms of Service</a>;</li>
               <li><strong>Regulatory Complaints</strong>: You may file complaints with applicable data protection authorities (see Section 9.7).</li>
             </ul>
           </Section>
@@ -882,7 +882,7 @@ export default function PrivacyPolicyPage() {
       <div className="glass-surface" style={surfaceStyle}>
         {/* Footer */}
         <footer style={footerStyle}>
-          2026 © Phaethon Order LLC | <a href="mailto:admin@phaethonorder.com" target="_blank" rel="noopener noreferrer" className="text-[#312f2f] hover:underline hover:text-blue-400">admin@phaethonorder.com</a> | <a href="https://phaethonorder.com" target="_blank" rel="noopener noreferrer" className="text-[#312f2f] hover:underline hover:text-blue-400">phaethonorder.com</a> | <a href="/help" className="text-[#312f2f] hover:underline hover:text-blue-400">Help</a> | <a href="/docs" className="text-[#312f2f] hover:underline hover:text-blue-400">Legal</a>
+          2026 © Phaethon Order LLC | <a href="mailto:admin@phaethonorder.com" target="_blank" rel="noopener noreferrer" className="text-[#312f2f] hover:underline hover:text-blue-400">admin@phaethonorder.com</a> | <a href="https://www.phaethonorder.com" target="_blank" rel="noopener noreferrer" className="text-[#312f2f] hover:underline hover:text-blue-400">phaethonorder.com</a> | <a href="/help" className="text-[#312f2f] hover:underline hover:text-blue-400">Help</a> | <a href="/docs" className="text-[#312f2f] hover:underline hover:text-blue-400">Legal</a>
         </footer>
       </div>
     </div>

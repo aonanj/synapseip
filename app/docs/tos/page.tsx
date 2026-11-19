@@ -60,7 +60,7 @@ export default function TermsOfServicePage() {
           
           <Section title="Agreement to Terms">
             <p>
-              These Terms of Service ("<strong>Terms</strong>") constitute a legally binding agreement between you (individually or on behalf of an entity, "<strong>you</strong>" or "<strong>your</strong>") and Phaethon Order LLC ("<strong>Company</strong>," "<strong>We</strong>," "<strong>Us</strong>," or "<strong>Our</strong>") concerning your access to and use of the SynapseIP service, including Our website at <a href="https://www.synapse-ip.com/" target="_blank" rel="noopener noreferrer" className="hover:underline" style={{ color: LINK_COLOR }}>https://www.synapse-ip.com/</a> and any related services, features, content, or applications (collectively, the "<strong>Service</strong>").
+              These Terms of Service ("<strong>Terms</strong>") constitute a legally binding agreement between you (individually or on behalf of an entity, "<strong>you</strong>" or "<strong>your</strong>") and Phaethon Order LLC ("<strong>Company</strong>," "<strong>We</strong>," "<strong>Us</strong>," or "<strong>Our</strong>") concerning your access to and use of the SynapseIP service, including Our website at <a href="https://www.synapse-ip.com/" target="_blank" rel="noopener noreferrer" className="text-[#5FA8D2] font-medium hover:underline hover:text-[#ffa400]">https://www.synapse-ip.com/</a> and any related services, features, content, or applications (collectively, the "<strong>Service</strong>").
             </p>
             <p style={{ fontWeight: 600, marginTop: 16 }}>
               BY ACCESSING OR USING THE SERVICE, YOU AGREE TO BE BOUND BY THESE TERMS. If you do not agree to these Terms, you must not access or use the Service.
@@ -296,7 +296,7 @@ export default function TermsOfServicePage() {
           <Section title="7. Privacy and Data Protection">
             <Subsection title="7.1 Privacy Policy">
               <p>
-                Your use of the Service is subject to Our <a href="/docs/privacy" className="hover:underline" style={{ color: LINK_COLOR }}>Privacy Policy</a>, which describes how We collect, use, and protect your personal information.
+                Your use of the Service is subject to Our <a href="/docs/privacy" className="text-[#5FA8D2] font-medium hover:underline hover:text-[#ffa400]">Privacy Policy</a>, which describes how We collect, use, and protect your personal information.
               </p>
             </Subsection>
 
@@ -329,7 +329,7 @@ export default function TermsOfServicePage() {
               <ul style={{ marginLeft: 20, listStyleType: "disc", listStylePosition: "outside", color: TEXT_COLOR }}>
                 <li><strong>Account Data</strong>: Retained while your account is active and for a reasonable period after termination;</li>
                 <li><strong>Usage Data</strong>: May be retained in anonymized form for analytics;</li>
-                <li><strong>Deletion Requests</strong>: You may request account deletion by contacting <a href="mailto:admin@phaethonorder.com" className="hover:underline" style={{ color: LINK_COLOR }}>admin@phaethonorder.com</a>.</li>
+                <li><strong>Deletion Requests</strong>: You may request account deletion by contacting <a href="mailto:admin@phaethonorder.com" className="text-[#5FA8D2] font-medium hover:underline hover:text-[#ffa400]">admin@phaethonorder.com</a>.</li>
               </ul>
             </Subsection>
 
@@ -458,7 +458,7 @@ export default function TermsOfServicePage() {
               <p>You may terminate your account at any time by:</p>
               <ul style={{ marginLeft: 20, marginTop: 8, listStyleType: "disc", listStylePosition: "outside", color: TEXT_COLOR }}>
                 <li>Canceling your subscription through your account settings</li>
-                <li>Contacting <a href="mailto:admin@phaethonorder.com" className="hover:underline" style={{ color: LINK_COLOR }}>admin@phaethonorder.com</a></li>
+                <li>Contacting <a href="mailto:admin@phaethonorder.com" className="text-[#5FA8D2] font-medium hover:underline hover:text-[#ffa400]">admin@phaethonorder.com</a></li>
                 <li>Ceasing to use the Service</li>
               </ul>
               <p style={{ marginTop: 12 }}>
@@ -525,7 +525,7 @@ export default function TermsOfServicePage() {
 
             <Subsection title="14.2 Informal Resolution">
               <p>
-                Before filing a claim, you agree to contact Us at <a href="mailto:admin@phaethonorder.com" className="hover:underline" style={{ color: LINK_COLOR }}>admin@phaethonorder.com</a> to attempt to resolve the dispute informally. We will make reasonable efforts to resolve disputes within ninety days.
+                Before filing a claim, you agree to contact Us at <a href="mailto:admin@phaethonorder.com" className="text-[#5FA8D2] font-medium hover:underline hover:text-[#ffa400]">admin@phaethonorder.com</a> to attempt to resolve the dispute informally. We will make reasonable efforts to resolve disputes within ninety days.
               </p>
             </Subsection>
 
@@ -598,8 +598,8 @@ export default function TermsOfServicePage() {
               <p style={{ marginTop: 12 }}>You may contact Us at:</p>
               <p style={{ marginTop: 8, marginLeft: 20 }}>
                 <strong>Phaethon Order LLC</strong><br />
-                Email: <a href="mailto:admin@phaethonorder.com" className="hover:underline" style={{ color: LINK_COLOR }}>admin@phaethonorder.com</a><br />
-                Website: <a href="https://phaethonorder.com" target="_blank" rel="noopener noreferrer" className="hover:underline" style={{ color: LINK_COLOR }}>https://phaethonorder.com</a>
+                Email: <a href="mailto:admin@phaethonorder.com" className="text-[#5FA8D2] font-medium hover:underline hover:text-[#ffa400]">admin@phaethonorder.com</a><br />
+                Website: <a href="https://www.phaethonorder.com" target="_blank" rel="noopener noreferrer" className="text-[#5FA8D2] font-medium hover:underline hover:text-[#ffa400]">https://www.phaethonorder.com</a>
               </p>
             </Subsection>
 
@@ -624,8 +624,8 @@ export default function TermsOfServicePage() {
             <p>For questions, concerns, or notices regarding these Terms, please contact:</p>
             <p style={{ marginTop: 12, marginLeft: 20 }}>
               <strong>Phaethon Order LLC</strong><br />
-              Email: <a href="mailto:admin@phaethonorder.com" className="hover:underline" style={{ color: LINK_COLOR }}>admin@phaethonorder.com</a><br />
-              Website: <a href="https://phaethonorder.com" target="_blank" rel="noopener noreferrer" className="hover:underline" style={{ color: LINK_COLOR }}>https://phaethonorder.com</a>
+              Email: <a href="mailto:admin@phaethonorder.com" className="text-[#5FA8D2] font-medium hover:underline hover:text-[#ffa400]">admin@phaethonorder.com</a><br />
+              Website: <a href="https://www.phaethonorder.com" target="_blank" rel="noopener noreferrer" className="text-[#5FA8D2] font-medium hover:underline hover:text-[#ffa400]">https://www.phaethonorder.com</a>
             </p>
           </Section>
 
@@ -656,7 +656,7 @@ export default function TermsOfServicePage() {
       <div className="glass-surface" style={surfaceStyle}>
         {/* Footer */}
         <footer style={footerStyle}>
-          2026 © Phaethon Order LLC | <a href="mailto:admin@phaethonorder.com" target="_blank" rel="noopener noreferrer" className="text-[#312f2f] hover:underline hover:text-blue-400">admin@phaethonorder.com</a> | <a href="https://phaethonorder.com" target="_blank" rel="noopener noreferrer" className="text-[#312f2f] hover:underline hover:text-blue-400">phaethonorder.com</a> | <a href="/help" className="text-[#312f2f] hover:underline hover:text-blue-400">Help</a> | <a href="/docs" className="text-[#312f2f] hover:underline hover:text-blue-400">Legal</a>
+          2026 © Phaethon Order LLC | <a href="mailto:admin@phaethonorder.com" target="_blank" rel="noopener noreferrer" className="text-[#312f2f] hover:underline hover:text-blue-400">admin@phaethonorder.com</a> | <a href="https://www.phaethonorder.com" target="_blank" rel="noopener noreferrer" className="text-[#312f2f] hover:underline hover:text-blue-400">phaethonorder.com</a> | <a href="/help" className="text-[#312f2f] hover:underline hover:text-blue-400">Help</a> | <a href="/docs" className="text-[#312f2f] hover:underline hover:text-blue-400">Legal</a>
         </footer>
       </div>
     </div>

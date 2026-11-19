@@ -49,7 +49,7 @@ function PricingCard({ plan, onSubscribe }: { plan: PricePlan; onSubscribe: (pri
     return null;
   }, [plan.tier, plan.interval, plan.amount_cents]);
 
-  const recommended = plan.tier === "user" && plan.interval === "year";
+  const recommended = plan.tier === "beta_tester" && plan.interval_count === 3;
 
   return (
     <div
@@ -71,9 +71,9 @@ function PricingCard({ plan, onSubscribe }: { plan: PricePlan; onSubscribe: (pri
       <div className="p-6">
         {/* Tier Name */}
         <div className="mb-4">
-          <h3 className="text-lg font-bold" style={{ color: '#102A43' }}>{isBeta ? "Beta Tester" : "User"}</h3>
+          <h3 className="text-lg font-bold" style={{ color: '#102A43' }}>{isBeta ? "Early Adopter" : "Standard User"}</h3>
           <p className="text-sm text-slate-500 mt-1">
-            {isBeta ? "Early access pricing" : "Full-featured access"}
+            {isBeta ? "Limited-time pricing" : "Full-featured access"}
           </p>
         </div>
 
@@ -92,11 +92,6 @@ function PricingCard({ plan, onSubscribe }: { plan: PricePlan; onSubscribe: (pri
             </div>
           )}
 
-          {isBeta && plan.interval_count === 3 && (
-            <p className="mt-2 text-xs text-slate-600">
-              Auto-migrates to User tier after 90 days
-            </p>
-          )}
         </div>
 
         {/* Features */}
@@ -127,7 +122,7 @@ function PricingCard({ plan, onSubscribe }: { plan: PricePlan; onSubscribe: (pri
                 clipRule="evenodd"
               />
             </svg>
-            <span>Semantic search & AI insights</span>
+            <span>AI-powered insights and metrics</span>
           </li>
           <li className="flex items-start gap-2 text-sm text-slate-700">
             <svg
@@ -141,7 +136,7 @@ function PricingCard({ plan, onSubscribe }: { plan: PricePlan; onSubscribe: (pri
                 clipRule="evenodd"
               />
             </svg>
-            <span>CSV & PDF exports</span>
+            <span>Downloadable reports</span>
           </li>
           <li className="flex items-start gap-2 text-sm text-slate-700">
             <svg
@@ -198,7 +193,7 @@ function PricingCard({ plan, onSubscribe }: { plan: PricePlan; onSubscribe: (pri
               : "bg-slate-100 text-[#102A43] hover:bg-slate-200 border border-slate-200"
           }`}
         >
-          {isBeta ? "Start Early Adopter Trial" : "Subscribe Now"}
+          {isBeta ? "Get Early Adopter Plan" : "Subscribe Now"}
         </button>
 
         {plan.interval === "year" && (
@@ -243,7 +238,7 @@ export default function PricingPlans({ plans, onSubscribe }: PricingPlansProps) 
         <div className="mb-12">
           <h3 className="text-xl font-bold mb-4" style={{ color: '#102A43' }}>Early Adopter Access</h3>
           <p className="text-sm text-slate-600 mb-6">
-            Special pricing for early adopters. Auto-migrates to User tier after 90 days.
+            Special pricing for early adopters. Limited-time offer.
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
             {betaPlans.map((plan) => (
@@ -258,7 +253,7 @@ export default function PricingPlans({ plans, onSubscribe }: PricingPlansProps) 
         <div>
           <h3 className="text-xl font-bold mb-4" style={{ color: '#102A43' }}>Standard Access</h3>
           <p className="text-sm text-slate-600 mb-6">
-            Full-featured access with no limits. Choose monthly or annual billing.
+            Full access to all features. Choose monthly or annual billing.
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
             {userPlans.map((plan) => (
@@ -281,9 +276,9 @@ export default function PricingPlans({ plans, onSubscribe }: PricingPlansProps) 
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a4 4 0 00-3.446 6.032l-2.261 2.26a1 1 0 101.414 1.415l2.261-2.261A4 4 0 1011 5z" clipRule="evenodd" />
               </svg>
             </div>
-            <h4 className="font-semibold mb-2" style={{ color: '#102A43' }}>Powerful Search</h4>
+            <h4 className="font-semibold mb-2" style={{ color: '#102A43' }}>High-Accuracy Search</h4>
             <p className="text-sm text-slate-600">
-              Search 57,000+ patents and applications with keyword and semantic search
+              Search 83,000+ patents and applications with AI-powered insights and metrics.
             </p>
           </div>
 
@@ -295,7 +290,7 @@ export default function PricingPlans({ plans, onSubscribe }: PricingPlansProps) 
             </div>
             <h4 className="font-semibold mb-2" style={{ color: '#102A43' }}>Trend Analysis</h4>
             <p className="text-sm text-slate-600">
-              Visualize patent trends by assignee, technology, and timeline
+              View AI/ML IP trends based on owner, tech domain, and timeline.
             </p>
           </div>
 
@@ -307,7 +302,7 @@ export default function PricingPlans({ plans, onSubscribe }: PricingPlansProps) 
             </div>
             <h4 className="font-semibold mb-2" style={{ color: '#102A43' }}>Data Export</h4>
             <p className="text-sm text-slate-600">
-              Export search results to CSV or PDF for further analysis
+              Export search results to CSV or PDF for further analysis.
             </p>
           </div>
 
@@ -320,7 +315,7 @@ export default function PricingPlans({ plans, onSubscribe }: PricingPlansProps) 
             </div>
             <h4 className="font-semibold mb-2" style={{ color: '#102A43' }}>Email Alerts</h4>
             <p className="text-sm text-slate-600">
-              Get notified when new patents or publications match your saved searches
+              Automatic email notifications when new patents or publications match saved search criteria.
             </p>
           </div>
 
@@ -332,7 +327,7 @@ export default function PricingPlans({ plans, onSubscribe }: PricingPlansProps) 
             </div>
             <h4 className="font-semibold mb-2" style={{ color: '#102A43' }}>IP Overview</h4>
             <p className="text-sm text-slate-600">
-              Identify gaps in AI/ML IP coverage and innovation opportunities
+              Identify gaps in AI/ML IP coverage and innovation opportunities.
             </p>
           </div>
 
@@ -344,7 +339,7 @@ export default function PricingPlans({ plans, onSubscribe }: PricingPlansProps) 
             </div>
             <h4 className="font-semibold mb-2" style={{ color: '#102A43' }}>Priority Support</h4>
             <p className="text-sm text-slate-600">
-              Get help when you need it from our expert support team
+              Get help when you need it from our expert support team.
             </p>
           </div>
         </div>
@@ -364,23 +359,37 @@ export default function PricingPlans({ plans, onSubscribe }: PricingPlansProps) 
             </p>
           </div>
           <div>
-            <h4 className="font-semibold mb-2" style={{ color: '#102A43' }}>What happens after the beta period?</h4>
+            <h4 className="font-semibold mb-2" style={{ color: '#102A43' }}>Are the Early Adopter plans still available?</h4>
             <p className="text-sm text-slate-600">
-              Early Adopter plans automatically migrate to the User tier after 90 days. You'll be
-              notified before this happens and can manage your subscription at any time.
+              Early Adopter plans are available as long as they are offered for purchase, but they may be removed at any time.
+            </p>
+          </div>
+          <div>
+            <h4 className="font-semibold mb-2" style={{ color: '#102A43' }}>Does the Early Adopter pricing expire?</h4>
+            <p className="text-sm text-slate-600">
+              Early Adopter pricing will be honored for at least 6 months after date of purchase, provided an active subscription is maintained during that time. Any pricing changes will be communicated at least 30 days in advance. Cancel any time.
             </p>
           </div>
           <div>
             <h4 className="font-semibold mb-2" style={{ color: '#102A43' }}>Do you offer refunds?</h4>
             <p className="text-sm text-slate-600">
-              Please contact us at admin@phaethonorder.com if you have concerns about your subscription.
+              Please contact us at <a href="mailto:admin@phaethonorder.com" target="_blank" rel="noopener noreferrer" className="text-[#5FA8D2] font-medium hover:underline hover:text-[#ffa400]">
+                admin@phaethonorder.com
+              </a> if you have concerns about your subscription.
             </p>
           </div>
           <div>
             <h4 className="font-semibold mb-2" style={{ color: '#102A43' }}>Is my payment information secure?</h4>
             <p className="text-sm text-slate-600">
-              Yes, all payments are processed securely through Stripe. We never store your payment
-              information on our servers.
+              Yes, all payments are processed securely through Stripe. No payment information is shared with us by Stripe.
+            </p>
+          </div>
+          <div>
+            <h4 className="font-semibold mb-2" style={{ color: '#102A43' }}>Does SynapseIP offer other discounts or promo codes?</h4>
+            <p className="text-sm text-slate-600">
+              Discounts may be offered to select users. Please contact us at <a href="mailto:admin@phaethonorder.com" target="_blank" rel="noopener noreferrer" className="text-[#5FA8D2] font-medium hover:underline hover:text-[#ffa400]">
+                admin@phaethonorder.com
+              </a> for further information.
             </p>
           </div>
         </div>
