@@ -452,7 +452,6 @@ def _canonicalize_assignee_for_lookup(name: str) -> str:
     changed = True
     while changed and tokens:
         changed = False
-        tail = " ".join(tokens[-2:]) if len(tokens) >= 2 else tokens[-1]
         for suffix in _ASSIGNEE_SUFFIXES:
             if " " in suffix:
                 parts = suffix.split()
@@ -754,9 +753,8 @@ def _validate_graph_params(req: GraphRequest) -> None:
         violations.append(
             f"layout_neighbors must be between 2 and {MAX_GRAPH_LAYOUT_NEIGHBORS}"
         )
-    if req.search_mode == "assignee":
-        if not req.assignee_query or not req.assignee_query.strip():
-            violations.append("assignee_query is required when search_mode='assignee'")
+    if req.search_mode == "assignee" and (not req.assignee_query or not req.assignee_query.strip()):
+        violations.append("assignee_query is required when search_mode='assignee'")
     if violations:
         raise HTTPException(status_code=400, detail=violations)
 
@@ -1017,6 +1015,16 @@ def _compute_momentum(series: list[MomentumPoint]) -> tuple[float, float | None,
     else:
         bucket = "Flat"
     return norm, cagr, bucket
+
+
+# Window (months) of the reference distribution in overview_crowding_percentiles.
+# Must match WINDOW_MONTHS in scripts/utilities/refresh_overview_crowding_percentiles.py.
+OVERVIEW_PERCENTILE_REF_MONTHS = 24
+
+
+def _percentile_lookup_total(total: int, window_months: int) -> int:
+    """Scale a window's total to its 24-month equivalent for the percentile lookup."""
+    return int(round(total * OVERVIEW_PERCENTILE_REF_MONTHS / max(window_months, 1)))
 
 
 async def _lookup_crowding_percentile(conn: psycopg.AsyncConnection, total: int) -> float | None:
@@ -2169,7 +2177,9 @@ async def get_ip_overview(
         m24=_sum_recent(24),
     )
 
-    percentile = await _lookup_crowding_percentile(conn, total_count)
+    percentile = await _lookup_crowding_percentile(
+        conn, _percentile_lookup_total(total_count, window_months)
+    )
 
     crowding = CrowdingMetrics(
         exact=exact_count,

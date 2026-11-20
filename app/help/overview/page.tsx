@@ -91,7 +91,7 @@ export default function OverviewHelpPage() {
             <li>Counts distinct patents and publications in the focus search set (exact, semantic, and combined) and normalizes volume per month.</li>
             <li>Tracks monthly patent grants and publications to measure growth trends, such as slope and compound annual growth rate (CAGR), and classifies momentum as rising, stable, or declining.</li>
             <li>Aggregates CPC classifications to show the top slices and a broader breakdown for adjacent technology clusters.</li>
-            <li>Summarizes recency (6/12/18/24 month totals) and, when available, tags saturation with a percentile vs. historical queries.</li>
+            <li>Summarizes recency (6/12/18/24 month totals) and, when available, tags saturation with a percentile vs. a reference sample of keyword searches over the trailing 24 months of the corpus (totals for other date ranges are scaled to a 24-month equivalent).</li>
             <li>With “Group by Assignee” enabled, builds an embedding graph and signal cards per assignee.</li>
           </ol>
         </div>

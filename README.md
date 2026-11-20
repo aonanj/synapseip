@@ -333,6 +333,13 @@ python scripts/generate-embeddings/independent_claims_embeddings.py \
   --dsn "postgresql://user:pass@host/db?sslmode=require"
 ```
 
+### IP Overview Percentile Reference (`scripts/utilities/refresh_overview_crowding_percentiles.py`)
+Fills `overview_crowding_percentiles`, the reference distribution behind the IP Overview "Percentile" and its Low / Medium / High / Very High label. It samples title terms and two-word title phrases from the trailing 24 months, counts each with the same full-text match an IP Overview keyword search uses, and stores the cumulative distribution of those counts. The API scales each search's total to a 24-month equivalent before the lookup. Migration `i3j4k5l6m7n8` (`alembic upgrade head`) creates the table empty, so run the script once after deploying that migration and again after each ETL load; until then the Percentile shows `--`. Run `--dry-run` first to check the run time and the Low / Medium / High / Very High cut points; `--max-terms` trades sample size for run time.
+```bash
+python scripts/utilities/refresh_overview_crowding_percentiles.py --dry-run
+python scripts/utilities/refresh_overview_crowding_percentiles.py
+```
+
 ### Update Applications Issued as Patents  (`scripts/issued_patent_checker.py`)
 Maintain current data in `patent` table by replacing applications that issue as patents. Process: (1) Fetch granted/issued patents from the USPTO ODP API for applications
 stored in the `patent` table (fetched patents are staged in `issued_patent_staging`). Requires env var `USPTO_ODP_API_KEY` to avoid rate limiting.

@@ -16,6 +16,12 @@ def test_from_int_date_handles_invalid() -> None:
     assert overview_api._from_int_date(20241301) is None  # type: ignore[attr-defined]
 
 
+def test_percentile_lookup_total_scales_to_24_month_equivalent() -> None:
+    assert overview_api._percentile_lookup_total(300, 24) == 300  # type: ignore[attr-defined]
+    assert overview_api._percentile_lookup_total(300, 12) == 600  # type: ignore[attr-defined]
+    assert overview_api._percentile_lookup_total(300, 48) == 150  # type: ignore[attr-defined]
+
+
 def test_local_density_computes_mean_similarity() -> None:
     dist = np.array([[0.0, 0.1], [0.1, 0.0]], dtype=np.float32)
     density = overview_api.local_density(dist)

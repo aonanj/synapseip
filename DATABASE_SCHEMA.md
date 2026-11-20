@@ -24,6 +24,7 @@ This document outlines the database schema for the project. The database is a **
 * [public.subscription](#publicsubscription)
 * [public.subscription\_event](#publicsubscription_event)
 * [public.price\_plan](#publicprice_plan)
+* [public.overview\_crowding\_percentiles](#publicoverview_crowding_percentiles)
 
 ### [Staging & Logging Tables](#staging--logging-tables-1)
 
@@ -621,6 +622,28 @@ Stores subscription price plan details.
 #### Referenced by
 
 * TABLE `subscription` CONSTRAINT `subscription_stripe_price_id_fkey` FOREIGN KEY `(stripe_price_id)` REFERENCES `price_plan(stripe_price_id)`
+
+---
+
+### public.overview\_crowding\_percentiles
+
+Reference distribution behind the IP Overview "Percentile". Each row maps a 24-month keyword-search total to the share of sampled corpus keyword searches with a total at or below it; the API reads the smallest `count_threshold` >= a search's (24-month-scaled) total. A final sentinel row (`2147483647`, `1.0`) covers totals above the sample maximum. Created by migration `i3j4k5l6m7n8`; replaced wholesale by `scripts/utilities/refresh_overview_crowding_percentiles.py`.
+
+#### Columns
+
+| Column | Type | Nullable | Default |
+| :--- | :--- | :--- | :--- |
+| `count_threshold` | `integer` | not null | |
+| `percentile` | `double precision` | not null | |
+| `computed_at` | `timestamp with time zone` | not null | `now()` |
+
+#### Indexes
+
+* `overview_crowding_percentiles_pkey` PRIMARY KEY, btree `(count_threshold)`
+
+#### Check Constraints
+
+* `overview_crowding_percentiles_percentile_check` CHECK `(percentile >= 0 AND percentile <= 1)`
 
 ---
 
